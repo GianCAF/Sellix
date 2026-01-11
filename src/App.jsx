@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSucursales from './pages/AdminSucursales';
+import AdminUsuarios from './pages/AdminUsuarios';
 
 // Componente para proteger las rutas
 const ProtectedRoute = ({ children, roleRequired }) => {
@@ -31,6 +32,12 @@ function App() {
           <Route path="/admin" element={
             <ProtectedRoute roleRequired="admin">
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/usuarios" element={
+            <ProtectedRoute roleRequired="admin">
+              <AdminUsuarios />
             </ProtectedRoute>
           } />
 
