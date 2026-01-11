@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 import { auth, db } from '../services/firebase'; // Importamos la conexión
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+
+
 
 const Login = () => {
+    const navigate = useNavigate();
+    
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(''); // Para mostrar errores al usuario
@@ -11,6 +16,13 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        // ... dentro del handleSubmit, después del login exitoso:
+        if (userData.rol === 'admin') {
+            navigate('/admin');
+        } else {
+            navigate('/venta');
+        }
 
         try {
             // 1. Intentar login en Firebase Auth
