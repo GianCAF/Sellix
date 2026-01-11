@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { auth } from './services/firebase'; // <--- AGREGA ESTA LÍNEA
+import { auth } from './services/firebase'; // 
 import Login from './pages/Login';
+import AdminSucursales from './pages/AdminSucursales';
 
 const ProtectedRoute = ({ children, roleRequired }) => {
   const { user, loading } = useAuth();
@@ -16,6 +17,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+
           <Route path="/" element={<Login />} />
 
           <Route path="/admin" element={
@@ -45,6 +47,12 @@ function App() {
                   Cerrar Sesión
                 </button>
               </div>
+            </ProtectedRoute>
+            
+          } />
+          <Route path="/admin/sucursales" element={
+            <ProtectedRoute roleRequired="admin">
+              <AdminSucursales />
             </ProtectedRoute>
           } />
         </Routes>
