@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { auth, db } from '../services/firebase'; // Nuestra conexión a Firebase
+import { auth, db } from '../services/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
@@ -12,42 +12,43 @@ const Login = () => {
 
     const navigate = useNavigate();
 
+    // La función debe ser async para poder usar await dentro
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
         try {
-            // 1. Autenticación con Firebase Auth
+            // 1. Intentar login en Firebase Auth
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // 2. Obtener los datos adicionales (rol) desde Firestore
+            // 2. Buscar el perfil en Firestore por UID
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
 
             if (userDoc.exists()) {
                 const userData = userDoc.data();
 
-                // 3. Redirección basada en el ROL
+                // 3. Redirigir según el rol
                 if (userData.rol === 'admin') {
                     navigate('/admin');
                 } else if (userData.rol === 'empleado') {
                     navigate('/venta');
                 } else {
-                    setError("El rol de este usuario no está definido.");
+                    setError("Rol no reconocido en el sistema.");
                 }
             } else {
-                setError("El usuario no tiene un perfil registrado en la base de datos.");
+                setError("No se encontró un perfil de Firestore vinculado a este usuario.");
             }
         } catch (err) {
             console.error("Error en login:", err.code);
-            // Mensajes de error amigables
+            // Manejo de errores específicos de Firebase
             if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
                 setError("Correo o contraseña incorrectos.");
             } else if (err.code === 'auth/invalid-email') {
                 setError("El formato del correo no es válido.");
             } else {
-                setError("Ocurrió un error al intentar ingresar. Revisa tu conexión.");
+                setError("Error al conectar con el servidor. Revisa tu conexión.");
             }
         } finally {
             setLoading(false);
