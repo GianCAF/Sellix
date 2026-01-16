@@ -18,16 +18,13 @@ const AdminDashboard = () => {
     const cargarDatos = async () => {
         setLoading(true);
         try {
-            // 1. Obtener todas las sucursales
             const sucSnap = await getDocs(collection(db, "sucursales"));
             const listaSucursales = sucSnap.docs.map(d => ({ id: d.id, ...d.data() }));
             setSucursales(listaSucursales);
 
-            // 2. Configurar el rango de tiempo (de 00:00:00 a 23:59:59)
             const inicio = new Date(fechaInicio + "T00:00:00");
             const fin = new Date(fechaFin + "T23:59:59");
 
-            // 3. Consulta de Ventas unificada
             let qVentas;
             if (filtroSucursal === 'todas') {
                 qVentas = query(
@@ -68,7 +65,7 @@ const AdminDashboard = () => {
     const totalGlobal = ventas.reduce((acc, v) => acc + (Number(v.total) || 0), 0);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 pb-20">
             <AdminNavbar />
 
             <div className="p-4 md:p-8 max-w-7xl mx-auto">
@@ -117,31 +114,88 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                {/* GRID DE SUCURSALES (3 columnas responsivo) */}
                 {loading ? (
                     <div className="text-center py-20 font-black text-gray-300 text-2xl uppercase animate-pulse italic">
                         Sincronizando...
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[30px]">
-                        {sucursales
-                            .filter(s => filtroSucursal === 'todas' || s.id === filtroSucursal)
-                            .map(suc => {
-                                const totalSuc = obtenerVentaSucursal(suc.id);
-                                return (
-                                    <div key={suc.id} className="bg-white p-10 rounded-[45px] shadow-sm border border-gray-50 flex flex-col items-center justify-center text-center hover:shadow-2xl hover:scale-[1.02] transition-all group">
-                                        <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">🏪</div>
-                                        <h3 className="text-xl font-black text-gray-800 uppercase tracking-tighter">{suc.nombre}</h3>
-                                        <p className="text-gray-400 text-xs font-bold mb-6 italic">{suc.ubicacion || 'Sin ubicación'}</p>
+                    <>
+                        {/* GRID DE RESUMEN POR SUCURSAL */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[30px] mb-12">
+                            {sucursales
+                                .filter(s => filtroSucursal === 'todas' || s.id === filtroSucursal)
+                                .map(suc => {
+                                    const totalSuc = obtenerVentaSucursal(suc.id);
+                                    return (
+                                        <div key={suc.id} className="bg-white p-10 rounded-[45px] shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:shadow-2xl hover:scale-[1.02] transition-all group">
+                                            <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">🏪</div>
+                                            <h3 className="text-xl font-black text-gray-800 uppercase tracking-tighter">{suc.nombre}</h3>
+                                            <p className="text-gray-400 text-xs font-bold mb-6 italic">{suc.ubicacion || 'Sin ubicación'}</p>
 
-                                        <div className="bg-blue-50 w-full py-6 rounded-[30px]">
-                                            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Total Vendido</p>
-                                            <p className="text-4xl font-black text-blue-600">${totalSuc.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                            <div className="bg-blue-50 w-full py-6 rounded-[30px]">
+                                                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Total Vendido</p>
+                                                <p className="text-4xl font-black text-blue-600">${totalSuc.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
-                    </div>
+                                    );
+                                })}
+                        </div>
+
+                        {/* DESGLOSE DETALLADO (Solo si hay una sucursal específica seleccionada) */}
+                        {filtroSucursal !== 'todas' && (
+                            <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-500">
+                                <div className="p-8 border-b bg-gray-50/50">
+                                    <h2 className="text-2xl font-black text-gray-800 uppercase italic">Desglose de Operaciones</h2>
+                                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Historial detallado del periodo</p>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-gray-50 border-b">
+                                            <tr>
+                                                <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha / Hora</th>
+                                                <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Productos Vendidos</th>
+                                                <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Monto Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {ventas.length > 0 ? ventas.map((v) => (
+                                                <tr key={v.id} className="hover:bg-blue-50/20 transition-colors">
+                                                    <td className="p-5">
+                                                        <p className="font-black text-gray-700 text-sm">
+                                                            {v.fecha?.seconds ? new Date(v.fecha.seconds * 1000).toLocaleDateString() : '---'}
+                                                        </p>
+                                                        <p className="text-[10px] font-bold text-blue-500 uppercase">
+                                                            {v.fecha?.seconds ? new Date(v.fecha.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
+                                                        </p>
+                                                    </td>
+                                                    <td className="p-5">
+                                                        <div className="flex flex-col gap-1">
+                                                            {v.productos?.map((p, idx) => (
+                                                                <span key={idx} className="text-xs font-bold text-gray-500">
+                                                                    • {p.descripcion} <span className="text-blue-600">({p.cantidadVenta} pz)</span>
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-5 text-right">
+                                                        <p className="text-lg font-black text-green-600 italic">
+                                                            ${(v.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            )) : (
+                                                <tr>
+                                                    <td colSpan="3" className="p-10 text-center text-gray-300 font-black uppercase italic">
+                                                        Sin ventas en este periodo
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>
