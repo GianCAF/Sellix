@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
-import { collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 
 const AdminCategorias = () => {
@@ -20,6 +20,7 @@ const AdminCategorias = () => {
 
     useEffect(() => { cargarDatos(); }, []);
 
+    // --- FUNCIONES PARA CATEGORÍAS ---
     const crearCategoria = async (e) => {
         e.preventDefault();
         await addDoc(collection(db, "categorias"), { nombre: nombreCat });
@@ -27,6 +28,22 @@ const AdminCategorias = () => {
         cargarDatos();
     };
 
+    const editarCategoria = async (id, nombreActual) => {
+        const nuevoNombre = prompt("Editar nombre de categoría:", nombreActual);
+        if (nuevoNombre && nuevoNombre !== nombreActual) {
+            await updateDoc(doc(db, "categorias", id), { nombre: nuevoNombre });
+            cargarDatos();
+        }
+    };
+
+    const eliminarCategoria = async (id) => {
+        if (window.confirm("¿Eliminar categoría? Esto no borrará las subcategorías, pero quedarán huérfanas.")) {
+            await deleteDoc(doc(db, "categorias", id));
+            cargarDatos();
+        }
+    };
+
+    // --- FUNCIONES PARA SUBCATEGORÍAS ---
     const crearSubcategoria = async (e) => {
         e.preventDefault();
         if (!categoriaSeleccionada) return alert("Selecciona una categoría primero");
@@ -38,6 +55,21 @@ const AdminCategorias = () => {
         cargarDatos();
     };
 
+    const editarSubcategoria = async (id, nombreActual) => {
+        const nuevoNombre = prompt("Editar nombre de subcategoría:", nombreActual);
+        if (nuevoNombre && nuevoNombre !== nombreActual) {
+            await updateDoc(doc(db, "subcategorias", id), { nombre: nuevoNombre });
+            cargarDatos();
+        }
+    };
+
+    const eliminarSubcategoria = async (id) => {
+        if (window.confirm("¿Eliminar esta subcategoría?")) {
+            await deleteDoc(doc(db, "subcategorias", id));
+            cargarDatos();
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
             <AdminNavbar />
@@ -45,7 +77,7 @@ const AdminCategorias = () => {
 
                 {/* Sección Categorías */}
                 <div className="bg-white p-6 rounded-xl shadow-sm">
-                    <h2 className="text-xl font-bold mb-4 italic text-blue-600">1. Crear Categoría</h2>
+                    <h2 className="text-xl font-bold mb-4 text-blue-600">1. Categorías</h2>
                     <form onSubmit={crearCategoria} className="flex gap-2 mb-6">
                         <input
                             type="text" placeholder="Ej: Audífonos" className="border p-2 rounded flex-1"
@@ -55,8 +87,12 @@ const AdminCategorias = () => {
                     </form>
                     <ul className="space-y-2">
                         {categorias.map(c => (
-                            <li key={c.id} className="p-2 bg-gray-50 rounded border flex justify-between">
+                            <li key={c.id} className="p-2 bg-gray-50 rounded border flex justify-between items-center group">
                                 <span>{c.nombre}</span>
+                                <div className="space-x-2">
+                                    <button onClick={() => editarCategoria(c.id, c.nombre)} className="text-blue-500 text-sm hover:underline">Editar</button>
+                                    <button onClick={() => eliminarCategoria(c.id)} className="text-red-500 text-sm hover:underline">Borrar</button>
+                                </div>
                             </li>
                         ))}
                     </ul>
@@ -64,7 +100,7 @@ const AdminCategorias = () => {
 
                 {/* Sección Subcategorías */}
                 <div className="bg-white p-6 rounded-xl shadow-sm">
-                    <h2 className="text-xl font-bold mb-4 italic text-green-600">2. Crear Subcategoría</h2>
+                    <h2 className="text-xl font-bold mb-4 text-green-600">2. Subcategorías</h2>
                     <form onSubmit={crearSubcategoria} className="space-y-4 mb-6">
                         <select
                             className="w-full border p-2 rounded"
@@ -87,9 +123,11 @@ const AdminCategorias = () => {
                                 <h3 className="font-bold text-gray-700">{c.nombre}</h3>
                                 <div className="flex flex-wrap gap-2 mt-1">
                                     {subcategorias.filter(s => s.categoriaId === c.id).map(s => (
-                                        <span key={s.id} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full border border-green-200">
-                                            {s.nombre}
-                                        </span>
+                                        <div key={s.id} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full border border-green-200 flex items-center gap-2">
+                                            <span>{s.nombre}</span>
+                                            <button onClick={() => editarSubcategoria(s.id, s.nombre)} className="hover:text-blue-600 font-bold">✎</button>
+                                            <button onClick={() => eliminarSubcategoria(s.id)} className="hover:text-red-600 font-bold">×</button>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
