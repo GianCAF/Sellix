@@ -1,38 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 
 const AdminSucursales = () => {
     const [nombre, setNombre] = useState('');
     const [ubicacion, setUbicacion] = useState('');
     const [sucursales, setSucursales] = useState([]);
+    const [editandoId, setEditandoId] = useState(null);
 
-    // Cargar sucursales existentes
-    const fetchSucursales = async () => {
+    const cargarSucursales = async () => {
         const querySnapshot = await getDocs(collection(db, "sucursales"));
-        const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setSucursales(docs);
+        setSucursales(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     };
 
-    useEffect(() => {
-        fetchSucursales();
-    }, []);
+    useEffect(() => { cargarSucursales(); }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await addDoc(collection(db, "sucursales"), {
-                nombre: nombre,
-                ubicacion: ubicacion,
-                fechaCreacion: new Date()
-            });
-            setNombre('');
-            setUbicacion('');
-            fetchSucursales(); // Recargar lista
-            alert("Sucursal creada con éxito");
-        } catch (error) {
-            console.error("Error al crear sucursal:", error);
+            if (editandoId) {
+                await updateDoc(doc(db, "sucursales", editandoId), { nombre, ubicacion });
+                setEditandoId(null);
+            } else {
+                await addDoc(collection(db, "sucursales"), { nombre, ubicacion });
+            }
+            setNombre(''); setUbicacion('');
+            cargarSucursales();
+        } catch (error) { console.error(error); }
+    };
+
+    const prepararEdicion = (suc) => {
+        setEditandoId(suc.id);
+        setNombre(suc.nombre);
+        setUbicacion(suc.ubicacion);
+        window.scrollTo(0, 0);
+    };
+
+    const eliminarSucursal = async (id) => {
+        if (window.confirm("¿Seguro que quieres eliminar esta sucursal?")) {
+            await deleteDoc(doc(db, "sucursales", id));
+            cargarSucursales();
         }
     };
 
@@ -40,54 +48,32 @@ const AdminSucursales = () => {
         <div className="min-h-screen bg-gray-50">
             <AdminNavbar />
             <div className="p-8 max-w-4xl mx-auto">
-                <h2 className="text-2xl font-bold mb-6">Gestionar Sucursales</h2>
+                <h2 className="text-2xl font-black mb-6 uppercase italic">
+                    {editandoId ? '📝 Editando Sucursal' : '🏢 Nueva Sucursal'}
+                </h2>
 
-                {/* Formulario */}
-                <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm mb-8 flex gap-4 items-end">
-                    <div className="flex-1">
-                        <label className="block text-sm font-medium mb-1">Nombre de Sucursal</label>
-                        <input
-                            type="text"
-                            className="w-full border p-2 rounded"
-                            value={nombre}
-                            onChange={(e) => setNombre(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="flex-1">
-                        <label className="block text-sm font-medium mb-1">Ubicación / Ciudad</label>
-                        <input
-                            type="text"
-                            className="w-full border p-2 rounded"
-                            value={ubicacion}
-                            onChange={(e) => setUbicacion(e.target.value)}
-                        />
-                    </div>
-                    <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700">
-                        Agregar
+                <form onSubmit={handleSubmit} className="bg-white p-6 rounded-3xl shadow-sm mb-8 flex flex-col md:flex-row gap-4">
+                    <input type="text" placeholder="Nombre de sucursal" className="flex-1 p-3 border-2 rounded-xl outline-none focus:border-blue-500" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+                    <input type="text" placeholder="Ubicación" className="flex-1 p-3 border-2 rounded-xl outline-none focus:border-blue-500" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} required />
+                    <button type="submit" className={`px-8 py-3 rounded-xl font-bold text-white ${editandoId ? 'bg-orange-500' : 'bg-blue-600'}`}>
+                        {editandoId ? 'ACTUALIZAR' : 'GUARDAR'}
                     </button>
+                    {editandoId && <button onClick={() => { setEditandoId(null); setNombre(''); setUbicacion(''); }} className="text-gray-400 font-bold">Cancelar</button>}
                 </form>
 
-                {/* Tabla de Sucursales */}
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="p-4">Nombre</th>
-                                <th className="p-4">Ubicación</th>
-                                <th className="p-4">ID de Sucursal</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {sucursales.map(s => (
-                                <tr key={s.id} className="border-t">
-                                    <td className="p-4 font-medium">{s.nombre}</td>
-                                    <td className="p-4 text-gray-600">{s.ubicacion}</td>
-                                    <td className="p-4 text-xs text-gray-400 font-mono">{s.id}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="grid gap-4">
+                    {sucursales.map(s => (
+                        <div key={s.id} className="bg-white p-6 rounded-2xl shadow-sm flex justify-between items-center border border-gray-100">
+                            <div>
+                                <h3 className="font-black text-gray-800 uppercase">{s.nombre}</h3>
+                                <p className="text-gray-400 text-sm">{s.ubicacion}</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => prepararEdicion(s)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all">✏️</button>
+                                <button onClick={() => eliminarSucursal(s.id)} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all">🗑️</button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
