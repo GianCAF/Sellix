@@ -8,6 +8,7 @@ import AdminCategorias from './pages/AdminCategorias';
 import AdminMarcas from './pages/AdminMarcas';
 import AdminInventario from './pages/AdminInventario';
 import AdminVerInventario from './pages/AdminVerInventario';
+import VentaEmpleado from './pages/VentaEmpleado';
 
 // Componente para proteger las rutas
 const ProtectedRoute = ({ children, roleRequired }) => {
@@ -79,6 +80,11 @@ function App() {
           <Route path="/venta" element={
             <ProtectedRoute roleRequired="empleado">
               <div className="p-10"><h1>Pantalla de Ventas - Próximamente</h1></div>
+            </ProtectedRoute>
+          } />
+          <Route path="/venta" element={
+            <ProtectedRoute roleRequired="empleado">
+              <VentaEmpleado />
             </ProtectedRoute>
           } />
 
