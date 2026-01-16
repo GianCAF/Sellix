@@ -70,7 +70,7 @@ const VentaEmpleado = () => {
         if (e) e.preventDefault();
         if (!tempNombre || !tempPrecio) return alert("Llena todos los campos");
         const nuevoTemp = {
-            id: `TEMP-${Date.now()}`,
+            id: `TEMP-${tempNombre.toLowerCase().trim()}`, // ID basado en nombre para agrupar
             descripcion: `(TEMP) ${tempNombre}`,
             precio: parseFloat(tempPrecio),
             esTemporal: true,
@@ -92,7 +92,7 @@ const VentaEmpleado = () => {
         } catch (error) { console.error(error); alert("Error al cargar el corte."); }
     };
 
-    // NUEVA FUNCIÓN PDF DETALLADA
+    // FUNCIÓN PDF CON AGRUPACIÓN POR PRODUCTO
     const descargarPDFCorte = () => {
         const doc = new jsPDF();
         const hoy = new Date();
@@ -101,41 +101,52 @@ const VentaEmpleado = () => {
 
         doc.setFontSize(18);
         doc.setTextColor(37, 99, 235);
-        doc.text("REPORTE DETALLADO DE CAJA", 14, 20);
+        doc.text("CORTE DE CAJA - RESUMEN DE PRODUCTOS", 14, 20);
 
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.text(`Sucursal: ${sucursalNombre}`, 14, 28);
-        doc.text(`Fecha: ${hoy.toLocaleDateString()} ${hoy.toLocaleTimeString()}`, 14, 33);
-        doc.text(`Venta Total: $${totalCorte.toFixed(2)}`, 14, 38);
+        doc.text(`Fecha: ${hoy.toLocaleDateString()}`, 14, 33);
+        doc.text(`Total Acumulado: $${totalCorte.toFixed(2)}`, 14, 38);
 
-        const tablaData = [];
+        // Lógica de Agrupación
+        const productosAgrupados = {};
+
         ventasHoy.forEach(venta => {
-            const hora = venta.fecha?.seconds
-                ? new Date(venta.fecha.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                : '---';
-
             venta.productos.forEach(prod => {
-                tablaData.push([
-                    hora,
-                    prod.descripcion,
-                    `${prod.cantidadVenta} pz`,
-                    `$${prod.precio.toFixed(2)}`,
-                    `$${(prod.cantidadVenta * prod.precio).toFixed(2)}`
-                ]);
+                // Usamos la descripción como llave para agrupar (funciona para inventario y temporales)
+                const llave = prod.descripcion;
+                if (productosAgrupados[llave]) {
+                    productosAgrupados[llave].cantidadTotal += prod.cantidadVenta;
+                    productosAgrupados[llave].subtotalTotal += (prod.cantidadVenta * prod.precio);
+                } else {
+                    productosAgrupados[llave] = {
+                        descripcion: prod.descripcion,
+                        cantidadTotal: prod.cantidadVenta,
+                        precioUnitario: prod.precio,
+                        subtotalTotal: (prod.cantidadVenta * prod.precio)
+                    };
+                }
             });
         });
 
+        const tablaData = Object.values(productosAgrupados).map(p => [
+            p.descripcion,
+            `${p.cantidadTotal} pz`,
+            `$${p.precioUnitario.toFixed(2)}`,
+            `$${p.subtotalTotal.toFixed(2)}`
+        ]);
+
         autoTable(doc, {
             startY: 45,
-            head: [['Hora', 'Producto', 'Cant.', 'Precio U.', 'Subtotal']],
+            head: [['Producto', 'Cant. Total', 'Precio U.', 'Subtotal']],
             body: tablaData,
             theme: 'striped',
             headStyles: { fillColor: [37, 99, 235] },
             styles: { fontSize: 9 }
         });
 
-        doc.save(`corte_detallado_${fechaTexto}.pdf`);
+        doc.save(`corte_resumido_${fechaTexto}.pdf`);
     };
 
     const finalizarVenta = async () => {
@@ -163,6 +174,7 @@ const VentaEmpleado = () => {
 
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
+            {/* El resto del JSX se mantiene igual que la versión anterior */}
             <div className="flex-1 p-6 border-r overflow-y-auto">
                 <header className="mb-4 flex justify-between items-center">
                     <h2 className="text-2xl font-black text-blue-600 italic uppercase">{sucursalNombre}</h2>
@@ -237,7 +249,7 @@ const VentaEmpleado = () => {
                         <div className="bg-blue-600 text-white p-6 rounded-2xl mb-4 text-center">
                             <p className="text-5xl font-black">${ventasHoy.reduce((acc, v) => acc + (v.total || 0), 0).toFixed(2)}</p>
                         </div>
-                        <button onClick={descargarPDFCorte} className="w-full mb-6 bg-green-600 text-white py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-2">📄 DESCARGAR DETALLE PDF</button>
+                        <button onClick={descargarPDFCorte} className="w-full mb-6 bg-green-600 text-white py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-2">📄 DESCARGAR RESUMEN PDF</button>
                         <div className="flex-1 overflow-y-auto space-y-3">
                             {ventasHoy.map((v, i) => (
                                 <div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
