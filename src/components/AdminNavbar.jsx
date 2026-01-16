@@ -26,6 +26,9 @@ const AdminNavbar = () => {
                     >
                         Sucursales
                     </button>
+                    <button onClick={() => navigate('/admin/categorias')} className="text-gray-600 hover:text-blue-600 font-medium">
+                        Categorías
+                    </button>
                     <button
                         onClick={() => navigate('/admin/usuarios')}
                         className="text-gray-600 hover:text-blue-600 font-medium"
