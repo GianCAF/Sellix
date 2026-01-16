@@ -5,6 +5,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminSucursales from './pages/AdminSucursales';
 import AdminUsuarios from './pages/AdminUsuarios';
 import AdminCategorias from './pages/AdminCategorias';
+import AdminMarcas from './pages/AdminMarcas';
 
 // Componente para proteger las rutas
 const ProtectedRoute = ({ children, roleRequired }) => {
@@ -33,6 +34,12 @@ function App() {
           <Route path="/admin" element={
             <ProtectedRoute roleRequired="admin">
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/marcas" element={
+            <ProtectedRoute roleRequired="admin">
+              <AdminMarcas />
             </ProtectedRoute>
           } />
 
