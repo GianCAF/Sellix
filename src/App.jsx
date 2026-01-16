@@ -77,11 +77,7 @@ function App() {
           } />
 
           {/* Ruta de Ventas (Empleado) */}
-          <Route path="/venta" element={
-            <ProtectedRoute roleRequired="empleado">
-              <div className="p-10"><h1>Pantalla de Ventas - Próximamente</h1></div>
-            </ProtectedRoute>
-          } />
+         
           <Route path="/venta" element={
             <ProtectedRoute roleRequired="empleado">
               <VentaEmpleado />
