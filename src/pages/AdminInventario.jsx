@@ -55,6 +55,19 @@ const AdminInventario = () => {
         });
     };
 
+    const limpiarFormulario = () => {
+        // Mantenemos sucursalSel si prefieres no reelegir la sucursal en cada producto
+        setCatSel('');
+        setSubSel('');
+        setMarcaSel('');
+        setModelo('');
+        setDescripcion('');
+        setPrecio('');
+        setCantidad(0);
+        setColores(['']);
+        setCodigos(['']);
+    };
+
     const guardarInventario = async (e) => {
         e.preventDefault();
         try {
@@ -72,12 +85,15 @@ const AdminInventario = () => {
                 fechaRegistro: new Date()
             });
             alert("Producto ingresado al inventario con éxito");
-            // Limpiar campos o redireccionar
+            // Limpiar campos
+            limpiarFormulario();
         } catch (error) {
             console.error(error);
             alert("Error al guardar");
         }
     };
+
+    
 
     return (
         <div className="min-h-screen bg-gray-50 pb-10">
