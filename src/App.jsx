@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSucursales from './pages/AdminSucursales';
 import AdminUsuarios from './pages/AdminUsuarios';
+import AdminCategorias from './pages/AdminCategorias';
 
 // Componente para proteger las rutas
 const ProtectedRoute = ({ children, roleRequired }) => {
@@ -44,6 +45,12 @@ function App() {
           <Route path="/admin/sucursales" element={
             <ProtectedRoute roleRequired="admin">
               <AdminSucursales />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/categorias" element={
+            <ProtectedRoute roleRequired="admin">
+              <AdminCategorias />
             </ProtectedRoute>
           } />
 
