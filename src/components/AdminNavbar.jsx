@@ -32,6 +32,9 @@ const AdminNavbar = () => {
                     <button onClick={() => navigate('/admin/marcas')} className="text-gray-600 hover:text-blue-600 font-medium">
                         Marcas
                     </button>
+                    <button onClick={() => navigate('/admin/inventario')} className="text-gray-600 hover:text-blue-600 font-medium">
+                        Inventario
+                    </button>
                     <button
                         onClick={() => navigate('/admin/usuarios')}
                         className="text-gray-600 hover:text-blue-600 font-medium"
