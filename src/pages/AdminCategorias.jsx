@@ -20,7 +20,6 @@ const AdminCategorias = () => {
 
     useEffect(() => { cargarDatos(); }, []);
 
-    // --- FUNCIONES PARA CATEGORÍAS ---
     const crearCategoria = async (e) => {
         e.preventDefault();
         await addDoc(collection(db, "categorias"), { nombre: nombreCat });
@@ -43,7 +42,6 @@ const AdminCategorias = () => {
         }
     };
 
-    // --- FUNCIONES PARA SUBCATEGORÍAS ---
     const crearSubcategoria = async (e) => {
         e.preventDefault();
         if (!categoriaSeleccionada) return alert("Selecciona una categoría primero");
@@ -73,25 +71,31 @@ const AdminCategorias = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <AdminNavbar />
-            <div className="p-8 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-4 md:p-8 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
 
                 {/* Sección Categorías */}
-                <div className="bg-white p-6 rounded-xl shadow-sm">
-                    <h2 className="text-xl font-bold mb-4 text-blue-600">1. Categorías</h2>
-                    <form onSubmit={crearCategoria} className="flex gap-2 mb-6">
+                <div className="bg-white p-5 md:p-6 rounded-xl shadow-sm h-fit">
+                    <h2 className="text-xl font-black mb-4 text-blue-600 uppercase italic">1. Categorías</h2>
+                    <form onSubmit={crearCategoria} className="flex flex-col sm:flex-row gap-2 mb-6">
                         <input
-                            type="text" placeholder="Ej: Audífonos" className="border p-2 rounded flex-1"
-                            value={nombreCat} onChange={(e) => setNombreCat(e.target.value)} required
+                            type="text"
+                            placeholder="Ej: Audífonos"
+                            className="border-2 p-2 rounded-xl flex-1 outline-none focus:border-blue-400 font-bold"
+                            value={nombreCat}
+                            onChange={(e) => setNombreCat(e.target.value)}
+                            required
                         />
-                        <button className="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700">Crear</button>
+                        <button className="bg-blue-600 text-white px-6 py-2 rounded-xl font-black hover:bg-blue-700 transition-colors uppercase text-sm">
+                            Crear
+                        </button>
                     </form>
                     <ul className="space-y-2">
                         {categorias.map(c => (
-                            <li key={c.id} className="p-2 bg-gray-50 rounded border flex justify-between items-center group">
-                                <span>{c.nombre}</span>
-                                <div className="space-x-2">
-                                    <button onClick={() => editarCategoria(c.id, c.nombre)} className="text-blue-500 text-sm hover:underline">Editar</button>
-                                    <button onClick={() => eliminarCategoria(c.id)} className="text-red-500 text-sm hover:underline">Borrar</button>
+                            <li key={c.id} className="p-3 bg-gray-50 rounded-xl border flex justify-between items-center group transition-all hover:shadow-md">
+                                <span className="font-bold text-gray-700">{c.nombre}</span>
+                                <div className="flex gap-3">
+                                    <button onClick={() => editarCategoria(c.id, c.nombre)} className="text-blue-500 text-xs font-black uppercase hover:underline">Editar</button>
+                                    <button onClick={() => eliminarCategoria(c.id)} className="text-red-500 text-xs font-black uppercase hover:underline">Borrar</button>
                                 </div>
                             </li>
                         ))}
@@ -99,36 +103,49 @@ const AdminCategorias = () => {
                 </div>
 
                 {/* Sección Subcategorías */}
-                <div className="bg-white p-6 rounded-xl shadow-sm">
-                    <h2 className="text-xl font-bold mb-4 text-green-600">2. Subcategorías</h2>
+                <div className="bg-white p-5 md:p-6 rounded-xl shadow-sm h-fit">
+                    <h2 className="text-xl font-black mb-4 text-green-600 uppercase italic">2. Subcategorías</h2>
                     <form onSubmit={crearSubcategoria} className="space-y-4 mb-6">
                         <select
-                            className="w-full border p-2 rounded"
-                            value={categoriaSeleccionada} onChange={(e) => setCategoriaSeleccionada(e.target.value)} required
+                            className="w-full border-2 p-2 rounded-xl font-bold bg-gray-50 outline-none focus:border-green-400"
+                            value={categoriaSeleccionada}
+                            onChange={(e) => setCategoriaSeleccionada(e.target.value)}
+                            required
                         >
                             <option value="">¿A qué categoría pertenece?</option>
                             {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                         </select>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <input
-                                type="text" placeholder="Ej: Diadema" className="border p-2 rounded flex-1"
-                                value={nombreSub} onChange={(e) => setNombreSub(e.target.value)} required
+                                type="text"
+                                placeholder="Ej: Diadema"
+                                className="border-2 p-2 rounded-xl flex-1 outline-none focus:border-green-400 font-bold"
+                                value={nombreSub}
+                                onChange={(e) => setNombreSub(e.target.value)}
+                                required
                             />
-                            <button className="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">Añadir</button>
+                            <button className="bg-green-600 text-white px-6 py-2 rounded-xl font-black hover:bg-green-700 transition-colors uppercase text-sm">
+                                Añadir
+                            </button>
                         </div>
                     </form>
                     <div className="space-y-4">
                         {categorias.map(c => (
-                            <div key={c.id} className="border-l-4 border-blue-200 pl-4">
-                                <h3 className="font-bold text-gray-700">{c.nombre}</h3>
-                                <div className="flex flex-wrap gap-2 mt-1">
+                            <div key={c.id} className="border-l-4 border-blue-200 pl-4 py-1">
+                                <h3 className="font-black text-gray-400 uppercase text-[10px] tracking-widest">{c.nombre}</h3>
+                                <div className="flex flex-wrap gap-2 mt-2">
                                     {subcategorias.filter(s => s.categoriaId === c.id).map(s => (
-                                        <div key={s.id} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full border border-green-200 flex items-center gap-2">
+                                        <div key={s.id} className="bg-green-50 text-green-700 text-[10px] font-black px-3 py-1.5 rounded-full border border-green-100 flex items-center gap-2 uppercase tracking-tighter">
                                             <span>{s.nombre}</span>
-                                            <button onClick={() => editarSubcategoria(s.id, s.nombre)} className="hover:text-blue-600 font-bold">✎</button>
-                                            <button onClick={() => eliminarSubcategoria(s.id)} className="hover:text-red-600 font-bold">×</button>
+                                            <div className="flex gap-1 border-l pl-2 border-green-200">
+                                                <button onClick={() => editarSubcategoria(s.id, s.nombre)} className="hover:text-blue-600">✎</button>
+                                                <button onClick={() => eliminarSubcategoria(s.id)} className="hover:text-red-600 text-lg leading-none">×</button>
+                                            </div>
                                         </div>
                                     ))}
+                                    {subcategorias.filter(s => s.categoriaId === c.id).length === 0 && (
+                                        <span className="text-[10px] italic text-gray-300 font-bold uppercase">Sin subcategorías</span>
+                                    )}
                                 </div>
                             </div>
                         ))}
