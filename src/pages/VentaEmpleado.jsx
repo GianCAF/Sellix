@@ -34,7 +34,7 @@ const VentaEmpleado = () => {
 
     const inputBusqueda = useRef(null);
 
-    // FUNCIÓN DE FECHA LOCAL (DD-MM-AAAA) - Nuestra "Llave" maestra
+    // FUNCIÓN DE FECHA LOCAL (DD-MM-AAAA)
     const getFechaLocalID = () => {
         const d = new Date();
         const dia = String(d.getDate()).padStart(2, '0');
@@ -92,7 +92,7 @@ const VentaEmpleado = () => {
                 monto: parseFloat(inputFondo),
                 sucursalId: user.sucursalId,
                 empleadoId: user.uid,
-                nombreEmpleado: user.nombre || 'Empleado',
+                nombreEmpleado: user.nombre || 'Empleado', // Auditoría apertura
                 fecha: Timestamp.now(),
                 fechaString: getFechaLocalID()
             });
@@ -111,8 +111,9 @@ const VentaEmpleado = () => {
                 motivo: movMotivo,
                 sucursalId: user.sucursalId,
                 empleadoId: user.uid,
+                nombreEmpleado: user.nombre || 'Empleado', // Auditoría movimiento
                 fecha: Timestamp.now(),
-                fechaString: getFechaLocalID() // Guardamos el string para filtrar sin errores de índice
+                fechaString: getFechaLocalID()
             });
             alert("Movimiento registrado");
             setMostrarModalMov(false);
@@ -120,18 +121,14 @@ const VentaEmpleado = () => {
         } catch (e) { alert("Error al registrar"); }
     };
 
-    // --- CORRECCIÓN DE CORTE: FILTRADO LOCAL PARA EVITAR ERRORES DE FIREBASE ---
     const consultarCorteCompleto = async () => {
         try {
             const fechaHoy = getFechaLocalID();
-
-            // Consultamos solo por sucursal para evitar el requisito de índices compuestos
             const qV = query(collection(db, "ventas"), where("sucursalId", "==", user.sucursalId));
             const qM = query(collection(db, "movimientos_caja"), where("sucursalId", "==", user.sucursalId));
 
             const [snapV, snapM] = await Promise.all([getDocs(qV), getDocs(qM)]);
 
-            // Filtramos en el cliente los que coincidan con la fecha de hoy string (DD-MM-AAAA)
             const vData = snapV.docs
                 .map(d => ({ id: d.id, ...d.data() }))
                 .filter(v => {
@@ -149,7 +146,6 @@ const VentaEmpleado = () => {
             setMovimientosHoy(mData);
             setMostrarCorte(true);
         } catch (error) {
-            console.error("Error en Corte:", error);
             alert("Error al generar el corte.");
         }
     };
@@ -162,7 +158,7 @@ const VentaEmpleado = () => {
     const descargarPDFCorteDetallado = () => {
         const doc = new jsPDF();
         doc.setFont("helvetica", "bold");
-        doc.text("CORTE DE CAJA DETALLADO", 14, 20);
+        doc.text("CORTE DE CAJA DETALLADO (AUDITORÍA)", 14, 20);
         doc.setFontSize(10);
         doc.text(`Sede: ${sucursalNombre} | Fecha: ${getFechaLocalID()}`, 14, 28);
 
@@ -179,27 +175,29 @@ const VentaEmpleado = () => {
             theme: 'grid'
         });
 
-        const prodAgrup = {};
-        ventasHoy.forEach(v => v.productos?.forEach(p => {
-            prodAgrup[p.descripcion] = (prodAgrup[p.descripcion] || 0) + p.cantidadVenta;
-        }));
-
+        // Desglose de Ventas con Vendedor
         autoTable(doc, {
             startY: doc.lastAutoTable.finalY + 10,
-            head: [['Cant', 'Producto Vendido']],
-            body: Object.entries(prodAgrup).map(([n, q]) => [q, n])
+            head: [['Hora', 'Empleado', 'Productos', 'Total']],
+            body: ventasHoy.map(v => [
+                v.fecha?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                v.nombreEmpleado || 'N/A',
+                v.productos.map(p => `${p.cantidadVenta}x ${p.descripcion}`).join(', '),
+                `$${Number(v.total).toFixed(2)}`
+            ]),
+            styles: { fontSize: 8 }
         });
 
         if (movimientosHoy.length > 0) {
             autoTable(doc, {
                 startY: doc.lastAutoTable.finalY + 10,
-                head: [['Tipo', 'Motivo', 'Monto']],
-                body: movimientosHoy.map(m => [m.tipo.toUpperCase(), m.motivo, `$${Number(m.monto).toFixed(2)}`]),
+                head: [['Tipo', 'Motivo', 'Realizado por', 'Monto']],
+                body: movimientosHoy.map(m => [m.tipo.toUpperCase(), m.motivo, m.nombreEmpleado || 'N/A', `$${Number(m.monto).toFixed(2)}`]),
                 headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] }
             });
         }
 
-        doc.save(`corte_${sucursalNombre}_${getFechaLocalID()}.pdf`);
+        doc.save(`corte_auditoria_${sucursalNombre}.pdf`);
     };
 
     const finalizarVenta = async () => {
@@ -208,6 +206,7 @@ const VentaEmpleado = () => {
         try {
             await addDoc(collection(db, "ventas"), {
                 empleadoId: user.uid,
+                nombreEmpleado: user.nombre || 'Empleado', // Auditoría venta
                 sucursalId: user.sucursalId,
                 productos: carrito,
                 total: total,
@@ -302,8 +301,8 @@ const VentaEmpleado = () => {
                 </div>
             </div>
 
-            <div className="w-full md:w-[420px] bg-white p-8 shadow-2xl flex flex-col h-screen sticky top-0 text-gray-800">
-                <h3 className="text-2xl font-black italic uppercase mb-6 tracking-tighter tracking-tighter">🛒 Venta Actual</h3>
+            <div className="w-full md:w-[420px] bg-white p-8 shadow-2xl flex flex-col h-screen sticky top-0 text-gray-800 text-gray-800">
+                <h3 className="text-2xl font-black italic uppercase mb-6 tracking-tighter">🛒 Venta Actual</h3>
                 <div className="flex-1 overflow-y-auto space-y-4">
                     {carrito.map(item => (
                         <div key={item.id} className="flex justify-between border-b pb-2">
@@ -323,28 +322,35 @@ const VentaEmpleado = () => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[200]">
                     <div className="bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col text-gray-800">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-2xl font-black uppercase italic">Resumen del Día</h3>
+                            <h3 className="text-2xl font-black uppercase italic">Corte de Caja</h3>
                             <button onClick={() => { setMostrarCorte(false); setVerDetallesCorte(false); }} className="text-3xl">✕</button>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                            <div className="p-4 bg-gray-50 rounded-2xl text-center"><p className="text-[10px] font-black text-gray-400">FONDO</p><p className="text-xl font-black">${Number(fondoInicial).toFixed(2)}</p></div>
-                            <div className="p-4 bg-green-50 rounded-2xl text-center text-green-700"><p className="text-[10px] font-black">VENTAS (+)</p><p className="text-xl font-black">${totalVentas.toFixed(2)}</p></div>
-                            <div className="p-4 bg-red-50 rounded-2xl text-center text-red-700"><p className="text-[10px] font-black">SALIDAS (-)</p><p className="text-xl font-black">${totalSalidas.toFixed(2)}</p></div>
-                            <div className="p-4 bg-blue-600 rounded-2xl text-center text-white"><p className="text-[10px] font-black uppercase font-black">Caja Actual</p><p className="text-xl font-black">${netoCaja.toFixed(2)}</p></div>
+                        <div className="grid grid-cols-2 gap-4 mb-6 text-center">
+                            <div className="p-4 bg-gray-50 rounded-2xl"><p className="text-[10px] font-black text-gray-400 uppercase">Fondo</p><p className="text-xl font-black">${Number(fondoInicial).toFixed(2)}</p></div>
+                            <div className="p-4 bg-green-50 rounded-2xl text-green-700"><p className="text-[10px] font-black uppercase">Ventas (+)</p><p className="text-xl font-black">${totalVentas.toFixed(2)}</p></div>
+                            <div className="p-4 bg-red-50 rounded-2xl text-red-700"><p className="text-[10px] font-black uppercase">Salidas (-)</p><p className="text-xl font-black">${totalSalidas.toFixed(2)}</p></div>
+                            <div className="p-4 bg-blue-600 rounded-2xl text-white"><p className="text-[10px] font-black uppercase">Caja Actual</p><p className="text-xl font-black">${netoCaja.toFixed(2)}</p></div>
                         </div>
                         <div className="flex gap-2 mb-4">
-                            <button onClick={() => setVerDetallesCorte(!verDetallesCorte)} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold uppercase text-xs">👁️ Ver Detalles</button>
-                            <button onClick={descargarPDFCorteDetallado} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold uppercase text-xs">📄 PDF Detallado</button>
+                            <button onClick={() => setVerDetallesCorte(!verDetallesCorte)} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold uppercase text-xs">👁️ Detalles</button>
+                            <button onClick={descargarPDFCorteDetallado} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold uppercase text-xs">📄 PDF Auditoría</button>
                         </div>
                         {verDetallesCorte && (
                             <div className="flex-1 overflow-y-auto space-y-4 italic">
-                                <h4 className="font-black text-blue-600 border-b uppercase text-xs">Ventas Agrupadas</h4>
-                                {ventasHoy.flatMap(v => v.productos || []).map((p, i) => (
-                                    <div key={i} className="flex justify-between text-sm border-b pb-1"><span>{p.cantidadVenta}x {p.descripcion}</span><span className="font-bold">${(p.cantidadVenta * p.precio).toFixed(2)}</span></div>
-                                ))}
-                                <h4 className="font-black text-red-600 border-b uppercase text-xs mt-4">Movimientos de Efectivo</h4>
-                                {movimientosHoy.map((m, i) => (
-                                    <div key={i} className="flex justify-between text-sm border-b pb-1"><span>{m.tipo.toUpperCase()}: {m.motivo}</span><span className="font-bold">${Number(m.monto).toFixed(2)}</span></div>
+                                <h4 className="font-black text-blue-600 border-b uppercase text-xs">Ventas por Vendedor</h4>
+                                {ventasHoy.map((v, i) => (
+                                    <div key={i} className="flex flex-col border-b pb-1 text-sm">
+                                        <div className="flex justify-between font-black text-gray-400 text-[10px]">
+                                            <span>{v.fecha?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            <span className="uppercase text-blue-500">Vendedor: {v.nombreEmpleado || 'N/A'}</span>
+                                        </div>
+                                        {v.productos.map((p, idx) => (
+                                            <div key={idx} className="flex justify-between">
+                                                <span>{p.cantidadVenta}x {p.descripcion}</span>
+                                                <span>${(p.cantidadVenta * p.precio).toFixed(2)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -361,8 +367,8 @@ const VentaEmpleado = () => {
                             <button onClick={() => setMovTipo('entrada')} className={`flex-1 py-3 rounded-xl font-black text-xs ${movTipo === 'entrada' ? 'bg-green-500 text-white shadow-md' : 'text-gray-400'}`}>ENTRADA</button>
                             <button onClick={() => setMovTipo('salida')} className={`flex-1 py-3 rounded-xl font-black text-xs ${movTipo === 'salida' ? 'bg-red-500 text-white shadow-md' : 'text-gray-400'}`}>SALIDA</button>
                         </div>
-                        <input type="number" placeholder="Monto $" className="w-full p-4 border-2 rounded-2xl mb-4 font-bold" value={movCantidad} onChange={(e) => setMovCantidad(e.target.value)} />
-                        <input type="text" placeholder="Motivo..." className="w-full p-4 border-2 rounded-2xl mb-6 font-bold uppercase text-xs" value={movMotivo} onChange={(e) => setMovMotivo(e.target.value)} />
+                        <input type="number" placeholder="Monto $" className="w-full p-4 border-2 rounded-2xl mb-4 font-bold outline-none" value={movCantidad} onChange={(e) => setMovCantidad(e.target.value)} />
+                        <input type="text" placeholder="Motivo..." className="w-full p-4 border-2 rounded-2xl mb-6 font-bold uppercase text-xs outline-none" value={movMotivo} onChange={(e) => setMovMotivo(e.target.value)} />
                         <div className="flex gap-2"><button onClick={() => setMostrarModalMov(false)} className="flex-1 font-bold text-gray-400 uppercase text-xs">Cerrar</button><button onClick={registrarMovimiento} className="flex-[2] bg-gray-800 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg">Registrar</button></div>
                     </div>
                 </div>
