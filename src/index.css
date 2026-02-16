@@ -56,6 +56,10 @@
         @apply text-red-500 hover:text-red-700 font-black px-2 transition-colors text-xl;
     }
 
+    .btn-close-modal {
+        @apply absolute top-4 right-6 text-2xl text-gray-400 hover:text-gray-600 font-bold transition-colors;
+    }
+
     /* Inputs del Punto de Venta */
     .input-pos {
         @apply w-full p-5 rounded-2xl shadow-sm outline-none text-xl border-2 border-transparent focus:border-blue-400;
