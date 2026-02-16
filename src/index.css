@@ -1,1 +1,76 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+
+    /* Contenedores de la App */
+    .pos-container {
+        @apply min-h-screen bg-gray-100 flex flex-col md:flex-row relative text-gray-800;
+    }
+
+    .pos-main-panel {
+        @apply flex-1 p-6 border-r overflow-y-auto;
+    }
+
+    .pos-sidebar {
+        @apply w-full md:w-[420px] bg-white p-8 shadow-2xl flex flex-col h-screen sticky top-0;
+    }
+
+    /* Modales y Overlays */
+    .modal-overlay {
+        @apply fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[200];
+    }
+
+    .modal-apertura-overlay {
+        @apply fixed inset-0 bg-blue-600 flex items-center justify-center p-4 z-[500] backdrop-blur-md text-gray-800;
+    }
+
+    .modal-content {
+        @apply bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col;
+    }
+
+    .modal-content-sm {
+        @apply bg-white p-10 rounded-[45px] shadow-2xl w-full max-w-md text-center;
+    }
+
+    /* Botones Reutilizables */
+    .btn-primary {
+        @apply bg-blue-600 text-white px-5 py-2 rounded-xl font-bold shadow-lg uppercase text-xs transition-all active:scale-95;
+    }
+
+    .btn-orange {
+        @apply bg-orange-500 text-white px-5 py-2 rounded-xl font-bold shadow-lg uppercase text-xs transition-all active:scale-95;
+    }
+
+    .btn-green {
+        @apply bg-green-500 text-white py-5 rounded-[25px] font-black text-2xl shadow-xl disabled:bg-gray-100 transition-all active:scale-95;
+    }
+
+    .btn-dark {
+        @apply bg-gray-800 text-white px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-tighter transition-all;
+    }
+
+    .btn-remove {
+        @apply text-red-500 hover:text-red-700 font-black px-2 transition-colors text-xl;
+    }
+
+    /* Inputs del Punto de Venta */
+    .input-pos {
+        @apply w-full p-5 rounded-2xl shadow-sm outline-none text-xl border-2 border-transparent focus:border-blue-400;
+    }
+
+    .input-modal {
+        @apply w-full border-2 p-4 rounded-2xl font-bold outline-none mb-4;
+    }
+
+    /* Elementos de Lista */
+    .product-card {
+        @apply bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm hover:shadow-md transition-shadow;
+    }
+
+    .ticket-item {
+        @apply flex justify-between border-b pb-2 items-center;
+    }
+}
