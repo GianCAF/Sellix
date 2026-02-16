@@ -32,9 +32,11 @@ const VentaEmpleado = () => {
     const [tempNombre, setTempNombre] = useState('');
     const [tempPrecio, setTempPrecio] = useState('');
 
+    // --- ESTADO PARA BLOQUEO DE BOTÓN ---
+    const [procesandoVenta, setProcesandoVenta] = useState(false);
+
     const inputBusqueda = useRef(null);
 
-    // FUNCIÓN DE FECHA LOCAL (DD-MM-AAAA)
     const getFechaLocalID = () => {
         const d = new Date();
         const dia = String(d.getDate()).padStart(2, '0');
@@ -92,7 +94,7 @@ const VentaEmpleado = () => {
                 monto: parseFloat(inputFondo),
                 sucursalId: user.sucursalId,
                 empleadoId: user.uid,
-                nombreEmpleado: user.nombre || 'Empleado', // Auditoría apertura
+                nombreEmpleado: user.nombre || 'Empleado',
                 fecha: Timestamp.now(),
                 fechaString: getFechaLocalID()
             });
@@ -111,7 +113,7 @@ const VentaEmpleado = () => {
                 motivo: movMotivo,
                 sucursalId: user.sucursalId,
                 empleadoId: user.uid,
-                nombreEmpleado: user.nombre || 'Empleado', // Auditoría movimiento
+                nombreEmpleado: user.nombre || 'Empleado',
                 fecha: Timestamp.now(),
                 fechaString: getFechaLocalID()
             });
@@ -126,7 +128,6 @@ const VentaEmpleado = () => {
             const fechaHoy = getFechaLocalID();
             const qV = query(collection(db, "ventas"), where("sucursalId", "==", user.sucursalId));
             const qM = query(collection(db, "movimientos_caja"), where("sucursalId", "==", user.sucursalId));
-
             const [snapV, snapM] = await Promise.all([getDocs(qV), getDocs(qM)]);
 
             const vData = snapV.docs
@@ -146,6 +147,7 @@ const VentaEmpleado = () => {
             setMovimientosHoy(mData);
             setMostrarCorte(true);
         } catch (error) {
+            console.error("Error en Corte:", error);
             alert("Error al generar el corte.");
         }
     };
@@ -158,7 +160,7 @@ const VentaEmpleado = () => {
     const descargarPDFCorteDetallado = () => {
         const doc = new jsPDF();
         doc.setFont("helvetica", "bold");
-        doc.text("CORTE DE CAJA DETALLADO (AUDITORÍA)", 14, 20);
+        doc.text("CORTE DE CAJA DETALLADO", 14, 20);
         doc.setFontSize(10);
         doc.text(`Sede: ${sucursalNombre} | Fecha: ${getFechaLocalID()}`, 14, 28);
 
@@ -175,38 +177,39 @@ const VentaEmpleado = () => {
             theme: 'grid'
         });
 
-        // Desglose de Ventas con Vendedor
+        const prodAgrup = {};
+        ventasHoy.forEach(v => v.productos?.forEach(p => {
+            prodAgrup[p.descripcion] = (prodAgrup[p.descripcion] || 0) + p.cantidadVenta;
+        }));
+
         autoTable(doc, {
             startY: doc.lastAutoTable.finalY + 10,
-            head: [['Hora', 'Empleado', 'Productos', 'Total']],
-            body: ventasHoy.map(v => [
-                v.fecha?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                v.nombreEmpleado || 'N/A',
-                v.productos.map(p => `${p.cantidadVenta}x ${p.descripcion}`).join(', '),
-                `$${Number(v.total).toFixed(2)}`
-            ]),
-            styles: { fontSize: 8 }
+            head: [['Cant', 'Producto Vendido']],
+            body: Object.entries(prodAgrup).map(([n, q]) => [q, n])
         });
 
         if (movimientosHoy.length > 0) {
             autoTable(doc, {
                 startY: doc.lastAutoTable.finalY + 10,
-                head: [['Tipo', 'Motivo', 'Realizado por', 'Monto']],
-                body: movimientosHoy.map(m => [m.tipo.toUpperCase(), m.motivo, m.nombreEmpleado || 'N/A', `$${Number(m.monto).toFixed(2)}`]),
+                head: [['Tipo', 'Motivo', 'Monto']],
+                body: movimientosHoy.map(m => [m.tipo.toUpperCase(), m.motivo, `$${Number(m.monto).toFixed(2)}`]),
                 headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] }
             });
         }
 
-        doc.save(`corte_auditoria_${sucursalNombre}.pdf`);
+        doc.save(`corte_${sucursalNombre}_${getFechaLocalID()}.pdf`);
     };
 
     const finalizarVenta = async () => {
-        if (carrito.length === 0) return;
+        if (carrito.length === 0 || procesandoVenta) return;
+
+        setProcesandoVenta(true); // BLOQUEO DEL BOTÓN
+
         const total = carrito.reduce((acc, item) => acc + (item.precio * item.cantidadVenta), 0);
         try {
             await addDoc(collection(db, "ventas"), {
                 empleadoId: user.uid,
-                nombreEmpleado: user.nombre || 'Empleado', // Auditoría venta
+                nombreEmpleado: user.nombre || 'Empleado',
                 sucursalId: user.sucursalId,
                 productos: carrito,
                 total: total,
@@ -219,7 +222,12 @@ const VentaEmpleado = () => {
             }
             alert("Venta procesada");
             setCarrito([]);
-        } catch (error) { alert("Error al cobrar"); }
+            enfocarBuscador();
+        } catch (error) {
+            alert("Error al cobrar");
+        } finally {
+            setProcesandoVenta(false); // LIBERACIÓN DEL BOTÓN
+        }
     };
 
     const buscarProducto = async (e) => {
@@ -274,7 +282,7 @@ const VentaEmpleado = () => {
             )}
 
             <div className="flex-1 p-6 border-r overflow-y-auto">
-                <header className="mb-4 flex justify-between items-center">
+                <header className="mb-4 flex justify-between items-center text-gray-800">
                     <h2 className="text-2xl font-black text-blue-600 italic uppercase">{sucursalNombre}</h2>
                     <div className="flex gap-2">
                         <button onClick={() => setMostrarModalMov(true)} className="bg-gray-800 text-white px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-tighter">💸 Efectivo</button>
@@ -301,7 +309,7 @@ const VentaEmpleado = () => {
                 </div>
             </div>
 
-            <div className="w-full md:w-[420px] bg-white p-8 shadow-2xl flex flex-col h-screen sticky top-0 text-gray-800 text-gray-800">
+            <div className="w-full md:w-[420px] bg-white p-8 shadow-2xl flex flex-col h-screen sticky top-0 text-gray-800">
                 <h3 className="text-2xl font-black italic uppercase mb-6 tracking-tighter">🛒 Venta Actual</h3>
                 <div className="flex-1 overflow-y-auto space-y-4">
                     {carrito.map(item => (
@@ -313,7 +321,13 @@ const VentaEmpleado = () => {
                 </div>
                 <div className="mt-6 pt-6 border-t-4 border-double">
                     <p className="text-4xl font-black text-green-600 mb-6">${carrito.reduce((acc, i) => acc + (i.precio * i.cantidadVenta), 0).toFixed(2)}</p>
-                    <button onClick={finalizarVenta} disabled={carrito.length === 0} className="w-full bg-green-500 text-white py-5 rounded-[25px] font-black text-2xl shadow-xl disabled:bg-gray-100">COBRAR</button>
+                    <button
+                        onClick={finalizarVenta}
+                        disabled={carrito.length === 0 || procesandoVenta}
+                        className="w-full bg-green-500 text-white py-5 rounded-[25px] font-black text-2xl shadow-xl disabled:bg-gray-100 transition-all active:scale-95"
+                    >
+                        {procesandoVenta ? "PROCESANDO..." : "COBRAR"}
+                    </button>
                 </div>
             </div>
 
@@ -332,7 +346,7 @@ const VentaEmpleado = () => {
                             <div className="p-4 bg-blue-600 rounded-2xl text-white"><p className="text-[10px] font-black uppercase">Caja Actual</p><p className="text-xl font-black">${netoCaja.toFixed(2)}</p></div>
                         </div>
                         <div className="flex gap-2 mb-4">
-                            <button onClick={() => setVerDetallesCorte(!verDetallesCorte)} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold uppercase text-xs">👁️ Detalles</button>
+                            <button onClick={() => setVerDetallesCorte(!verDetallesCorte)} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold uppercase text-xs">👁️ Ver Detalles</button>
                             <button onClick={descargarPDFCorteDetallado} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold uppercase text-xs">📄 PDF Auditoría</button>
                         </div>
                         {verDetallesCorte && (
