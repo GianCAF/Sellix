@@ -145,6 +145,7 @@ const VentaEmpleado = () => {
 
     return (
         <div className="pos-container">
+            {/* MODAL APERTURA */}
             {mostrarModalFondo && (
                 <div className="modal-apertura-overlay">
                     <div className="modal-content-sm text-gray-800">
@@ -202,7 +203,7 @@ const VentaEmpleado = () => {
                 </div>
             </div>
 
-            {/* MODALES */}
+            {/* MODAL CORTE */}
             {mostrarCorte && (
                 <div className="modal-overlay">
                     <div className="modal-content text-gray-800">
@@ -237,9 +238,14 @@ const VentaEmpleado = () => {
                 </div>
             )}
 
+            {/* MODAL EFECTIVO - CON BOTÓN DE CIERRE "X" */}
             {mostrarModalMov && (
                 <div className="modal-overlay">
-                    <div className="modal-content-sm text-gray-800">
+                    <div className="modal-content-sm text-gray-800 relative">
+                        <button
+                            onClick={() => setMostrarModalMov(false)}
+                            className="btn-close-modal"
+                        >✕</button>
                         <h3 className="text-2xl font-black mb-6 italic uppercase text-center">Movimiento Efectivo</h3>
                         <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-2xl">
                             <button onClick={() => setMovTipo('entrada')} className={`flex-1 py-3 rounded-xl font-black text-xs ${movTipo === 'entrada' ? 'bg-green-500 text-white shadow-md' : 'text-gray-400'}`}>ENTRADA</button>
@@ -252,6 +258,7 @@ const VentaEmpleado = () => {
                 </div>
             )}
 
+            {/* MODAL VENTA MANUAL */}
             {mostrarModalTemp && (
                 <div className="modal-overlay">
                     <div className="modal-content-sm text-gray-800">
