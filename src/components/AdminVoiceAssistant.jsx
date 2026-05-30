@@ -3,6 +3,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const normalizarBusqueda = (texto) => normalizarTexto(texto).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
 const formatearPesos = (monto) => `${Number(monto || 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })} pesos`;
 const ADMIN_VOICE_GUIDE_STORAGE_KEY = 'sellix_admin_voice_guide';
 
@@ -389,6 +390,90 @@ const AdminVoiceAssistant = () => {
         return productos.map(p => `${p.descripcion} (${Number(p.cantidad) || 0} piezas)`).join(', ');
     };
 
+    const obtenerVariantesToken = (token) => {
+        const variantes = [token];
+        if (token.endsWith('es') && token.length > 4) variantes.push(token.slice(0, -2));
+        if (token.endsWith('s') && token.length > 3) variantes.push(token.slice(0, -1));
+        if (!token.endsWith('s') && token.length > 2) variantes.push(`${token}s`);
+        if (!token.endsWith('es') && token.length > 3) variantes.push(`${token}es`);
+        return [...new Set(variantes)];
+    };
+
+    const textoProductoAdmin = (producto) => [
+        producto.descripcion,
+        producto.modelo,
+        producto.marca,
+        producto.marcaNombre,
+        producto.categoria,
+        producto.categoriaNombre,
+        producto.subcategoria,
+        producto.subcategoriaNombre,
+        ...(producto.codigos || []),
+        ...(producto.colores || [])
+    ].map(normalizarBusqueda).join(' ');
+
+    const tokenCoincide = (textoProducto, token) => {
+        if (token.length === 1) return new RegExp(`(^|\\s)${token}($|\\s)`).test(textoProducto);
+        return obtenerVariantesToken(token).some(variante => textoProducto.includes(variante));
+    };
+
+    const limpiarConsultaProductoSucursal = (consulta, sucursal) => {
+        const tokensSucursal = normalizarBusqueda(`${sucursal.nombre || ''} ${sucursal.ubicacion || ''}`)
+            .split(' ')
+            .filter(token => token.length > 2);
+        return normalizarBusqueda(consulta)
+            .split(' ')
+            .filter(token => ![
+                'en', 'sucursal', 'tienda', 'local', 'hay', 'tienen', 'tenemos', 'existe',
+                'producto', 'productos', 'la', 'el', 'un', 'una', 'de', 'del'
+            ].includes(token))
+            .filter(token => !tokensSucursal.includes(token))
+            .join(' ')
+            .trim();
+    };
+
+    const esConsultaExistenciaProducto = (consulta) => {
+        return /\b(hay|tienen|tenemos|existe)\b/.test(consulta)
+            && !/\b(menos|mayor|mas|más|bajo|baja|agotado|agotados|sin stock|cero|0 piezas|0 pieza)\b/.test(consulta);
+    };
+
+    const responderExistenciaProducto = (consulta, sucursal, inventario) => {
+        const busquedaProducto = limpiarConsultaProductoSucursal(consulta, sucursal);
+        const tokens = busquedaProducto.split(' ').filter(Boolean);
+
+        if (tokens.length === 0) {
+            const respuesta = 'lo siento, no puedo responder a eso';
+            setMensaje(respuesta);
+            setResultado(null);
+            hablar(respuesta);
+            return true;
+        }
+
+        const productos = inventario
+            .filter(item => item.sucursalId === sucursal.id && (Number(item.cantidad) || 0) > 0)
+            .map(item => ({ item, texto: textoProductoAdmin(item) }))
+            .filter(({ texto }) => tokens.every(token => tokenCoincide(texto, token)))
+            .map(({ item }) => item)
+            .sort((a, b) => (a.descripcion || '').localeCompare(b.descripcion || ''));
+
+        if (productos.length === 0) {
+            const respuesta = `No, no hay ${busquedaProducto} en ${sucursal.nombre}.`;
+            setMensaje(respuesta);
+            setResultado({ sucursal: sucursal.nombre, criterio: `existencia de ${busquedaProducto}`, productos: [] });
+            hablar(respuesta);
+            return true;
+        }
+
+        const lista = productos.map(item => item.descripcion).join(', ');
+        const respuesta = productos.length === 1
+            ? `Si, hay ${lista} en ${sucursal.nombre}.`
+            : `Si, hay ${productos.length} coincidencias en ${sucursal.nombre}: ${lista}.`;
+        setMensaje(respuesta);
+        setResultado({ sucursal: sucursal.nombre, criterio: `existencia de ${busquedaProducto}`, productos });
+        hablar(respuesta);
+        return true;
+    };
+
     const responderConsultaVentas = async (consulta, sucursales) => {
         const periodo = detectarPeriodoVentas(consulta);
         const ventas = await obtenerVentasPeriodo(periodo);
@@ -504,6 +589,10 @@ const AdminVoiceAssistant = () => {
                 setMensaje(respuesta);
                 setResultado(null);
                 hablar(respuesta);
+                return;
+            }
+
+            if (esConsultaExistenciaProducto(consulta) && responderExistenciaProducto(consulta, sucursal, inventario)) {
                 return;
             }
 
