@@ -255,19 +255,48 @@ const AdminVoiceAssistant = () => {
         return `${year}-${month}-${day}`;
     };
 
+    const cerrarDia = (fecha) => {
+        const fin = new Date(fecha);
+        fin.setHours(23, 59, 59, 999);
+        return fin;
+    };
+
+    const iniciarDia = (fecha) => {
+        const inicio = new Date(fecha);
+        inicio.setHours(0, 0, 0, 0);
+        return inicio;
+    };
+
     const detectarPeriodoVentas = (texto) => {
         const hoy = new Date();
-        const inicio = new Date(hoy);
+        let inicio = iniciarDia(hoy);
+        let fin = cerrarDia(hoy);
         let etiqueta = 'hoy';
 
         if (/\bayer\b/.test(texto)) {
+            inicio = iniciarDia(hoy);
             inicio.setDate(inicio.getDate() - 1);
+            fin = cerrarDia(inicio);
             etiqueta = 'ayer';
+        } else if (/\b(esta semana|semana actual)\b/.test(texto)) {
+            inicio = iniciarDia(hoy);
+            const diaSemana = inicio.getDay() || 7;
+            inicio.setDate(inicio.getDate() - diaSemana + 1);
+            fin = cerrarDia(hoy);
+            etiqueta = 'esta semana';
+        } else if (/\b(mes pasado)\b/.test(texto)) {
+            inicio = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+            fin = cerrarDia(new Date(hoy.getFullYear(), hoy.getMonth(), 0));
+            etiqueta = 'el mes pasado';
+        } else if (/\b(este mes|mes actual|ultimo mes|último mes)\b/.test(texto)) {
+            inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            fin = cerrarDia(hoy);
+            etiqueta = 'este mes';
+        } else if (/\b(este ano|este año|ano actual|año actual)\b/.test(texto)) {
+            inicio = new Date(hoy.getFullYear(), 0, 1);
+            fin = cerrarDia(hoy);
+            etiqueta = 'este año';
         }
-
-        inicio.setHours(0, 0, 0, 0);
-        const fin = new Date(inicio);
-        fin.setHours(23, 59, 59, 999);
 
         return {
             inicio,
