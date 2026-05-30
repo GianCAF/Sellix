@@ -300,7 +300,7 @@ const VentaEmpleado = () => {
         const esInventario = preguntaCantidad || preguntaExistencia;
 
         let consulta = comando
-            .replace(/\b(cuantos|cuantas|cuanto|cuanta|cantidad|tenemos|tienes|hay|existe|busca|buscar|consulta|checa|revisa|stock|inventario|producto|productos|de|del|la|el|un|una|por favor)\b/g, ' ')
+            .replace(/\b(cuantos|cuantas|cuanto|cuanta|cantidad|tenemos|tienes|hay|existe|busca|buscar|consulta|checa|revisa|stock|inventario|producto|productos|marca|modelo|de|del|la|el|un|una|por favor)\b/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
 
@@ -329,11 +329,7 @@ const VentaEmpleado = () => {
         return inventarioBase;
     };
 
-    const calificarProductoVoz = (producto, termino) => {
-        const tokens = termino.split(' ').filter(Boolean);
-        const codigos = (producto.codigos || []).map(normalizarTexto);
-        const descripcion = normalizarTexto(producto.descripcion);
-        const textoProducto = [
+    const obtenerTextoProductoVoz = (producto) => [
             producto.descripcion,
             producto.modelo,
             producto.marca,
@@ -346,21 +342,48 @@ const VentaEmpleado = () => {
             ...(producto.colores || [])
         ].map(normalizarTexto).join(' ');
 
+    const obtenerVariantesTokenVoz = (token) => {
+        const variantes = [token];
+        if (token.endsWith('es') && token.length > 4) variantes.push(token.slice(0, -2));
+        if (token.endsWith('s') && token.length > 3) variantes.push(token.slice(0, -1));
+        return [...new Set(variantes)];
+    };
+
+    const tokenCoincideProductoVoz = (textoProducto, token) => {
+        if (token.length === 1) {
+            return new RegExp(`(^|\\s)${token}($|\\s)`).test(textoProducto);
+        }
+        return obtenerVariantesTokenVoz(token).some(variante => textoProducto.includes(variante));
+    };
+
+    const obtenerTokensBusquedaVoz = (termino) => termino.split(' ').filter(Boolean);
+
+    const calificarProductoVoz = (producto, termino) => {
+        const tokens = obtenerTokensBusquedaVoz(termino);
+        const codigos = (producto.codigos || []).map(normalizarTexto);
+        const descripcion = normalizarTexto(producto.descripcion);
+        const textoProducto = obtenerTextoProductoVoz(producto);
+
         let puntaje = 0;
         if (codigos.some(codigo => codigo === termino)) puntaje += 100;
         if (descripcion === termino) puntaje += 80;
         if (descripcion.includes(termino)) puntaje += 45;
         if (textoProducto.includes(termino)) puntaje += 30;
-        puntaje += tokens.filter(token => textoProducto.includes(token)).length * 12;
+        puntaje += tokens.filter(token => tokenCoincideProductoVoz(textoProducto, token)).length * 12;
         if (Number(producto.cantidad) > 0) puntaje += 3;
         return puntaje;
     };
 
     const buscarProductoPorVoz = (inventarioBase, consulta) => {
         const termino = normalizarTexto(consulta);
+        const tokens = obtenerTokensBusquedaVoz(termino);
         return inventarioBase
-            .map(producto => ({ producto, puntaje: calificarProductoVoz(producto, termino) }))
-            .filter(item => item.puntaje > 0)
+            .map(producto => ({
+                producto,
+                puntaje: calificarProductoVoz(producto, termino),
+                textoProducto: obtenerTextoProductoVoz(producto)
+            }))
+            .filter(item => item.puntaje > 0 && tokens.every(token => tokenCoincideProductoVoz(item.textoProducto, token)))
             .sort((a, b) => b.puntaje - a.puntaje || (Number(b.producto.cantidad) || 0) - (Number(a.producto.cantidad) || 0));
     };
 
