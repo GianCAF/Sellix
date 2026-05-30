@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -18,7 +18,18 @@ const palabrasNumero = {
     nueve: 9,
     diez: 10,
     quince: 15,
-    veinte: 20
+    veinte: 20,
+    cien: 100,
+    ciento: 100,
+    doscientos: 200,
+    trescientos: 300,
+    cuatrocientos: 400,
+    quinientos: 500,
+    seiscientos: 600,
+    setecientos: 700,
+    ochocientos: 800,
+    novecientos: 900,
+    mil: 1000
 };
 
 const AdminVoiceAssistant = () => {
@@ -30,6 +41,7 @@ const AdminVoiceAssistant = () => {
     const reconocimientoVoz = useRef(null);
     const asistenteEscuchando = useRef(false);
     const cacheDatos = useRef({ sucursales: [], inventario: [], actualizado: 0 });
+    const cacheVentas = useRef({ key: '', ventas: [], actualizado: 0 });
 
     const hablar = (texto) => {
         if (!('speechSynthesis' in window)) return;
@@ -72,11 +84,75 @@ const AdminVoiceAssistant = () => {
     };
 
     const obtenerNumero = (texto) => {
-        const numero = texto.match(/\d+/)?.[0];
-        if (numero) return Number(numero);
+        const numero = texto.match(/\d+(?:[.,]\d+)?/)?.[0];
+        if (numero) return Number(numero.replace(',', '.'));
         const palabra = texto.split(' ').find(token => palabrasNumero[token] !== undefined);
         return palabra ? palabrasNumero[palabra] : null;
     };
+
+    const obtenerMonto = (texto) => {
+        const cantidad = texto.match(/\d[\d,]*(?:\.\d+)?/)?.[0];
+        if (cantidad) return Number(cantidad.replace(/,/g, ''));
+        return obtenerNumero(texto);
+    };
+
+    const fechaLocalISO = (fecha) => {
+        const year = fecha.getFullYear();
+        const month = String(fecha.getMonth() + 1).padStart(2, '0');
+        const day = String(fecha.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const detectarPeriodoVentas = (texto) => {
+        const hoy = new Date();
+        const inicio = new Date(hoy);
+        let etiqueta = 'hoy';
+
+        if (/\bayer\b/.test(texto)) {
+            inicio.setDate(inicio.getDate() - 1);
+            etiqueta = 'ayer';
+        }
+
+        inicio.setHours(0, 0, 0, 0);
+        const fin = new Date(inicio);
+        fin.setHours(23, 59, 59, 999);
+
+        return {
+            inicio,
+            fin,
+            etiqueta,
+            key: `${fechaLocalISO(inicio)}_${fechaLocalISO(fin)}`
+        };
+    };
+
+    const obtenerVentasPeriodo = async (periodo) => {
+        const ahora = Date.now();
+        const cacheVigente = cacheVentas.current.key === periodo.key && ahora - cacheVentas.current.actualizado < 60000;
+        if (cacheVigente) return cacheVentas.current.ventas;
+
+        const ventasSnap = await getDocs(query(
+            collection(db, "ventas"),
+            where("fecha", ">=", periodo.inicio),
+            where("fecha", "<=", periodo.fin)
+        ));
+
+        const ventas = ventasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        cacheVentas.current = { key: periodo.key, ventas, actualizado: ahora };
+        return ventas;
+    };
+
+    const obtenerResumenVentas = (sucursales, ventas) => {
+        return sucursales
+            .map(sucursal => ({
+                sucursal,
+                total: ventas
+                    .filter(venta => venta.sucursalId === sucursal.id)
+                    .reduce((acc, venta) => acc + (Number(venta.total) || 0), 0)
+            }))
+            .sort((a, b) => a.total - b.total);
+    };
+
+    const esConsultaVentas = (texto) => /\b(venta|ventas|vendido|vendio|vendieron|lleva vendido|facturo|ingreso|ingresos)\b/.test(texto);
 
     const detectarSucursal = (texto, sucursales) => {
         const textoNormalizado = normalizarTexto(texto);
@@ -105,6 +181,56 @@ const AdminVoiceAssistant = () => {
         return productos.map(p => `${p.descripcion} (${Number(p.cantidad) || 0} piezas)`).join(', ');
     };
 
+    const responderConsultaVentas = async (consulta, sucursales) => {
+        const periodo = detectarPeriodoVentas(consulta);
+        const ventas = await obtenerVentasPeriodo(periodo);
+        const resumen = obtenerResumenVentas(sucursales, ventas);
+        const monto = obtenerMonto(consulta);
+        const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+        const pideMenos = /\b(menos|menor|bajo|baja)\b/.test(consulta);
+        const pideMas = /\b(mas|mayor|alto|alta)\b/.test(consulta);
+
+        if (monto !== null && (pideMenos || pideMas)) {
+            const tiendas = resumen
+                .filter(item => pideMenos ? item.total < monto : item.total > monto)
+                .sort((a, b) => pideMenos ? a.total - b.total : b.total - a.total);
+            const criterio = pideMenos ? `menos de ${moneda.format(monto)}` : `mas de ${moneda.format(monto)}`;
+
+            if (tiendas.length === 0) {
+                const respuesta = `Ninguna tienda vendio ${criterio} ${periodo.etiqueta}.`;
+                setMensaje(respuesta);
+                setResultado({ tipo: 'ventas', criterio: `${criterio} ${periodo.etiqueta}`, tiendas: [] });
+                hablar(respuesta);
+                return;
+            }
+
+            const lista = tiendas.map(item => `${item.sucursal.nombre} con ${moneda.format(item.total)}`).join(', ');
+            const respuesta = `Las tiendas que vendieron ${criterio} ${periodo.etiqueta} son: ${lista}.`;
+            setMensaje(respuesta);
+            setResultado({ tipo: 'ventas', criterio: `${criterio} ${periodo.etiqueta}`, tiendas });
+            hablar(respuesta);
+            return;
+        }
+
+        const tiendasConVenta = resumen.filter(item => item.total > 0);
+        const base = pideMenos ? resumen : (tiendasConVenta.length > 0 ? tiendasConVenta : resumen);
+        const tienda = pideMenos ? base[0] : [...base].sort((a, b) => b.total - a.total)[0];
+
+        if (!tienda) {
+            const respuesta = `No encontre ventas registradas ${periodo.etiqueta}.`;
+            setMensaje(respuesta);
+            setResultado({ tipo: 'ventas', criterio: periodo.etiqueta, tiendas: [] });
+            hablar(respuesta);
+            return;
+        }
+
+        const comparativo = pideMenos ? 'vendio menos' : 'vendio mas';
+        const respuesta = `La tienda que ${comparativo} ${periodo.etiqueta} es ${tienda.sucursal.nombre}, con ${moneda.format(tienda.total)}.`;
+        setMensaje(respuesta);
+        setResultado({ tipo: 'ventas', criterio: `${comparativo} ${periodo.etiqueta}`, tiendas: [tienda] });
+        hablar(respuesta);
+    };
+
     const procesarConsulta = async (texto) => {
         const consulta = extraerConsulta(texto);
         if (consulta === null) return;
@@ -121,6 +247,12 @@ const AdminVoiceAssistant = () => {
 
         try {
             const { sucursales, inventario } = await obtenerDatos();
+
+            if (esConsultaVentas(consulta)) {
+                await responderConsultaVentas(consulta, sucursales);
+                return;
+            }
+
             const sucursal = detectarSucursal(consulta, sucursales);
 
             if (!sucursal) {
@@ -259,12 +391,23 @@ const AdminVoiceAssistant = () => {
                 {resultado && (
                     <div className="mt-3 border-t border-gray-100 pt-3">
                         <p className="text-[10px] font-black uppercase text-gray-400">
-                            {resultado.sucursal} | {resultado.criterio}
+                            {resultado.tipo === 'ventas' ? 'Ventas' : resultado.sucursal} | {resultado.criterio}
                         </p>
                         <div className="max-h-40 overflow-y-auto mt-2 space-y-2">
-                            {resultado.productos.length === 0 ? (
+                            {resultado.tipo === 'ventas' && resultado.tiendas.length === 0 && (
+                                <p className="text-xs font-bold text-green-600">Sin tiendas en este criterio</p>
+                            )}
+                            {resultado.tipo === 'ventas' && resultado.tiendas.map(item => (
+                                <div key={item.sucursal.id} className="flex justify-between gap-3 text-xs">
+                                    <span className="font-bold uppercase">{item.sucursal.nombre}</span>
+                                    <span className="font-black text-blue-600 shrink-0">
+                                        {item.total.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
+                                    </span>
+                                </div>
+                            ))}
+                            {resultado.tipo !== 'ventas' && resultado.productos.length === 0 ? (
                                 <p className="text-xs font-bold text-green-600">Sin productos en alerta</p>
-                            ) : resultado.productos.map(item => (
+                            ) : resultado.tipo !== 'ventas' && resultado.productos.map(item => (
                                 <div key={item.id} className="flex justify-between gap-3 text-xs">
                                     <span className="font-bold uppercase">{item.descripcion}</span>
                                     <span className="font-black text-red-500 shrink-0">{Number(item.cantidad) || 0} PZ</span>
