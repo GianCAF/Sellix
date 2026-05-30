@@ -14,11 +14,11 @@ const GUIAS_ADMIN = {
         ],
         pasos: [
             'Revisa si el producto ya existe en el catalogo maestro.',
-            'Revisa si la categoria ya existe. Por ejemplo, Audifonos.',
+            'Revisa si la categoría ya existe. Por ejemplo, Audifonos.',
             'Revisa si la subcategoria ya existe. Por ejemplo, Diadema, Bluetooth o Tipo C.',
             'Revisa si la marca ya esta registrada en Marcas.',
             'Ve a Inventario.',
-            'Selecciona categoria, subcategoria y marca.',
+            'Selecciona categoría, subcategoria y marca.',
             'Agrega modelo si aplica y descripcion si hace falta.',
             'Indica los colores disponibles del producto.',
             'Escanea el codigo de barras. Si tiene varios codigos, da clic en Anadir codigo.',
@@ -56,10 +56,58 @@ const GUIAS_ADMIN = {
             /\b(categoria|subcategoria|marca).*\b(nueva|nuevo|registrar|crear)\b/
         ],
         pasos: [
-            'Antes de crear un producto, revisa si ya existe la categoria, subcategoria o marca.',
-            'Si falta una categoria o subcategoria, entra a Categorias y registrala.',
+            'Antes de crear un producto, revisa si ya existe la categoría, subcategoria o marca.',
+            'Si falta una categoría o subcategoria, entra a Categorias y registrala.',
             'Si falta la marca, entra a Marcas y registrala.',
             'Despues vuelve a Inventario para crear el producto usando esos datos.'
+        ]
+    },
+    despuesDeCategoria: {
+        titulo: 'Despues de crear categoría',
+        activadores: [
+            /\b(ya|listo).*\b(cree|registre|hice|agregue).*\b(categoria)\b.*\b(ahora|sigue|siguiente|hago)\b/,
+            /\b(categoria).*\b(lista|creada|registrada)\b.*\b(ahora|sigue|hago)\b/
+        ],
+        pasos: [
+            'Ahora crea la subcategoria del producto si todavia no existe.',
+            'Si ya creaste la subcategoria, ve a Marcas.',
+            'Verifica que ya exista la marca del producto.',
+            'Si la marca no existe, agregala en Marcas.',
+            'Cuando categoría, subcategoria y marca esten listas, vuelve a Inventario para registrar el producto.'
+        ]
+    },
+    despuesDeMarca: {
+        titulo: 'Despues de verificar marca',
+        activadores: [
+            /\b(ya|listo).*\b(agregue|registre|existe|existia|cree|verifique).*\b(marca)\b/,
+            /\b(marca).*\b(lista|registrada|existia|existe)\b.*\b(ahora|sigue|hago)\b/
+        ],
+        pasos: [
+            'Ahora entra a Inventario.',
+            'Selecciona la categoría, subcategoria y marca del producto.',
+            'Ingresa el modelo si aplica.',
+            'Agrega la descripcion si hace falta.',
+            'Indica que colores hay disponibles.',
+            'Escanea el codigo de barras.',
+            'Si el producto tiene mas de un codigo, selecciona Anadir codigo.',
+            'Agrega el precio.',
+            'Da clic en Registrar en catalogo.'
+        ]
+    },
+    despuesDeInventario: {
+        titulo: 'Agregar producto a sucursal',
+        activadores: [
+            /\b(ya|listo).*\b(registre|agregue|cree).*\b(inventario|catalogo|producto)\b.*\b(sucursal|tienda|stock|agrego|surto)\b/,
+            /\b(como).*\b(agrego|surto|llevo).*\b(producto).*\b(sucursal|tienda|stock)\b/
+        ],
+        pasos: [
+            'Ahora da clic en Ver Stock.',
+            'Selecciona la tienda donde surtiras el producto.',
+            'Da clic en Surtir Mercancia.',
+            'Busca el producto que llevaras a la sucursal.',
+            'Ingresa la cantidad de piezas.',
+            'Da clic en Anadir.',
+            'Verifica en Ver Stock que el producto aparezca en la sucursal con la cantidad correcta.'
         ]
     }
 };
@@ -102,6 +150,7 @@ const AdminVoiceAssistant = () => {
     const asistenteEscuchando = useRef(false);
     const cacheDatos = useRef({ sucursales: [], inventario: [], actualizado: 0 });
     const cacheVentas = useRef({ key: '', ventas: [], actualizado: 0 });
+    const ultimaGuia = useRef(null);
 
     const hablar = (texto) => {
         if (!('speechSynthesis' in window)) return;
@@ -220,9 +269,54 @@ const AdminVoiceAssistant = () => {
     };
 
     const responderGuiaAdmin = (guia) => {
+        ultimaGuia.current = guia;
         const respuesta = `${guia.titulo}: ${guia.pasos.join(' ')}`;
         setMensaje(respuesta);
         setResultado({ tipo: 'guia', titulo: guia.titulo, pasos: guia.pasos });
+        hablar(respuesta);
+    };
+
+    const repetirUltimaGuia = () => {
+        if (!ultimaGuia.current) {
+            const respuesta = 'lo siento, no puedo responder a eso';
+            setMensaje(respuesta);
+            setResultado(null);
+            hablar(respuesta);
+            return;
+        }
+        responderGuiaAdmin(ultimaGuia.current);
+    };
+
+    const obtenerPuntoDeGuia = (consulta) => {
+        return consulta
+            .replace(/\b(me quede|me quede en|voy en|estoy en|llegue a|ya hice|ya estoy en|me quede por)\b/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    };
+
+    const responderDesdePuntoGuia = (consulta) => {
+        const guia = ultimaGuia.current || GUIAS_ADMIN.agregarProducto;
+        const punto = obtenerPuntoDeGuia(consulta);
+        const tokens = normalizarTexto(punto).split(' ').filter(token => token.length > 2);
+        const indice = guia.pasos.findIndex(paso => {
+            const pasoNormalizado = normalizarTexto(paso);
+            return tokens.length > 0 && tokens.every(token => pasoNormalizado.includes(token));
+        });
+
+        const pasosRestantes = indice >= 0 ? guia.pasos.slice(indice + 1) : guia.pasos;
+        if (pasosRestantes.length === 0) {
+            const respuesta = 'Si ya completaste ese paso, solo verifica que el producto aparezca con el stock correcto.';
+            setMensaje(respuesta);
+            setResultado({ tipo: 'guia', titulo: guia.titulo, pasos: [respuesta] });
+            hablar(respuesta);
+            return;
+        }
+
+        const titulo = indice >= 0 ? `Despues de ${punto}` : guia.titulo;
+        const respuesta = `${titulo}: ${pasosRestantes.join(' ')}`;
+        ultimaGuia.current = { ...guia, titulo, pasos: pasosRestantes };
+        setMensaje(respuesta);
+        setResultado({ tipo: 'guia', titulo, pasos: pasosRestantes });
         hablar(respuesta);
     };
 
@@ -330,6 +424,16 @@ const AdminVoiceAssistant = () => {
         setMensaje(`Consultando: ${consulta}`);
 
         try {
+            if (/\b(repite|repetir|otra vez|vuelve a decir).*\b(instrucciones|pasos|guia|guía)\b/.test(consulta)) {
+                repetirUltimaGuia();
+                return;
+            }
+
+            if (/\b(me quede|voy en|estoy en|llegue a|ya hice|ya estoy en)\b/.test(consulta)) {
+                responderDesdePuntoGuia(consulta);
+                return;
+            }
+
             const guia = obtenerGuiaAdmin(consulta);
             if (guia) {
                 responderGuiaAdmin(guia);
