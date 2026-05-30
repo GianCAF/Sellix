@@ -5,6 +5,65 @@ import { db } from '../services/firebase';
 const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const formatearPesos = (monto) => `${Number(monto || 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })} pesos`;
 
+const GUIAS_ADMIN = {
+    agregarProducto: {
+        titulo: 'Agregar producto nuevo',
+        activadores: [
+            /\b(como|cómo).*\b(agrego|agregar|registro|registrar|crear|creo|doy de alta).*\b(producto|mercancia|articulo)\b/,
+            /\b(producto|mercancia|articulo).*\b(nuevo|nueva)\b/
+        ],
+        pasos: [
+            'Revisa si el producto ya existe en el catalogo maestro.',
+            'Revisa si la categoria ya existe. Por ejemplo, Audifonos.',
+            'Revisa si la subcategoria ya existe. Por ejemplo, Diadema, Bluetooth o Tipo C.',
+            'Revisa si la marca ya esta registrada en Marcas.',
+            'Ve a Inventario.',
+            'Selecciona categoria, subcategoria y marca.',
+            'Agrega modelo si aplica y descripcion si hace falta.',
+            'Indica los colores disponibles del producto.',
+            'Escanea el codigo de barras. Si tiene varios codigos, da clic en Anadir codigo.',
+            'Asigna el precio de venta.',
+            'Da clic en Registrar.',
+            'Despues ve a Ver Stock.',
+            'Selecciona la sucursal donde llevaras producto.',
+            'Da clic en Surtir Mercancia.',
+            'Busca el producto que quieres surtir en la tienda seleccionada.',
+            'Agrega cuantas piezas llevaras a la sucursal.',
+            'Da clic en Agregar.',
+            'Para verificar, vuelve a Ver Stock, selecciona la sucursal y confirma que el producto aparezca en su stock.'
+        ]
+    },
+    surtirMercancia: {
+        titulo: 'Surtir mercancia',
+        activadores: [
+            /\b(como|cómo).*\b(surto|surtir|agrego stock|agregar stock|llevo mercancia|llevar mercancia)\b/,
+            /\b(surtir|stock).*\b(sucursal|tienda)\b/
+        ],
+        pasos: [
+            'Ve a Ver Stock.',
+            'Selecciona la sucursal que recibira la mercancia.',
+            'Da clic en Surtir Mercancia.',
+            'Busca el producto en el catalogo.',
+            'Escribe cuantas piezas llevaras a esa sucursal.',
+            'Da clic en Agregar.',
+            'Verifica que el producto aparezca con el stock actualizado en esa sucursal.'
+        ]
+    },
+    crearCategoriaMarca: {
+        titulo: 'Preparar categoria, subcategoria o marca',
+        activadores: [
+            /\b(como|cómo).*\b(agrego|crear|creo|registro|registrar).*\b(categoria|subcategoria|marca)\b/,
+            /\b(categoria|subcategoria|marca).*\b(nueva|nuevo|registrar|crear)\b/
+        ],
+        pasos: [
+            'Antes de crear un producto, revisa si ya existe la categoria, subcategoria o marca.',
+            'Si falta una categoria o subcategoria, entra a Categorias y registrala.',
+            'Si falta la marca, entra a Marcas y registrala.',
+            'Despues vuelve a Inventario para crear el producto usando esos datos.'
+        ]
+    }
+};
+
 const palabrasNumero = {
     cero: 0,
     uno: 1,
@@ -156,6 +215,17 @@ const AdminVoiceAssistant = () => {
     const esConsultaVentas = (texto) => /\b(venta|ventas|vendido|vendio|vendieron|lleva vendido|facturo|ingreso|ingresos)\b/.test(texto);
     const esConsultaInventario = (texto) => /\b(inventario|stock|existencia|existencias|producto|productos|pieza|piezas|agotado|agotados|tenemos|hay)\b/.test(texto);
 
+    const obtenerGuiaAdmin = (consulta) => {
+        return Object.values(GUIAS_ADMIN).find(guia => guia.activadores.some(regex => regex.test(consulta))) || null;
+    };
+
+    const responderGuiaAdmin = (guia) => {
+        const respuesta = `${guia.titulo}: ${guia.pasos.join(' ')}`;
+        setMensaje(respuesta);
+        setResultado({ tipo: 'guia', titulo: guia.titulo, pasos: guia.pasos });
+        hablar(respuesta);
+    };
+
     const detectarSucursal = (texto, sucursales) => {
         const textoNormalizado = normalizarTexto(texto);
         return sucursales
@@ -260,6 +330,12 @@ const AdminVoiceAssistant = () => {
         setMensaje(`Consultando: ${consulta}`);
 
         try {
+            const guia = obtenerGuiaAdmin(consulta);
+            if (guia) {
+                responderGuiaAdmin(guia);
+                return;
+            }
+
             const { sucursales, inventario } = await obtenerDatos();
 
             if (esConsultaVentas(consulta)) {
@@ -414,9 +490,15 @@ const AdminVoiceAssistant = () => {
                 {resultado && (
                     <div className="mt-3 border-t border-gray-100 pt-3">
                         <p className="text-[10px] font-black uppercase text-gray-400">
-                            {resultado.tipo === 'ventas' ? 'Ventas' : resultado.sucursal} | {resultado.criterio}
+                            {resultado.tipo === 'ventas' ? 'Ventas' : resultado.tipo === 'guia' ? 'Guia' : resultado.sucursal} | {resultado.tipo === 'guia' ? resultado.titulo : resultado.criterio}
                         </p>
                         <div className="max-h-40 overflow-y-auto mt-2 space-y-2">
+                            {resultado.tipo === 'guia' && resultado.pasos.map((paso, index) => (
+                                <div key={paso} className="flex gap-2 text-xs">
+                                    <span className="font-black text-blue-600 shrink-0">{index + 1}.</span>
+                                    <span className="font-bold text-gray-600">{paso}</span>
+                                </div>
+                            ))}
                             {resultado.tipo === 'ventas' && resultado.tiendas.length === 0 && (
                                 <p className="text-xs font-bold text-green-600">Sin tiendas en este criterio</p>
                             )}
@@ -428,9 +510,9 @@ const AdminVoiceAssistant = () => {
                                     </span>
                                 </div>
                             ))}
-                            {resultado.tipo !== 'ventas' && resultado.productos.length === 0 ? (
+                            {resultado.tipo !== 'ventas' && resultado.tipo !== 'guia' && resultado.productos.length === 0 ? (
                                 <p className="text-xs font-bold text-green-600">Sin productos en alerta</p>
-                            ) : resultado.tipo !== 'ventas' && resultado.productos.map(item => (
+                            ) : resultado.tipo !== 'ventas' && resultado.tipo !== 'guia' && resultado.productos.map(item => (
                                 <div key={item.id} className="flex justify-between gap-3 text-xs">
                                     <span className="font-bold uppercase">{item.descripcion}</span>
                                     <span className="font-black text-red-500 shrink-0">{Number(item.cantidad) || 0} PZ</span>
