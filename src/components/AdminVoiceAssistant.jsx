@@ -285,14 +285,15 @@ const AdminVoiceAssistant = () => {
                 return;
             }
 
-            const esSinStock = /\b(sin stock|no hay stock|no tenemos stock|agotado|agotados|en cero|cero piezas)\b/.test(consulta);
-            const umbral = esSinStock ? 1 : obtenerNumero(consulta) ?? 5;
+            const numeroInventario = obtenerNumero(consulta);
+            const esSinStock = /\b(sin stock|no hay stock|no tenemos stock|agotado|agotados|en cero|cero piezas|0 piezas|0 pieza)\b/.test(consulta) || numeroInventario === 0;
+            const umbral = esSinStock ? 1 : numeroInventario ?? 5;
             const productosSucursal = inventario.filter(item => item.sucursalId === sucursal.id);
             const productos = productosSucursal
                 .filter(item => esSinStock ? (Number(item.cantidad) || 0) <= 0 : (Number(item.cantidad) || 0) < umbral)
                 .sort((a, b) => (Number(a.cantidad) || 0) - (Number(b.cantidad) || 0) || (a.descripcion || '').localeCompare(b.descripcion || ''));
 
-            const criterio = esSinStock ? 'sin stock' : `con menos de ${umbral} piezas`;
+            const criterio = esSinStock ? 'sin stock o 0 piezas' : `con menos de ${umbral} piezas`;
             if (productos.length === 0) {
                 const respuesta = `En ${sucursal.nombre} no encontre productos ${criterio}.`;
                 setMensaje(respuesta);
