@@ -4,6 +4,33 @@ import { db } from '../services/firebase';
 
 const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const formatearPesos = (monto) => `${Number(monto || 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })} pesos`;
+const ADMIN_VOICE_GUIDE_STORAGE_KEY = 'sellix_admin_voice_guide';
+
+const crearMensajeGuia = (guia) => guia ? `${guia.titulo}: ${guia.pasos.join(' ')}` : '';
+
+const cargarGuiaPersistida = () => {
+    try {
+        return JSON.parse(sessionStorage.getItem(ADMIN_VOICE_GUIDE_STORAGE_KEY) || 'null');
+    } catch {
+        return null;
+    }
+};
+
+const guardarGuiaPersistida = (resultado, guia) => {
+    try {
+        sessionStorage.setItem(ADMIN_VOICE_GUIDE_STORAGE_KEY, JSON.stringify({ resultado, guia }));
+    } catch {
+        // No bloquea el asistente si el navegador no permite sessionStorage.
+    }
+};
+
+const limpiarGuiaPersistida = () => {
+    try {
+        sessionStorage.removeItem(ADMIN_VOICE_GUIDE_STORAGE_KEY);
+    } catch {
+        // No bloquea el asistente si el navegador no permite sessionStorage.
+    }
+};
 
 const GUIAS_ADMIN = {
     agregarProducto: {
@@ -141,16 +168,31 @@ const palabrasNumero = {
 };
 
 const AdminVoiceAssistant = () => {
+    const guiaPersistida = cargarGuiaPersistida();
     const [vozDisponible, setVozDisponible] = useState(false);
     const [escuchando, setEscuchando] = useState(false);
-    const [mensaje, setMensaje] = useState('Asistente admin apagado');
-    const [resultado, setResultado] = useState(null);
+    const [mensaje, setMensaje] = useState(guiaPersistida?.resultado?.tipo === 'guia' ? crearMensajeGuia(guiaPersistida.resultado) : 'Asistente admin apagado');
+    const [resultado, setResultado] = useState(guiaPersistida?.resultado || null);
 
     const reconocimientoVoz = useRef(null);
     const asistenteEscuchando = useRef(false);
     const cacheDatos = useRef({ sucursales: [], inventario: [], actualizado: 0 });
     const cacheVentas = useRef({ key: '', ventas: [], actualizado: 0 });
-    const ultimaGuia = useRef(null);
+    const ultimaGuia = useRef(guiaPersistida?.guia || (guiaPersistida?.resultado?.tipo === 'guia' ? {
+        titulo: guiaPersistida.resultado.titulo,
+        pasos: guiaPersistida.resultado.pasos
+    } : null));
+
+    useEffect(() => {
+        if (resultado?.tipo === 'guia') {
+            guardarGuiaPersistida(resultado, ultimaGuia.current || {
+                titulo: resultado.titulo,
+                pasos: resultado.pasos
+            });
+        } else if (resultado) {
+            limpiarGuiaPersistida();
+        }
+    }, [resultado]);
 
     const hablar = (texto) => {
         if (!('speechSynthesis' in window)) return;
