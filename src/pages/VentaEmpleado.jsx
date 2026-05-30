@@ -42,8 +42,15 @@ const VentaEmpleado = () => {
     const [modoOffline, setModoOffline] = useState(!navigator.onLine);
     const [ventasPendientes, setVentasPendientes] = useState(0);
     const [ultimaVentaOffline, setUltimaVentaOffline] = useState(false);
+    const [vozDisponible, setVozDisponible] = useState(false);
+    const [escuchandoVoz, setEscuchandoVoz] = useState(false);
+    const [mensajeAsistente, setMensajeAsistente] = useState('Asistente apagado');
+    const [resultadoAsistente, setResultadoAsistente] = useState(null);
 
     const inputBusqueda = useRef(null);
+    const reconocimientoVoz = useRef(null);
+    const asistenteEscuchando = useRef(false);
+    const inventarioSucursalRef = useRef([]);
     const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
     const monedaSinCentavos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
     const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -59,6 +66,10 @@ const VentaEmpleado = () => {
 
     useEffect(() => { if (user) { obtenerSucursal(); verificarCajaHoy(); } }, [user]);
     const enfocarBuscador = () => setTimeout(() => inputBusqueda.current?.focus(), 150);
+
+    useEffect(() => {
+        inventarioSucursalRef.current = inventarioSucursal;
+    }, [inventarioSucursal]);
 
     useEffect(() => {
         if (!user?.sucursalId) return;
@@ -103,6 +114,7 @@ const VentaEmpleado = () => {
     const guardarInventarioCache = (items) => {
         if (!inventarioCacheKey) return;
         guardarJsonLocal(inventarioCacheKey, items);
+        inventarioSucursalRef.current = items;
         setInventarioSucursal(items);
     };
 
@@ -260,6 +272,193 @@ const VentaEmpleado = () => {
         ].map(normalizarTexto).join(' ');
 
         return textoProducto.includes(termino);
+    };
+
+    const hablarAsistente = (texto) => {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+        const voz = new SpeechSynthesisUtterance(texto);
+        voz.lang = 'es-MX';
+        voz.rate = 1;
+        voz.pitch = 1;
+        window.speechSynthesis.speak(voz);
+    };
+
+    const extraerConsultaAsistente = (texto) => {
+        const limpio = normalizarTexto(texto);
+        const activadores = ['sellix', 'selix', 'celix', 'zelix', 'celis', 'felix'];
+        const coincidencias = activadores
+            .map(palabra => ({ palabra, indice: limpio.indexOf(palabra) }))
+            .filter(item => item.indice >= 0)
+            .sort((a, b) => a.indice - b.indice);
+
+        if (coincidencias.length === 0) return null;
+
+        const { palabra, indice } = coincidencias[0];
+        let consulta = limpio.slice(indice + palabra.length);
+        consulta = consulta
+            .replace(/\b(tenemos|tienes|hay|existe|busca|buscar|consulta|checa|revisa|stock|inventario|producto|productos|de|del|la|el|un|una|por favor)\b/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        return consulta;
+    };
+
+    const obtenerInventarioParaAsistente = async () => {
+        let inventarioBase = inventarioSucursalRef.current.length ? inventarioSucursalRef.current : cargarInventarioDesdeCache();
+
+        if (navigator.onLine && user?.sucursalId) {
+            try {
+                const snap = await getDocs(query(collection(db, "inventarios"), where("sucursalId", "==", user.sucursalId)));
+                inventarioBase = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                guardarInventarioCache(inventarioBase);
+                setModoOffline(false);
+            } catch {
+                inventarioBase = cargarInventarioDesdeCache();
+                setModoOffline(true);
+            }
+        }
+
+        return inventarioBase;
+    };
+
+    const calificarProductoVoz = (producto, termino) => {
+        const tokens = termino.split(' ').filter(Boolean);
+        const codigos = (producto.codigos || []).map(normalizarTexto);
+        const descripcion = normalizarTexto(producto.descripcion);
+        const textoProducto = [
+            producto.descripcion,
+            producto.modelo,
+            producto.marca,
+            producto.marcaNombre,
+            producto.categoria,
+            producto.categoriaNombre,
+            producto.subcategoria,
+            producto.subcategoriaNombre,
+            ...(producto.codigos || []),
+            ...(producto.colores || [])
+        ].map(normalizarTexto).join(' ');
+
+        let puntaje = 0;
+        if (codigos.some(codigo => codigo === termino)) puntaje += 100;
+        if (descripcion === termino) puntaje += 80;
+        if (descripcion.includes(termino)) puntaje += 45;
+        if (textoProducto.includes(termino)) puntaje += 30;
+        puntaje += tokens.filter(token => textoProducto.includes(token)).length * 12;
+        if (Number(producto.cantidad) > 0) puntaje += 3;
+        return puntaje;
+    };
+
+    const buscarProductoPorVoz = (inventarioBase, consulta) => {
+        const termino = normalizarTexto(consulta);
+        return inventarioBase
+            .map(producto => ({ producto, puntaje: calificarProductoVoz(producto, termino) }))
+            .filter(item => item.puntaje > 0)
+            .sort((a, b) => b.puntaje - a.puntaje || (Number(b.producto.cantidad) || 0) - (Number(a.producto.cantidad) || 0));
+    };
+
+    const procesarComandoVoz = async (texto) => {
+        const consulta = extraerConsultaAsistente(texto);
+        if (consulta === null) return;
+
+        if (!consulta) {
+            const respuesta = 'Te escucho. Dime que producto quieres consultar.';
+            setMensajeAsistente(respuesta);
+            setResultadoAsistente(null);
+            hablarAsistente(respuesta);
+            return;
+        }
+
+        setMensajeAsistente(`Buscando: ${consulta}`);
+        const inventarioBase = await obtenerInventarioParaAsistente();
+        const resultados = buscarProductoPorVoz(inventarioBase, consulta);
+        const mejor = resultados[0]?.producto;
+        const stock = Number(mejor?.cantidad) || 0;
+
+        if (!mejor || stock <= 0) {
+            const respuesta = `Segun inventario no tenemos ${consulta} en esta sucursal.`;
+            setMensajeAsistente(respuesta);
+            setResultadoAsistente({ consulta, encontrado: false });
+            hablarAsistente(respuesta);
+            return;
+        }
+
+        const respuesta = `Segun inventario hay ${stock} pieza${stock === 1 ? '' : 's'} de ${mejor.descripcion}.`;
+        setMensajeAsistente(respuesta);
+        setResultadoAsistente({
+            consulta,
+            encontrado: true,
+            descripcion: mejor.descripcion,
+            stock,
+            precio: Number(mejor.precio) || 0,
+            codigo: mejor.codigos?.[0] || 'N/A'
+        });
+        hablarAsistente(respuesta);
+    };
+
+    useEffect(() => {
+        const Reconocimiento = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!Reconocimiento) {
+            setVozDisponible(false);
+            setMensajeAsistente('Voz no disponible en este navegador');
+            return;
+        }
+
+        const reconocimiento = new Reconocimiento();
+        reconocimiento.lang = 'es-MX';
+        reconocimiento.continuous = true;
+        reconocimiento.interimResults = false;
+        reconocimiento.maxAlternatives = 1;
+
+        reconocimiento.onresult = (event) => {
+            const ultimo = event.results[event.results.length - 1]?.[0]?.transcript || '';
+            procesarComandoVoz(ultimo);
+        };
+
+        reconocimiento.onerror = () => {
+            setMensajeAsistente('No pude escuchar bien. Intentalo de nuevo.');
+        };
+
+        reconocimiento.onend = () => {
+            if (!asistenteEscuchando.current) return;
+            try {
+                reconocimiento.start();
+            } catch {
+                setEscuchandoVoz(false);
+                asistenteEscuchando.current = false;
+            }
+        };
+
+        reconocimientoVoz.current = reconocimiento;
+        setVozDisponible(true);
+
+        return () => {
+            asistenteEscuchando.current = false;
+            reconocimiento.stop();
+        };
+    }, [user?.sucursalId]);
+
+    const toggleAsistenteVoz = () => {
+        if (!vozDisponible || !reconocimientoVoz.current) return;
+
+        if (asistenteEscuchando.current) {
+            asistenteEscuchando.current = false;
+            reconocimientoVoz.current.stop();
+            setEscuchandoVoz(false);
+            setMensajeAsistente('Asistente apagado');
+            return;
+        }
+
+        try {
+            asistenteEscuchando.current = true;
+            reconocimientoVoz.current.start();
+            setEscuchandoVoz(true);
+            setMensajeAsistente('Escuchando. Di Sellix y el producto.');
+        } catch {
+            setMensajeAsistente('No pude iniciar el microfono.');
+            asistenteEscuchando.current = false;
+            setEscuchandoVoz(false);
+        }
     };
 
     const totalVentas = ventasHoy.reduce((acc, v) => acc + (Number(v.total) || 0), 0);
@@ -583,7 +782,28 @@ const VentaEmpleado = () => {
                     <button onClick={() => setMostrarModalTemp(true)} className="btn-orange">➕ Temporal</button>
                     <button onClick={consultarCorteCompleto} className="btn-primary">📊 Corte</button>
                 </div>
-                <button onClick={obtenerInventarioSucursal} className="btn-dark mb-6">{cargandoInventario ? 'Cargando...' : 'Ver inventario'}</button>
+                <div className="flex flex-wrap gap-3 mb-6">
+                    <button onClick={obtenerInventarioSucursal} className="btn-dark">{cargandoInventario ? 'Cargando...' : 'Ver inventario'}</button>
+                    <button
+                        onClick={toggleAsistenteVoz}
+                        disabled={!vozDisponible}
+                        className={`${escuchandoVoz ? 'btn-orange' : 'btn-dark'} disabled:opacity-40 disabled:cursor-not-allowed`}
+                    >
+                        {escuchandoVoz ? 'Escuchando voz' : 'Asistente voz'}
+                    </button>
+                </div>
+                {(escuchandoVoz || resultadoAsistente || !vozDisponible) && (
+                    <div className="bg-white border border-blue-50 rounded-2xl shadow-sm p-4 mb-6 text-gray-800">
+                        <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Asistente Sellix</p>
+                        <p className="text-sm font-bold mt-1">{mensajeAsistente}</p>
+                        {resultadoAsistente?.encontrado && (
+                            <div className="mt-3 text-xs font-black uppercase text-gray-400">
+                                <p>{resultadoAsistente.descripcion}</p>
+                                <p>Stock: {resultadoAsistente.stock} | Codigo: {resultadoAsistente.codigo} | Precio: {moneda.format(resultadoAsistente.precio)}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
                 <form onSubmit={buscarProducto} className="mb-6">
                     <input ref={inputBusqueda} type="text" className="input-pos" placeholder="Buscar por codigo, nombre, marca..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                 </form>
