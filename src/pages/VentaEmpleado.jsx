@@ -396,6 +396,31 @@ const VentaEmpleado = () => {
         hablarAsistente(respuesta);
     };
 
+    const iniciarEscuchaVoz = () => {
+        if (!reconocimientoVoz.current || asistenteEscuchando.current) return false;
+
+        try {
+            asistenteEscuchando.current = true;
+            reconocimientoVoz.current.start();
+            setEscuchandoVoz(true);
+            setMensajeAsistente('Escuchando. Di Sellix y el producto.');
+            return true;
+        } catch {
+            setMensajeAsistente('No pude iniciar el microfono.');
+            asistenteEscuchando.current = false;
+            setEscuchandoVoz(false);
+            return false;
+        }
+    };
+
+    const detenerEscuchaVoz = () => {
+        if (!reconocimientoVoz.current) return;
+        asistenteEscuchando.current = false;
+        reconocimientoVoz.current.stop();
+        setEscuchandoVoz(false);
+        setMensajeAsistente('Asistente apagado');
+    };
+
     useEffect(() => {
         const Reconocimiento = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!Reconocimiento) {
@@ -415,7 +440,13 @@ const VentaEmpleado = () => {
             procesarComandoVoz(ultimo);
         };
 
-        reconocimiento.onerror = () => {
+        reconocimiento.onerror = (event) => {
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                asistenteEscuchando.current = false;
+                setEscuchandoVoz(false);
+                setMensajeAsistente('Permite el microfono para activar el asistente automatico.');
+                return;
+            }
             setMensajeAsistente('No pude escuchar bien. Intentalo de nuevo.');
         };
 
@@ -431,8 +462,10 @@ const VentaEmpleado = () => {
 
         reconocimientoVoz.current = reconocimiento;
         setVozDisponible(true);
+        const inicioAutomatico = setTimeout(() => iniciarEscuchaVoz(), 500);
 
         return () => {
+            clearTimeout(inicioAutomatico);
             asistenteEscuchando.current = false;
             reconocimiento.stop();
         };
@@ -442,23 +475,11 @@ const VentaEmpleado = () => {
         if (!vozDisponible || !reconocimientoVoz.current) return;
 
         if (asistenteEscuchando.current) {
-            asistenteEscuchando.current = false;
-            reconocimientoVoz.current.stop();
-            setEscuchandoVoz(false);
-            setMensajeAsistente('Asistente apagado');
+            detenerEscuchaVoz();
             return;
         }
 
-        try {
-            asistenteEscuchando.current = true;
-            reconocimientoVoz.current.start();
-            setEscuchandoVoz(true);
-            setMensajeAsistente('Escuchando. Di Sellix y el producto.');
-        } catch {
-            setMensajeAsistente('No pude iniciar el microfono.');
-            asistenteEscuchando.current = false;
-            setEscuchandoVoz(false);
-        }
+        iniciarEscuchaVoz();
     };
 
     const totalVentas = ventasHoy.reduce((acc, v) => acc + (Number(v.total) || 0), 0);
