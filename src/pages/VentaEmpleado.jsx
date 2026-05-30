@@ -357,6 +357,24 @@ const VentaEmpleado = () => {
             .sort((a, b) => b.puntaje - a.puntaje || (Number(b.producto.cantidad) || 0) - (Number(a.producto.cantidad) || 0));
     };
 
+    const obtenerCoincidenciasVoz = (resultados) => {
+        const conStock = resultados.filter(item => (Number(item.producto.cantidad) || 0) > 0);
+        const mejorPuntaje = conStock[0]?.puntaje || 0;
+        return conStock
+            .filter(item => item.puntaje >= Math.max(20, mejorPuntaje * 0.65))
+            .slice(0, 8)
+            .map(item => item.producto);
+    };
+
+    const resumirCoincidenciasVoz = (productos) => {
+        return productos
+            .map(producto => {
+                const stock = Number(producto.cantidad) || 0;
+                return `${stock} pieza${stock === 1 ? '' : 's'} de ${producto.descripcion}`;
+            })
+            .join(', ');
+    };
+
     const procesarComandoVoz = async (texto) => {
         const consulta = extraerConsultaAsistente(texto);
         if (consulta === null) return;
@@ -372,7 +390,8 @@ const VentaEmpleado = () => {
         setMensajeAsistente(`Buscando: ${consulta}`);
         const inventarioBase = await obtenerInventarioParaAsistente();
         const resultados = buscarProductoPorVoz(inventarioBase, consulta);
-        const mejor = resultados[0]?.producto;
+        const coincidencias = obtenerCoincidenciasVoz(resultados);
+        const mejor = coincidencias[0];
         const stock = Number(mejor?.cantidad) || 0;
 
         if (!mejor || stock <= 0) {
@@ -383,7 +402,9 @@ const VentaEmpleado = () => {
             return;
         }
 
-        const respuesta = `Segun inventario hay ${stock} pieza${stock === 1 ? '' : 's'} de ${mejor.descripcion}.`;
+        const respuesta = coincidencias.length > 1
+            ? `Segun inventario encontre ${coincidencias.length} coincidencias: ${resumirCoincidenciasVoz(coincidencias)}.`
+            : `Segun inventario hay ${stock} pieza${stock === 1 ? '' : 's'} de ${mejor.descripcion}.`;
         setMensajeAsistente(respuesta);
         setResultadoAsistente({
             consulta,
@@ -391,7 +412,14 @@ const VentaEmpleado = () => {
             descripcion: mejor.descripcion,
             stock,
             precio: Number(mejor.precio) || 0,
-            codigo: mejor.codigos?.[0] || 'N/A'
+            codigo: mejor.codigos?.[0] || 'N/A',
+            productos: coincidencias.map(producto => ({
+                id: producto.id,
+                descripcion: producto.descripcion,
+                stock: Number(producto.cantidad) || 0,
+                precio: Number(producto.precio) || 0,
+                codigo: producto.codigos?.[0] || 'N/A'
+            }))
         });
         hablarAsistente(respuesta);
     };
@@ -819,8 +847,21 @@ const VentaEmpleado = () => {
                         <p className="text-sm font-bold mt-1">{mensajeAsistente}</p>
                         {resultadoAsistente?.encontrado && (
                             <div className="mt-3 text-xs font-black uppercase text-gray-400">
-                                <p>{resultadoAsistente.descripcion}</p>
-                                <p>Stock: {resultadoAsistente.stock} | Codigo: {resultadoAsistente.codigo} | Precio: {moneda.format(resultadoAsistente.precio)}</p>
+                                {(resultadoAsistente.productos || []).length > 1 ? (
+                                    <div className="space-y-2">
+                                        {resultadoAsistente.productos.map(producto => (
+                                            <div key={producto.id} className="flex justify-between gap-3">
+                                                <span>{producto.descripcion}</span>
+                                                <span className="text-green-600 shrink-0">{producto.stock} PZ</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p>{resultadoAsistente.descripcion}</p>
+                                        <p>Stock: {resultadoAsistente.stock} | Codigo: {resultadoAsistente.codigo} | Precio: {moneda.format(resultadoAsistente.precio)}</p>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
