@@ -284,24 +284,31 @@ const VentaEmpleado = () => {
         window.speechSynthesis.speak(voz);
     };
 
-    const extraerConsultaAsistente = (texto) => {
+    const obtenerContextoAsistente = (texto) => {
         const limpio = normalizarTexto(texto);
         const activadores = ['sellix', 'selix', 'celix', 'zelix', 'celis', 'felix'];
-        const coincidencias = activadores
+        const coincidencia = activadores
             .map(palabra => ({ palabra, indice: limpio.indexOf(palabra) }))
             .filter(item => item.indice >= 0)
-            .sort((a, b) => a.indice - b.indice);
+            .sort((a, b) => a.indice - b.indice)[0];
 
-        if (coincidencias.length === 0) return null;
+        if (!coincidencia) return null;
 
-        const { palabra, indice } = coincidencias[0];
-        let consulta = limpio.slice(indice + palabra.length);
-        consulta = consulta
-            .replace(/\b(tenemos|tienes|hay|existe|busca|buscar|consulta|checa|revisa|stock|inventario|producto|productos|de|del|la|el|un|una|por favor)\b/g, ' ')
+        const comando = limpio.slice(coincidencia.indice + coincidencia.palabra.length).replace(/\s+/g, ' ').trim();
+        const preguntaCantidad = /\b(cuantos|cuantas|cuanto|cuanta|cantidad|stock|inventario)\b/.test(comando);
+        const preguntaExistencia = /\b(hay|tenemos|tienes|existe|busca|buscar|consulta|checa|revisa)\b/.test(comando);
+        const esInventario = preguntaCantidad || preguntaExistencia;
+
+        let consulta = comando
+            .replace(/\b(cuantos|cuantas|cuanto|cuanta|cantidad|tenemos|tienes|hay|existe|busca|buscar|consulta|checa|revisa|stock|inventario|producto|productos|de|del|la|el|un|una|por favor)\b/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
 
-        return consulta;
+        return {
+            consulta,
+            esInventario,
+            intencion: preguntaCantidad ? 'cantidad' : 'existencia'
+        };
     };
 
     const obtenerInventarioParaAsistente = async () => {
@@ -375,12 +382,31 @@ const VentaEmpleado = () => {
             .join(', ');
     };
 
+    const describirProductoSinCantidad = (producto) => {
+        const marca = producto.marcaNombre || producto.marca || '';
+        const descripcion = producto.descripcion || 'producto';
+        if (!marca || normalizarTexto(descripcion).includes(normalizarTexto(marca))) return descripcion;
+        return `${descripcion} de ${marca}`;
+    };
+
+    const resumirExistenciasVoz = (productos) => productos.map(describirProductoSinCantidad).join(', ');
+
     const procesarComandoVoz = async (texto) => {
-        const consulta = extraerConsultaAsistente(texto);
-        if (consulta === null) return;
+        const contexto = obtenerContextoAsistente(texto);
+        if (contexto === null) return;
+
+        const { consulta, esInventario, intencion } = contexto;
 
         if (!consulta) {
             const respuesta = 'Te escucho. Dime que producto quieres consultar.';
+            setMensajeAsistente(respuesta);
+            setResultadoAsistente(null);
+            hablarAsistente(respuesta);
+            return;
+        }
+
+        if (!esInventario) {
+            const respuesta = 'lo siento no puedo responder a eso';
             setMensajeAsistente(respuesta);
             setResultadoAsistente(null);
             hablarAsistente(respuesta);
@@ -402,9 +428,11 @@ const VentaEmpleado = () => {
             return;
         }
 
-        const respuesta = coincidencias.length > 1
-            ? `Segun inventario encontre ${coincidencias.length} coincidencias: ${resumirCoincidenciasVoz(coincidencias)}.`
-            : `Segun inventario hay ${stock} pieza${stock === 1 ? '' : 's'} de ${mejor.descripcion}.`;
+        const respuesta = intencion === 'existencia'
+            ? `Si, hay ${resumirExistenciasVoz(coincidencias)}.`
+            : coincidencias.length > 1
+                ? `Segun inventario encontre ${coincidencias.length} coincidencias: ${resumirCoincidenciasVoz(coincidencias)}.`
+                : `Segun inventario hay ${stock} pieza${stock === 1 ? '' : 's'} de ${mejor.descripcion}.`;
         setMensajeAsistente(respuesta);
         setResultadoAsistente({
             consulta,
