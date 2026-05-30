@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { auth } from '../services/firebase';
 import { useNavigate } from 'react-router-dom';
+import AdminVoiceAssistant from './AdminVoiceAssistant';
 
 const AdminNavbar = () => {
     const navigate = useNavigate();
@@ -27,6 +28,7 @@ const AdminNavbar = () => {
     };
 
     return (
+        <>
         <nav className="bg-white border-b border-gray-200 p-4 sticky top-0 z-[100] shadow-sm">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
                 {/* LOGO */}
@@ -101,6 +103,8 @@ const AdminNavbar = () => {
                 </>
             )}
         </nav>
+        <AdminVoiceAssistant />
+        </>
     );
 };
 
