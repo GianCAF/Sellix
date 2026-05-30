@@ -54,6 +54,7 @@ const VentaEmpleado = () => {
     const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
     const monedaSinCentavos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
     const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const normalizarBusquedaVoz = (texto) => normalizarTexto(texto).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
     const subtotalProducto = (item) => Math.max(0, (Number(item.precio) || 0) * (Number(item.cantidadVenta) || 0) - (Number(item.descuento) || 0));
     const totalCarrito = carrito.reduce((acc, item) => acc + subtotalProducto(item), 0);
     const inventarioCacheKey = user?.sucursalId ? `sellix_inventario_${user.sucursalId}` : '';
@@ -340,7 +341,7 @@ const VentaEmpleado = () => {
             producto.subcategoriaNombre,
             ...(producto.codigos || []),
             ...(producto.colores || [])
-        ].map(normalizarTexto).join(' ');
+        ].map(normalizarBusquedaVoz).join(' ');
 
     const obtenerVariantesTokenVoz = (token) => {
         const variantes = [token];
@@ -358,10 +359,17 @@ const VentaEmpleado = () => {
 
     const obtenerTokensBusquedaVoz = (termino) => termino.split(' ').filter(Boolean);
 
+    const obtenerFrasesRequeridasVoz = (termino) => {
+        const frases = [];
+        const tipo = termino.match(/\btipo\s+([a-z0-9]+)\b/)?.[0];
+        if (tipo) frases.push(tipo);
+        return frases;
+    };
+
     const calificarProductoVoz = (producto, termino) => {
         const tokens = obtenerTokensBusquedaVoz(termino);
-        const codigos = (producto.codigos || []).map(normalizarTexto);
-        const descripcion = normalizarTexto(producto.descripcion);
+        const codigos = (producto.codigos || []).map(normalizarBusquedaVoz);
+        const descripcion = normalizarBusquedaVoz(producto.descripcion);
         const textoProducto = obtenerTextoProductoVoz(producto);
 
         let puntaje = 0;
@@ -375,15 +383,20 @@ const VentaEmpleado = () => {
     };
 
     const buscarProductoPorVoz = (inventarioBase, consulta) => {
-        const termino = normalizarTexto(consulta);
+        const termino = normalizarBusquedaVoz(consulta);
         const tokens = obtenerTokensBusquedaVoz(termino);
+        const frasesRequeridas = obtenerFrasesRequeridasVoz(termino);
         return inventarioBase
             .map(producto => ({
                 producto,
                 puntaje: calificarProductoVoz(producto, termino),
                 textoProducto: obtenerTextoProductoVoz(producto)
             }))
-            .filter(item => item.puntaje > 0 && tokens.every(token => tokenCoincideProductoVoz(item.textoProducto, token)))
+            .filter(item =>
+                item.puntaje > 0
+                && tokens.every(token => tokenCoincideProductoVoz(item.textoProducto, token))
+                && frasesRequeridas.every(frase => item.textoProducto.includes(frase))
+            )
             .sort((a, b) => b.puntaje - a.puntaje || (Number(b.producto.cantidad) || 0) - (Number(a.producto.cantidad) || 0));
     };
 
