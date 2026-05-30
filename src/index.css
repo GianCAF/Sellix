@@ -4,6 +4,280 @@
 @tailwind utilities;
 
 @layer components {
+    /* Login */
+    .login-page {
+        @apply min-h-screen bg-gray-100 flex items-center justify-center p-4;
+    }
+
+    .login-card {
+        @apply max-w-md w-full bg-white rounded-2xl shadow-xl p-8 transition-all;
+    }
+
+    .login-header {
+        @apply text-center mb-10;
+    }
+
+    .login-title {
+        @apply text-4xl font-extrabold text-blue-600;
+    }
+
+    .login-subtitle {
+        @apply text-gray-500 mt-2 font-medium;
+    }
+
+    .form-stack {
+        @apply space-y-6;
+    }
+
+    .form-label {
+        @apply block text-sm font-semibold text-gray-700 mb-1;
+    }
+
+    .login-input {
+        @apply w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all;
+    }
+
+    .login-error {
+        @apply bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm animate-pulse;
+    }
+
+    .login-submit {
+        @apply w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transform transition-all active:scale-95;
+    }
+
+    .login-submit-active {
+        @apply bg-blue-600 hover:bg-blue-700;
+    }
+
+    .login-submit-loading {
+        @apply bg-blue-300 cursor-not-allowed;
+    }
+
+    .app-footer-note {
+        @apply text-xs text-gray-400;
+    }
+
+    /* Admin Layout */
+    .admin-page {
+        @apply min-h-screen bg-gray-50 pb-20;
+    }
+
+    .admin-shell {
+        @apply p-4 md:p-8 max-w-7xl mx-auto;
+    }
+
+    .admin-shell-md {
+        @apply p-8 max-w-6xl mx-auto;
+    }
+
+    .admin-panel {
+        @apply bg-white shadow-sm border border-gray-100;
+    }
+
+    .admin-summary-panel {
+        @apply bg-white p-8 rounded-[30px] shadow-sm mb-8 border border-gray-100;
+    }
+
+    .admin-filter-bar {
+        @apply flex flex-wrap gap-4 justify-center bg-gray-50 p-4 rounded-3xl;
+    }
+
+    .admin-filter-label {
+        @apply text-[10px] font-black text-gray-400 uppercase ml-2;
+    }
+
+    .admin-filter-input {
+        @apply bg-transparent font-bold text-gray-700 outline-none;
+    }
+
+    .admin-filter-select {
+        @apply bg-transparent font-bold text-gray-700 outline-none p-1;
+    }
+
+    .admin-empty-state {
+        @apply text-center py-20 font-black text-gray-300 text-2xl uppercase animate-pulse italic;
+    }
+
+    .admin-section-title {
+        @apply text-2xl font-black text-gray-800 uppercase italic;
+    }
+
+    .admin-section-subtitle {
+        @apply text-gray-400 text-xs font-bold uppercase mt-1;
+    }
+
+    .admin-card-grid {
+        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[30px] mb-12;
+    }
+
+    .admin-branch-card {
+        @apply bg-white p-10 rounded-[45px] shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:shadow-2xl hover:scale-[1.02] transition-all;
+    }
+
+    .admin-branch-icon {
+        @apply text-5xl mb-4 transition-transform;
+    }
+
+    .admin-branch-name {
+        @apply text-xl font-black text-gray-800 uppercase tracking-tighter;
+    }
+
+    .admin-branch-location {
+        @apply text-gray-400 text-xs font-bold mb-6 italic;
+    }
+
+    .admin-metric-box {
+        @apply bg-blue-50 w-full py-6 rounded-[30px];
+    }
+
+    .admin-metric-label {
+        @apply text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1;
+    }
+
+    .admin-metric-value {
+        @apply text-4xl font-black text-blue-600;
+    }
+
+    .admin-table-panel {
+        @apply bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden;
+    }
+
+    .admin-table {
+        @apply w-full text-left;
+    }
+
+    .admin-table-head {
+        @apply bg-gray-50 border-b;
+    }
+
+    .admin-th {
+        @apply p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest;
+    }
+
+    .admin-th-lg {
+        @apply p-5 text-xs font-black text-gray-400 uppercase;
+    }
+
+    .admin-td {
+        @apply p-5;
+    }
+
+    .admin-row {
+        @apply hover:bg-blue-50/20 transition-colors;
+    }
+
+    .admin-badge {
+        @apply bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase italic;
+    }
+
+    /* Inventario Maestro */
+    .inventory-tabs {
+        @apply flex gap-4 mb-10 bg-white p-2 rounded-[25px] shadow-sm border border-gray-100 max-w-md mx-auto;
+    }
+
+    .inventory-tab {
+        @apply flex-1 py-4 rounded-2xl font-black text-xs uppercase italic transition-all;
+    }
+
+    .inventory-tab-active {
+        @apply bg-blue-600 text-white shadow-lg;
+    }
+
+    .inventory-tab-idle {
+        @apply text-gray-400 hover:text-blue-600;
+    }
+
+    .inventory-form {
+        @apply bg-white p-8 rounded-[40px] shadow-sm space-y-6 border border-gray-100;
+    }
+
+    .inventory-grid-3 {
+        @apply grid grid-cols-1 md:grid-cols-3 gap-6;
+    }
+
+    .inventory-grid-2 {
+        @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+    }
+
+    .inventory-label-primary {
+        @apply block text-xs font-black text-blue-600 uppercase mb-2;
+    }
+
+    .inventory-label-muted {
+        @apply block text-xs font-black text-gray-400 uppercase mb-2;
+    }
+
+    .inventory-label-green {
+        @apply block text-xs font-black text-green-500 uppercase mb-2;
+    }
+
+    .inventory-select-primary {
+        @apply w-full border-2 border-blue-100 p-3 rounded-xl bg-blue-50 font-bold outline-none;
+    }
+
+    .inventory-select {
+        @apply w-full border-2 p-3 rounded-xl bg-gray-50 font-bold outline-none;
+    }
+
+    .inventory-input {
+        @apply w-full border-2 p-3 rounded-xl outline-none font-bold;
+    }
+
+    .inventory-input-soft {
+        @apply w-full border-2 border-gray-100 p-3 rounded-xl bg-gray-50 font-black text-gray-700 outline-none;
+    }
+
+    .inventory-array-section {
+        @apply grid grid-cols-1 md:grid-cols-2 gap-10 border-t pt-6 border-gray-100;
+    }
+
+    .inventory-pill-input {
+        @apply border-2 p-2 rounded-xl w-28 font-bold;
+    }
+
+    .inventory-code-input {
+        @apply border-2 p-2 rounded-xl w-full font-mono font-bold outline-none focus:border-blue-500;
+    }
+
+    .inventory-add-small {
+        @apply bg-orange-100 text-orange-600 px-4 py-2 rounded-xl font-black;
+    }
+
+    .inventory-add-link {
+        @apply text-blue-600 text-[10px] font-black uppercase tracking-widest;
+    }
+
+    .inventory-price-input {
+        @apply w-full border-4 border-green-50 p-4 rounded-[25px] text-4xl font-black text-green-600 outline-none;
+    }
+
+    .inventory-submit {
+        @apply w-full bg-blue-600 text-white py-6 rounded-[30px] font-black text-2xl hover:bg-blue-700 shadow-xl uppercase italic;
+    }
+
+    .inventory-list-panel {
+        @apply bg-white rounded-[40px] shadow-sm overflow-hidden border border-gray-100;
+    }
+
+    .inventory-product-title {
+        @apply font-black text-gray-700 uppercase leading-tight;
+    }
+
+    .inventory-product-meta {
+        @apply text-[10px] text-blue-500 font-bold uppercase;
+    }
+
+    .inventory-code-badge {
+        @apply text-[9px] font-mono bg-gray-100 px-2 py-1 rounded text-gray-500;
+    }
+
+    .inventory-edit-btn {
+        @apply p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all;
+    }
+
+    .inventory-delete-btn {
+        @apply p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all;
+    }
 
     /* Contenedores de la App */
     .pos-container {
@@ -76,5 +350,123 @@
 
     .ticket-item {
         @apply flex justify-between border-b pb-2 items-center;
+    }
+
+    /* Ticket termico */
+    .print-ticket {
+        display: none;
+    }
+
+    @media print {
+        :root {
+            --ticket-paper-width: 58mm;
+            --ticket-print-width: 48mm;
+            --ticket-offset-x: 5mm;
+            --ticket-header-offset-x: -5mm;
+        }
+
+        @page {
+            size: var(--ticket-paper-width) auto;
+            margin: 0;
+        }
+
+        html,
+        body {
+            width: var(--ticket-paper-width);
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+            overflow: hidden;
+        }
+
+        .pos-container {
+            display: block !important;
+            width: var(--ticket-paper-width) !important;
+            min-height: 0 !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+        }
+
+        .pos-container > :not(.print-ticket) {
+            display: none !important;
+        }
+
+        .print-ticket {
+            display: block !important;
+            position: static;
+            width: var(--ticket-print-width);
+            box-sizing: border-box;
+            padding: 1mm 0 0;
+            margin: 0;
+            transform: translateX(var(--ticket-offset-x));
+            color: #000;
+            background: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10px;
+            line-height: 1.25;
+            text-align: left;
+        }
+
+        .print-ticket-title {
+            display: block;
+            width: 100%;
+            margin: 0 auto 1mm;
+            font-size: 15px;
+            font-weight: 900;
+            text-align: center;
+            text-transform: uppercase;
+            white-space: nowrap;
+            transform: translateX(var(--ticket-header-offset-x));
+        }
+
+        .print-ticket-center {
+            display: block;
+            width: 100%;
+            text-align: center;
+            overflow-wrap: anywhere;
+        }
+
+        .print-ticket-header-line {
+            transform: translateX(var(--ticket-header-offset-x));
+        }
+
+        .print-ticket-rule {
+            border-top: 1px dashed #000;
+            margin: 6px 0;
+        }
+
+        .print-ticket-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .print-ticket-product {
+            margin-bottom: 4px;
+        }
+
+        .print-ticket-line-amount {
+            transform: translateX(-8mm);
+        }
+
+        .print-ticket-total {
+            display: flex;
+            font-size: 13px;
+            font-weight: 900;
+            margin-bottom: 2px;
+        }
+
+        .print-ticket-total-amount {
+            transform: translateX(-8mm);
+        }
+
+        .print-ticket-contact {
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0;
+        }
     }
 }

@@ -56,28 +56,28 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 transition-all">
-                <div className="text-center mb-10">
-                    <h2 className="text-4xl font-extrabold text-blue-600">POS Multi-Sedes</h2>
-                    <p className="text-gray-500 mt-2 font-medium">Panel de acceso</p>
+        <div className="login-page">
+            <div className="login-card">
+                <div className="login-header">
+                    <h2 className="login-title">POS Multi-Sedes</h2>
+                    <p className="login-subtitle">Panel de acceso</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="form-stack">
                     {error && (
-                        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm animate-pulse">
+                        <div className="login-error">
                             <p className="text-sm font-bold">{error}</p>
                         </div>
                     )}
 
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        <label className="form-label">
                             Correo Institucional
                         </label>
                         <input
                             type="email"
                             required
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            className="login-input"
                             placeholder="tu@correo.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -85,13 +85,13 @@ const Login = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        <label className="form-label">
                             Contraseña
                         </label>
                         <input
                             type="password"
                             required
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                            className="login-input"
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -101,7 +101,7 @@ const Login = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transform transition-all active:scale-95 ${loading ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                        className={`login-submit ${loading ? 'login-submit-loading' : 'login-submit-active'
                             }`}
                     >
                         {loading ? 'Validando...' : 'Entrar al Sistema'}
@@ -109,7 +109,7 @@ const Login = () => {
                 </form>
 
                 <div className="mt-8 text-center">
-                    <p className="text-xs text-gray-400">
+                    <p className="app-footer-note">
                         Punto de Venta PWA - v1.0 2026
                     </p>
                 </div>
