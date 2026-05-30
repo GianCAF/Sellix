@@ -347,6 +347,8 @@ const VentaEmpleado = () => {
         const variantes = [token];
         if (token.endsWith('es') && token.length > 4) variantes.push(token.slice(0, -2));
         if (token.endsWith('s') && token.length > 3) variantes.push(token.slice(0, -1));
+        if (!token.endsWith('s') && token.length > 2) variantes.push(`${token}s`);
+        if (!token.endsWith('es') && token.length > 3) variantes.push(`${token}es`);
         return [...new Set(variantes)];
     };
 
@@ -404,7 +406,7 @@ const VentaEmpleado = () => {
         const conStock = resultados.filter(item => (Number(item.producto.cantidad) || 0) > 0);
         const mejorPuntaje = conStock[0]?.puntaje || 0;
         return conStock
-            .filter(item => item.puntaje >= Math.max(20, mejorPuntaje * 0.65))
+            .filter(item => item.puntaje >= Math.max(10, mejorPuntaje * 0.65))
             .slice(0, 8)
             .map(item => item.producto);
     };
