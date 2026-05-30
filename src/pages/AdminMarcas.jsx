@@ -6,6 +6,7 @@ import AdminNavbar from '../components/AdminNavbar';
 const AdminMarcas = () => {
     const [nombreMarca, setNombreMarca] = useState('');
     const [marcas, setMarcas] = useState([]);
+    const [procesando, setProcesando] = useState('');
 
     const cargarMarcas = async () => {
         const q = query(collection(db, "marcas"), orderBy("nombre"));
@@ -17,23 +18,41 @@ const AdminMarcas = () => {
 
     const crearMarca = async (e) => {
         e.preventDefault();
-        await addDoc(collection(db, "marcas"), { nombre: nombreMarca });
-        setNombreMarca('');
-        cargarMarcas();
+        if (procesando) return;
+        setProcesando('crear');
+        try {
+            await addDoc(collection(db, "marcas"), { nombre: nombreMarca });
+            setNombreMarca('');
+            await cargarMarcas();
+        } finally {
+            setProcesando('');
+        }
     };
 
     const editarMarca = async (id, nombreActual) => {
+        if (procesando) return;
         const nuevoNombre = prompt("Editar nombre de la marca:", nombreActual);
         if (nuevoNombre && nuevoNombre !== nombreActual) {
-            await updateDoc(doc(db, "marcas", id), { nombre: nuevoNombre });
-            cargarMarcas();
+            setProcesando(`editar:${id}`);
+            try {
+                await updateDoc(doc(db, "marcas", id), { nombre: nuevoNombre });
+                await cargarMarcas();
+            } finally {
+                setProcesando('');
+            }
         }
     };
 
     const eliminarMarca = async (id) => {
+        if (procesando) return;
         if (window.confirm("¿Eliminar esta marca?")) {
-            await deleteDoc(doc(db, "marcas", id));
-            cargarMarcas();
+            setProcesando(`eliminar:${id}`);
+            try {
+                await deleteDoc(doc(db, "marcas", id));
+                await cargarMarcas();
+            } finally {
+                setProcesando('');
+            }
         }
     };
 
@@ -53,8 +72,8 @@ const AdminMarcas = () => {
                         onChange={(e) => setNombreMarca(e.target.value)}
                         required
                     />
-                    <button className="bg-blue-600 text-white px-8 py-3 rounded-xl font-black hover:bg-blue-700 transition-all uppercase text-sm shadow-md active:scale-95">
-                        Guardar
+                    <button disabled={procesando === 'crear'} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-black hover:bg-blue-700 transition-all uppercase text-sm shadow-md active:scale-95 disabled:opacity-50">
+                        {procesando === 'crear' ? 'Guardando...' : 'Guardar'}
                     </button>
                 </form>
 
@@ -78,13 +97,15 @@ const AdminMarcas = () => {
                                             <div className="flex justify-end gap-3">
                                                 <button
                                                     onClick={() => editarMarca(m.id, m.nombre)}
-                                                    className="text-blue-500 hover:text-blue-700 text-xs font-black uppercase tracking-tighter"
+                                                    disabled={procesando === `editar:${m.id}`}
+                                                    className="text-blue-500 hover:text-blue-700 text-xs font-black uppercase tracking-tighter disabled:opacity-50"
                                                 >
                                                     Editar
                                                 </button>
                                                 <button
                                                     onClick={() => eliminarMarca(m.id)}
-                                                    className="text-red-500 hover:text-red-700 text-xs font-black uppercase tracking-tighter"
+                                                    disabled={procesando === `eliminar:${m.id}`}
+                                                    className="text-red-500 hover:text-red-700 text-xs font-black uppercase tracking-tighter disabled:opacity-50"
                                                 >
                                                     Borrar
                                                 </button>

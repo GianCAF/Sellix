@@ -9,6 +9,7 @@ const AdminCategorias = () => {
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
     const [categorias, setCategorias] = useState([]);
     const [subcategorias, setSubcategorias] = useState([]);
+    const [procesando, setProcesando] = useState('');
 
     const cargarDatos = async () => {
         const catSnap = await getDocs(query(collection(db, "categorias"), orderBy("nombre")));
@@ -22,49 +23,85 @@ const AdminCategorias = () => {
 
     const crearCategoria = async (e) => {
         e.preventDefault();
-        await addDoc(collection(db, "categorias"), { nombre: nombreCat });
-        setNombreCat('');
-        cargarDatos();
+        if (procesando) return;
+        setProcesando('crearCategoria');
+        try {
+            await addDoc(collection(db, "categorias"), { nombre: nombreCat });
+            setNombreCat('');
+            await cargarDatos();
+        } finally {
+            setProcesando('');
+        }
     };
 
     const editarCategoria = async (id, nombreActual) => {
+        if (procesando) return;
         const nuevoNombre = prompt("Editar nombre de categoría:", nombreActual);
         if (nuevoNombre && nuevoNombre !== nombreActual) {
-            await updateDoc(doc(db, "categorias", id), { nombre: nuevoNombre });
-            cargarDatos();
+            setProcesando(`editarCategoria:${id}`);
+            try {
+                await updateDoc(doc(db, "categorias", id), { nombre: nuevoNombre });
+                await cargarDatos();
+            } finally {
+                setProcesando('');
+            }
         }
     };
 
     const eliminarCategoria = async (id) => {
+        if (procesando) return;
         if (window.confirm("¿Eliminar categoría? Esto no borrará las subcategorías, pero quedarán huérfanas.")) {
-            await deleteDoc(doc(db, "categorias", id));
-            cargarDatos();
+            setProcesando(`eliminarCategoria:${id}`);
+            try {
+                await deleteDoc(doc(db, "categorias", id));
+                await cargarDatos();
+            } finally {
+                setProcesando('');
+            }
         }
     };
 
     const crearSubcategoria = async (e) => {
         e.preventDefault();
+        if (procesando) return;
         if (!categoriaSeleccionada) return alert("Selecciona una categoría primero");
-        await addDoc(collection(db, "subcategorias"), {
-            nombre: nombreSub,
-            categoriaId: categoriaSeleccionada
-        });
-        setNombreSub('');
-        cargarDatos();
+        setProcesando('crearSubcategoria');
+        try {
+            await addDoc(collection(db, "subcategorias"), {
+                nombre: nombreSub,
+                categoriaId: categoriaSeleccionada
+            });
+            setNombreSub('');
+            await cargarDatos();
+        } finally {
+            setProcesando('');
+        }
     };
 
     const editarSubcategoria = async (id, nombreActual) => {
+        if (procesando) return;
         const nuevoNombre = prompt("Editar nombre de subcategoría:", nombreActual);
         if (nuevoNombre && nuevoNombre !== nombreActual) {
-            await updateDoc(doc(db, "subcategorias", id), { nombre: nuevoNombre });
-            cargarDatos();
+            setProcesando(`editarSubcategoria:${id}`);
+            try {
+                await updateDoc(doc(db, "subcategorias", id), { nombre: nuevoNombre });
+                await cargarDatos();
+            } finally {
+                setProcesando('');
+            }
         }
     };
 
     const eliminarSubcategoria = async (id) => {
+        if (procesando) return;
         if (window.confirm("¿Eliminar esta subcategoría?")) {
-            await deleteDoc(doc(db, "subcategorias", id));
-            cargarDatos();
+            setProcesando(`eliminarSubcategoria:${id}`);
+            try {
+                await deleteDoc(doc(db, "subcategorias", id));
+                await cargarDatos();
+            } finally {
+                setProcesando('');
+            }
         }
     };
 
@@ -85,8 +122,8 @@ const AdminCategorias = () => {
                             onChange={(e) => setNombreCat(e.target.value)}
                             required
                         />
-                        <button className="bg-blue-600 text-white px-6 py-2 rounded-xl font-black hover:bg-blue-700 transition-colors uppercase text-sm">
-                            Crear
+                        <button disabled={procesando === 'crearCategoria'} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-black hover:bg-blue-700 transition-colors uppercase text-sm disabled:opacity-50">
+                            {procesando === 'crearCategoria' ? 'Creando...' : 'Crear'}
                         </button>
                     </form>
                     <ul className="space-y-2">
@@ -94,8 +131,8 @@ const AdminCategorias = () => {
                             <li key={c.id} className="p-3 bg-gray-50 rounded-xl border flex justify-between items-center group transition-all hover:shadow-md">
                                 <span className="font-bold text-gray-700">{c.nombre}</span>
                                 <div className="flex gap-3">
-                                    <button onClick={() => editarCategoria(c.id, c.nombre)} className="text-blue-500 text-xs font-black uppercase hover:underline">Editar</button>
-                                    <button onClick={() => eliminarCategoria(c.id)} className="text-red-500 text-xs font-black uppercase hover:underline">Borrar</button>
+                                    <button onClick={() => editarCategoria(c.id, c.nombre)} disabled={procesando === `editarCategoria:${c.id}`} className="text-blue-500 text-xs font-black uppercase hover:underline disabled:opacity-50">Editar</button>
+                                    <button onClick={() => eliminarCategoria(c.id)} disabled={procesando === `eliminarCategoria:${c.id}`} className="text-red-500 text-xs font-black uppercase hover:underline disabled:opacity-50">Borrar</button>
                                 </div>
                             </li>
                         ))}
@@ -124,7 +161,7 @@ const AdminCategorias = () => {
                                 onChange={(e) => setNombreSub(e.target.value)}
                                 required
                             />
-                            <button className="bg-green-600 text-white px-6 py-2 rounded-xl font-black hover:bg-green-700 transition-colors uppercase text-sm">
+                            <button disabled={procesando === 'crearSubcategoria'} className="bg-green-600 text-white px-6 py-2 rounded-xl font-black hover:bg-green-700 transition-colors uppercase text-sm disabled:opacity-50">
                                 Añadir
                             </button>
                         </div>

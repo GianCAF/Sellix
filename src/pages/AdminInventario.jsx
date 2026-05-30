@@ -13,6 +13,8 @@ const AdminInventario = () => {
     // Estados de navegación y UI
     const [vistaActual, setVistaActual] = useState('registrar'); // 'registrar' o 'ver'
     const [editandoId, setEditandoId] = useState(null);
+    const [procesandoGuardar, setProcesandoGuardar] = useState(false);
+    const [procesandoEliminar, setProcesandoEliminar] = useState(null);
 
     // Estado del formulario
     const [catSel, setCatSel] = useState('');
@@ -72,6 +74,8 @@ const AdminInventario = () => {
 
     const guardarOActualizar = async (e) => {
         e.preventDefault();
+        if (procesandoGuardar) return;
+        setProcesandoGuardar(true);
         try {
             const data = {
                 categoriaId: catSel,
@@ -94,11 +98,13 @@ const AdminInventario = () => {
             }
 
             limpiarFormulario();
-            cargarCatalogos();
+            await cargarCatalogos();
             setVistaActual('ver');
         } catch (error) {
             console.error(error);
             alert("Error al procesar el registro");
+        } finally {
+            setProcesandoGuardar(false);
         }
     };
 
@@ -117,9 +123,15 @@ const AdminInventario = () => {
     };
 
     const eliminarProductoMaestro = async (id) => {
+        if (procesandoEliminar) return;
         if (window.confirm("¿Eliminar del catálogo maestro? Esto no borrará existencias en sucursales pero ya no podrás surtirlo.")) {
-            await deleteDoc(doc(db, "productos_maestros", id));
-            cargarCatalogos();
+            setProcesandoEliminar(id);
+            try {
+                await deleteDoc(doc(db, "productos_maestros", id));
+                await cargarCatalogos();
+            } finally {
+                setProcesandoEliminar(null);
+            }
         }
     };
 
@@ -208,8 +220,8 @@ const AdminInventario = () => {
                             <input type="number" step="0.01" className="inventory-price-input" placeholder="$ 0.00" value={precio} onChange={(e) => setPrecio(e.target.value)} required />
                         </div>
 
-                        <button type="submit" className="inventory-submit">
-                            {editandoId ? 'Actualizar Ficha Maestra' : 'Registrar en Catálogo'}
+                        <button type="submit" disabled={procesandoGuardar} className="inventory-submit disabled:opacity-50">
+                            {procesandoGuardar ? 'Procesando...' : editandoId ? 'Actualizar Ficha Maestra' : 'Registrar en Catálogo'}
                         </button>
                     </form>
                 ) : (
@@ -241,7 +253,7 @@ const AdminInventario = () => {
                                         <td className="admin-td text-center font-black text-green-600">${prod.precio}</td>
                                         <td className="admin-td text-right flex gap-2 justify-end">
                                             <button onClick={() => prepararEdicion(prod)} className="inventory-edit-btn">✏️</button>
-                                            <button onClick={() => eliminarProductoMaestro(prod.id)} className="inventory-delete-btn">🗑️</button>
+                                            <button onClick={() => eliminarProductoMaestro(prod.id)} disabled={procesandoEliminar === prod.id} className="inventory-delete-btn disabled:opacity-50">🗑️</button>
                                         </td>
                                     </tr>
                                 ))}

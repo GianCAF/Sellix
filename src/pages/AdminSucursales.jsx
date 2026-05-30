@@ -8,6 +8,7 @@ const AdminSucursales = () => {
     const [ubicacion, setUbicacion] = useState('');
     const [sucursales, setSucursales] = useState([]);
     const [editandoId, setEditandoId] = useState(null);
+    const [procesando, setProcesando] = useState('');
 
     const cargarSucursales = async () => {
         const querySnapshot = await getDocs(collection(db, "sucursales"));
@@ -18,6 +19,8 @@ const AdminSucursales = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (procesando) return;
+        setProcesando('guardar');
         try {
             if (editandoId) {
                 await updateDoc(doc(db, "sucursales", editandoId), { nombre, ubicacion });
@@ -26,8 +29,8 @@ const AdminSucursales = () => {
                 await addDoc(collection(db, "sucursales"), { nombre, ubicacion });
             }
             setNombre(''); setUbicacion('');
-            cargarSucursales();
-        } catch (error) { console.error(error); }
+            await cargarSucursales();
+        } catch (error) { console.error(error); } finally { setProcesando(''); }
     };
 
     const prepararEdicion = (suc) => {
@@ -38,9 +41,15 @@ const AdminSucursales = () => {
     };
 
     const eliminarSucursal = async (id) => {
+        if (procesando) return;
         if (window.confirm("¿Seguro que quieres eliminar esta sucursal?")) {
-            await deleteDoc(doc(db, "sucursales", id));
-            cargarSucursales();
+            setProcesando(`eliminar:${id}`);
+            try {
+                await deleteDoc(doc(db, "sucursales", id));
+                await cargarSucursales();
+            } finally {
+                setProcesando('');
+            }
         }
     };
 
@@ -55,8 +64,8 @@ const AdminSucursales = () => {
                 <form onSubmit={handleSubmit} className="bg-white p-6 rounded-3xl shadow-sm mb-8 flex flex-col md:flex-row gap-4">
                     <input type="text" placeholder="Nombre de sucursal" className="flex-1 p-3 border-2 rounded-xl outline-none focus:border-blue-500" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
                     <input type="text" placeholder="Ubicación" className="flex-1 p-3 border-2 rounded-xl outline-none focus:border-blue-500" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} required />
-                    <button type="submit" className={`px-8 py-3 rounded-xl font-bold text-white ${editandoId ? 'bg-orange-500' : 'bg-blue-600'}`}>
-                        {editandoId ? 'ACTUALIZAR' : 'GUARDAR'}
+                    <button type="submit" disabled={procesando === 'guardar'} className={`px-8 py-3 rounded-xl font-bold text-white disabled:opacity-50 ${editandoId ? 'bg-orange-500' : 'bg-blue-600'}`}>
+                        {procesando === 'guardar' ? 'PROCESANDO...' : editandoId ? 'ACTUALIZAR' : 'GUARDAR'}
                     </button>
                     {editandoId && <button onClick={() => { setEditandoId(null); setNombre(''); setUbicacion(''); }} className="text-gray-400 font-bold">Cancelar</button>}
                 </form>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../services/firebase';
-import { collection, getDocs, query, where, addDoc, doc, updateDoc, increment, Timestamp, getDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, addDoc, doc, updateDoc, increment, Timestamp, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -42,6 +42,10 @@ const VentaEmpleado = () => {
     const [modoOffline, setModoOffline] = useState(!navigator.onLine);
     const [ventasPendientes, setVentasPendientes] = useState(0);
     const [ultimaVentaOffline, setUltimaVentaOffline] = useState(false);
+    const [procesandoCaja, setProcesandoCaja] = useState(false);
+    const [procesandoMovimiento, setProcesandoMovimiento] = useState(false);
+    const [procesandoTemporal, setProcesandoTemporal] = useState(false);
+    const [procesandoImpresion, setProcesandoImpresion] = useState(false);
     const [vozDisponible, setVozDisponible] = useState(false);
     const [escuchandoVoz, setEscuchandoVoz] = useState(false);
     const [mensajeAsistente, setMensajeAsistente] = useState('Asistente apagado');
@@ -51,6 +55,7 @@ const VentaEmpleado = () => {
     const reconocimientoVoz = useRef(null);
     const asistenteEscuchando = useRef(false);
     const inventarioSucursalRef = useRef([]);
+    const productosAgregandoRef = useRef(new Set());
     const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
     const monedaSinCentavos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
     const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -145,6 +150,9 @@ const VentaEmpleado = () => {
     };
 
     const abrirCaja = async () => {
+        if (procesandoCaja) return;
+        if (!inputFondo || isNaN(inputFondo) || parseFloat(inputFondo) < 0) return alert("Monto no valido");
+        setProcesandoCaja(true);
         if (!inputFondo || isNaN(inputFondo) || parseFloat(inputFondo) < 0) return alert("Monto no válido");
         try {
             await setDoc(doc(db, "cajas_inicio", `${user.sucursalId}_${getFechaLocalID()}`), {
@@ -152,10 +160,13 @@ const VentaEmpleado = () => {
                 nombreEmpleado: user.nombre || 'Empleado', fecha: Timestamp.now(), fechaString: getFechaLocalID()
             });
             setFondoInicial(parseFloat(inputFondo)); setMostrarModalFondo(false);
-        } catch (e) { alert("Error"); }
+        } catch (e) { alert("Error"); } finally { setProcesandoCaja(false); }
     };
 
     const registrarMovimiento = async () => {
+        if (procesandoMovimiento) return;
+        if (!movCantidad || !movMotivo) return alert("Faltan datos");
+        setProcesandoMovimiento(true);
         if (!movCantidad || !movMotivo) return alert("Faltan datos");
         try {
             await addDoc(collection(db, "movimientos_caja"), {
@@ -163,7 +174,7 @@ const VentaEmpleado = () => {
                 empleadoId: user.uid, nombreEmpleado: user.nombre || 'Empleado', fecha: Timestamp.now(), fechaString: getFechaLocalID()
             });
             setMostrarModalMov(false); setMovCantidad(''); setMovMotivo(''); alert("Registrado");
-        } catch (e) { alert("Error"); }
+        } catch (e) { alert("Error"); } finally { setProcesandoMovimiento(false); }
     };
 
     const consultarCorteCompleto = async () => {
@@ -689,6 +700,11 @@ const VentaEmpleado = () => {
 
     const guardarVentaOffline = ({ ventaId, fechaTicket, productosVendidos, totalVenta, data }) => {
         const pendientes = leerJsonLocal(ventasOfflineKey, []);
+        if (pendientes.some(v => v.ventaId === ventaId)) {
+            setModoOffline(true);
+            actualizarConteoPendientes();
+            return;
+        }
         const ventaOffline = {
             ventaId,
             fechaISO: fechaTicket.toISOString(),
@@ -703,6 +719,19 @@ const VentaEmpleado = () => {
         actualizarConteoPendientes();
         descontarInventarioLocal(productosVendidos);
         setModoOffline(true);
+    };
+
+    const registrarVentaFirestore = async (ventaId, ventaData) => {
+        const batch = writeBatch(db);
+        batch.set(doc(db, "ventas", ventaId), ventaData);
+        for (const item of ventaData.productos || []) {
+            if (!item.esTemporal) {
+                batch.update(doc(db, "inventarios", item.id), {
+                    cantidad: increment(-Number(item.cantidadVenta || 0))
+                });
+            }
+        }
+        await batch.commit();
     };
 
     const sincronizarVentasOffline = async () => {
@@ -721,10 +750,7 @@ const VentaEmpleado = () => {
                     fecha: Timestamp.fromDate(new Date(venta.fechaISO)),
                     sincronizadaDesdeOffline: true
                 };
-                await setDoc(doc(db, "ventas", venta.ventaId), ventaData);
-                for (const item of ventaData.productos || []) {
-                    if (!item.esTemporal) await updateDoc(doc(db, "inventarios", item.id), { cantidad: increment(-item.cantidadVenta) });
-                }
+                await registrarVentaFirestore(venta.ventaId, ventaData);
             } catch (error) {
                 restantes.push(venta);
             }
@@ -744,8 +770,7 @@ const VentaEmpleado = () => {
                 guardarVentaOffline(venta);
                 setUltimaVentaOffline(true);
             } else {
-                await setDoc(doc(db, "ventas", venta.ventaId), venta.data);
-                for (const item of carrito) { if (!item.esTemporal) await updateDoc(doc(db, "inventarios", item.id), { cantidad: increment(-item.cantidadVenta) }); }
+                await registrarVentaFirestore(venta.ventaId, venta.data);
                 descontarInventarioLocal(venta.productosVendidos);
                 setUltimaVentaOffline(false);
             }
@@ -780,8 +805,13 @@ const VentaEmpleado = () => {
     };
 
     const imprimirTicketConfirmado = () => {
+        if (procesandoImpresion) return;
+        setProcesandoImpresion(true);
         setMostrarConfirmacionVenta(false);
-        requestAnimationFrame(() => window.print());
+        requestAnimationFrame(() => {
+            window.print();
+            setTimeout(() => setProcesandoImpresion(false), 1000);
+        });
     };
 
     const buscarProducto = async (e, autoAgregarExacto = true) => {
@@ -815,6 +845,9 @@ const VentaEmpleado = () => {
     }, [busqueda, user?.sucursalId]);
 
     const agregarAlCarrito = (p) => {
+        if (productosAgregandoRef.current.has(p.id)) return;
+        productosAgregandoRef.current.add(p.id);
+        setTimeout(() => productosAgregandoRef.current.delete(p.id), 500);
         const ex = carrito.find(i => i.id === p.id);
         if (!p.esTemporal && Number(p.cantidad) <= 0) return alert("Producto sin stock disponible");
         if (ex && !p.esTemporal && ex.cantidadVenta >= Number(p.cantidad)) return alert("No hay mas stock disponible");
@@ -828,8 +861,11 @@ const VentaEmpleado = () => {
     };
 
     const agregarTempAlCarrito = () => {
+        if (procesandoTemporal) return;
+        setProcesandoTemporal(true);
         agregarAlCarrito({ id: `TEMP-${Date.now()}`, descripcion: `(TEMP) ${tempNombre}`, precio: parseFloat(tempPrecio), esTemporal: true, cantidad: 999 });
         setTempNombre(''); setTempPrecio(''); setMostrarModalTemp(false);
+        setTimeout(() => setProcesandoTemporal(false), 500);
     };
 
     const abrirDescuento = (item) => {
@@ -873,7 +909,7 @@ const VentaEmpleado = () => {
                         <h2 className="text-3xl font-black italic uppercase">Apertura</h2>
                         <p className="text-gray-400 font-bold mb-8 uppercase text-[10px] tracking-widest">{sucursalNombre}</p>
                         <input type="number" className="w-full p-5 border-4 border-blue-50 rounded-[30px] text-5xl font-black text-center mb-8 outline-none" value={inputFondo} onChange={(e) => setInputFondo(e.target.value)} autoFocus />
-                        <button onClick={abrirCaja} className="btn-primary w-full py-6 text-2xl rounded-[30px]">Abrir Turno</button>
+                        <button onClick={abrirCaja} disabled={procesandoCaja} className="btn-primary w-full py-6 text-2xl rounded-[30px] disabled:opacity-50">{procesandoCaja ? 'Abriendo...' : 'Abrir Turno'}</button>
                     </div>
                 </div>
             )}
@@ -1053,7 +1089,7 @@ const VentaEmpleado = () => {
                         </div>
                         <input type="number" placeholder="Monto $" className="input-modal" value={movCantidad} onChange={(e) => setMovCantidad(e.target.value)} />
                         <input type="text" placeholder="Motivo..." className="input-modal" value={movMotivo} onChange={(e) => setMovMotivo(e.target.value)} />
-                        <button onClick={registrarMovimiento} className="btn-dark w-full py-4 rounded-2xl">Registrar</button>
+                        <button onClick={registrarMovimiento} disabled={procesandoMovimiento} className="btn-dark w-full py-4 rounded-2xl disabled:opacity-50">{procesandoMovimiento ? 'Registrando...' : 'Registrar'}</button>
                     </div>
                 </div>
             )}
@@ -1131,7 +1167,7 @@ const VentaEmpleado = () => {
                         <h3 className="text-2xl font-black mb-6 italic uppercase">Venta Manual</h3>
                         <input type="text" placeholder="¿Qué es?" className="input-modal" value={tempNombre} onChange={(e) => setTempNombre(e.target.value)} />
                         <input type="number" placeholder="Precio $" className="input-modal" value={tempPrecio} onChange={(e) => setTempPrecio(e.target.value)} />
-                        <button onClick={agregarTempAlCarrito} className="btn-orange w-full py-4 rounded-xl mb-2">Añadir</button>
+                        <button onClick={agregarTempAlCarrito} disabled={procesandoTemporal} className="btn-orange w-full py-4 rounded-xl mb-2 disabled:opacity-50">{procesandoTemporal ? 'Añadiendo...' : 'Añadir'}</button>
                         <button onClick={() => setMostrarModalTemp(false)} className="text-xs font-bold text-gray-400 uppercase">Cerrar</button>
                     </div>
                 </div>
@@ -1144,8 +1180,8 @@ const VentaEmpleado = () => {
                         <p className="text-gray-400 text-xs font-bold uppercase mb-6">
                             {ultimaVentaOffline ? 'Venta guardada localmente. Se sincronizara al volver internet.' : 'El ticket esta listo para imprimir'}
                         </p>
-                        <button onClick={imprimirTicketConfirmado} className="btn-green w-full uppercase">
-                            Aceptar e imprimir
+                        <button onClick={imprimirTicketConfirmado} disabled={procesandoImpresion} className="btn-green w-full uppercase">
+                            {procesandoImpresion ? 'Imprimiendo...' : 'Aceptar e imprimir'}
                         </button>
                     </div>
                 </div>

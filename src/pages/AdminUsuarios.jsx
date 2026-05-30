@@ -12,6 +12,7 @@ const AdminUsuarios = () => {
     const [usuarios, setUsuarios] = useState([]);
     const [editandoId, setEditandoId] = useState(null);
     const [cargando, setCargando] = useState(false);
+    const [eliminandoId, setEliminandoId] = useState(null);
 
     const cargarDatos = async () => {
         const sSnap = await getDocs(collection(db, "sucursales"));
@@ -65,7 +66,7 @@ const AdminUsuarios = () => {
             }
             // Resetear campos
             setNombre(''); setEmail(''); setPassword(''); setSucursalId('');
-            cargarDatos();
+            await cargarDatos();
         } catch (error) {
             console.error(error);
             alert("Error: " + error.message);
@@ -82,9 +83,15 @@ const AdminUsuarios = () => {
     };
 
     const eliminarUsuario = async (id) => {
+        if (eliminandoId) return;
         if (window.confirm("¿Seguro que deseas quitar el acceso a este empleado?")) {
-            await deleteDoc(doc(db, "usuarios", id));
-            cargarDatos();
+            setEliminandoId(id);
+            try {
+                await deleteDoc(doc(db, "usuarios", id));
+                await cargarDatos();
+            } finally {
+                setEliminandoId(null);
+            }
         }
     };
 
@@ -163,7 +170,7 @@ const AdminUsuarios = () => {
                                         <td className="p-5 text-right">
                                             <div className="flex gap-2 justify-end">
                                                 <button onClick={() => prepararEdicion(u)} className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">✏️</button>
-                                                <button onClick={() => eliminarUsuario(u.id)} className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm">🗑️</button>
+                                                <button onClick={() => eliminarUsuario(u.id)} disabled={eliminandoId === u.id} className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm disabled:opacity-50">🗑️</button>
                                             </div>
                                         </td>
                                     </tr>

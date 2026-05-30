@@ -16,6 +16,9 @@ const AdminVerInventario = () => {
     const [mostrarSurtir, setMostrarSurtir] = useState(false);
     const [busquedaCatalogo, setBusquedaCatalogo] = useState('');
     const [cantidadSurtir, setCantidadSurtir] = useState(1);
+    const [procesandoActualizar, setProcesandoActualizar] = useState(null);
+    const [procesandoEliminar, setProcesandoEliminar] = useState(null);
+    const [procesandoSurtir, setProcesandoSurtir] = useState(null);
 
     const cargarDatos = async () => {
         const sSnap = await getDocs(collection(db, "sucursales"));
@@ -41,22 +44,36 @@ const AdminVerInventario = () => {
     };
 
     const handleActualizar = async (id) => {
-        await updateDoc(doc(db, "inventarios", id), {
-            cantidad: parseInt(nuevoStock),
-            precio: parseFloat(nuevoPrecio)
-        });
-        setEditandoProd(null);
-        cargarDatos();
+        if (procesandoActualizar) return;
+        setProcesandoActualizar(id);
+        try {
+            await updateDoc(doc(db, "inventarios", id), {
+                cantidad: parseInt(nuevoStock),
+                precio: parseFloat(nuevoPrecio)
+            });
+            setEditandoProd(null);
+            await cargarDatos();
+        } finally {
+            setProcesandoActualizar(null);
+        }
     };
 
     const eliminarProducto = async (id) => {
+        if (procesandoEliminar) return;
         if (window.confirm("¿Eliminar este producto de esta sucursal?")) {
-            await deleteDoc(doc(db, "inventarios", id));
-            cargarDatos();
+            setProcesandoEliminar(id);
+            try {
+                await deleteDoc(doc(db, "inventarios", id));
+                await cargarDatos();
+            } finally {
+                setProcesandoEliminar(null);
+            }
         }
     };
 
     const handleSurtirEfectivo = async (prodMaestro) => {
+        if (procesandoSurtir) return;
+        setProcesandoSurtir(prodMaestro.id);
         try {
             const existe = inventario.find(p =>
                 p.productoId === prodMaestro.id && p.sucursalId === filtroSucursal
@@ -79,9 +96,11 @@ const AdminVerInventario = () => {
             alert("Inventario actualizado");
             setBusquedaCatalogo('');
             setMostrarSurtir(false);
-            cargarDatos();
+            await cargarDatos();
         } catch (error) {
             alert("Error al surtir stock");
+        } finally {
+            setProcesandoSurtir(null);
         }
     };
 
@@ -191,7 +210,7 @@ const AdminVerInventario = () => {
                                             <td className="p-5 text-center font-black text-blue-600">${(p.cantidad * p.precio).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
                                             <td className="p-5 text-right flex gap-2 justify-end">
                                                 <button onClick={() => { setEditandoProd(p.id); setNuevoStock(p.cantidad); setNuevoPrecio(p.precio); }} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all">✏️</button>
-                                                <button onClick={() => eliminarProducto(p.id)} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all">🗑️</button>
+                                                <button onClick={() => eliminarProducto(p.id)} disabled={procesandoEliminar === p.id} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all disabled:opacity-50">🗑️</button>
                                             </td>
                                         </tr>
                                         {editandoProd === p.id && (
@@ -206,7 +225,7 @@ const AdminVerInventario = () => {
                                                             <label className="text-[9px] font-black text-blue-600 uppercase ml-1 mb-1 tracking-widest">Precio</label>
                                                             <input type="number" step="0.1" className="p-3 border-2 rounded-xl w-28 font-black outline-none focus:border-blue-500" value={nuevoPrecio} onChange={(e) => setNuevoPrecio(e.target.value)} />
                                                         </div>
-                                                        <button onClick={() => handleActualizar(p.id)} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-black shadow-md hover:bg-blue-700 transition-all uppercase text-xs">Guardar Cambios</button>
+                                                        <button onClick={() => handleActualizar(p.id)} disabled={procesandoActualizar === p.id} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-black shadow-md hover:bg-blue-700 transition-all uppercase text-xs disabled:opacity-50">{procesandoActualizar === p.id ? 'Guardando...' : 'Guardar Cambios'}</button>
                                                         <button onClick={() => setEditandoProd(null)} className="text-gray-400 font-black uppercase text-[10px] mb-3 ml-2">Cancelar</button>
                                                     </div>
                                                 </td>
@@ -261,9 +280,10 @@ const AdminVerInventario = () => {
                                             </div>
                                             <button
                                                 onClick={() => handleSurtirEfectivo(prod)}
-                                                className="bg-green-500 text-white px-5 py-3 rounded-2xl font-black shadow-md hover:bg-green-600 transition-all uppercase text-[10px] mt-3"
+                                                disabled={procesandoSurtir === prod.id}
+                                                className="bg-green-500 text-white px-5 py-3 rounded-2xl font-black shadow-md hover:bg-green-600 transition-all uppercase text-[10px] mt-3 disabled:opacity-50"
                                             >
-                                                Añadir
+                                                {procesandoSurtir === prod.id ? 'Añadiendo...' : 'Añadir'}
                                             </button>
                                         </div>
                                     </div>
