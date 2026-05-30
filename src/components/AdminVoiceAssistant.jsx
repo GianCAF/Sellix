@@ -3,6 +3,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
 
 const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const formatearPesos = (monto) => `${Number(monto || 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })} pesos`;
 
 const palabrasNumero = {
     cero: 0,
@@ -153,6 +154,7 @@ const AdminVoiceAssistant = () => {
     };
 
     const esConsultaVentas = (texto) => /\b(venta|ventas|vendido|vendio|vendieron|lleva vendido|facturo|ingreso|ingresos)\b/.test(texto);
+    const esConsultaInventario = (texto) => /\b(inventario|stock|existencia|existencias|producto|productos|pieza|piezas|agotado|agotados|tenemos|hay)\b/.test(texto);
 
     const detectarSucursal = (texto, sucursales) => {
         const textoNormalizado = normalizarTexto(texto);
@@ -186,15 +188,22 @@ const AdminVoiceAssistant = () => {
         const ventas = await obtenerVentasPeriodo(periodo);
         const resumen = obtenerResumenVentas(sucursales, ventas);
         const monto = obtenerMonto(consulta);
-        const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
         const pideMenos = /\b(menos|menor|bajo|baja)\b/.test(consulta);
         const pideMas = /\b(mas|mayor|alto|alta)\b/.test(consulta);
+
+        if (!pideMenos && !pideMas) {
+            const respuesta = 'lo siento, no puedo responder a eso';
+            setMensaje(respuesta);
+            setResultado(null);
+            hablar(respuesta);
+            return;
+        }
 
         if (monto !== null && (pideMenos || pideMas)) {
             const tiendas = resumen
                 .filter(item => pideMenos ? item.total < monto : item.total > monto)
                 .sort((a, b) => pideMenos ? a.total - b.total : b.total - a.total);
-            const criterio = pideMenos ? `menos de ${moneda.format(monto)}` : `mas de ${moneda.format(monto)}`;
+            const criterio = pideMenos ? `menos de ${formatearPesos(monto)}` : `mas de ${formatearPesos(monto)}`;
 
             if (tiendas.length === 0) {
                 const respuesta = `Ninguna tienda vendio ${criterio} ${periodo.etiqueta}.`;
@@ -204,7 +213,7 @@ const AdminVoiceAssistant = () => {
                 return;
             }
 
-            const lista = tiendas.map(item => `${item.sucursal.nombre} con ${moneda.format(item.total)}`).join(', ');
+            const lista = tiendas.map(item => `${item.sucursal.nombre} con ${formatearPesos(item.total)}`).join(', ');
             const respuesta = `Las tiendas que vendieron ${criterio} ${periodo.etiqueta} son: ${lista}.`;
             setMensaje(respuesta);
             setResultado({ tipo: 'ventas', criterio: `${criterio} ${periodo.etiqueta}`, tiendas });
@@ -214,9 +223,11 @@ const AdminVoiceAssistant = () => {
 
         const tiendasConVenta = resumen.filter(item => item.total > 0);
         const base = pideMenos ? resumen : (tiendasConVenta.length > 0 ? tiendasConVenta : resumen);
-        const tienda = pideMenos ? base[0] : [...base].sort((a, b) => b.total - a.total)[0];
+        const ordenadas = pideMenos ? base : [...base].sort((a, b) => b.total - a.total);
+        const totalReferencia = ordenadas[0]?.total;
+        const tiendasEmpatadas = ordenadas.filter(item => item.total === totalReferencia);
 
-        if (!tienda) {
+        if (totalReferencia === undefined) {
             const respuesta = `No encontre ventas registradas ${periodo.etiqueta}.`;
             setMensaje(respuesta);
             setResultado({ tipo: 'ventas', criterio: periodo.etiqueta, tiendas: [] });
@@ -225,9 +236,12 @@ const AdminVoiceAssistant = () => {
         }
 
         const comparativo = pideMenos ? 'vendio menos' : 'vendio mas';
-        const respuesta = `La tienda que ${comparativo} ${periodo.etiqueta} es ${tienda.sucursal.nombre}, con ${moneda.format(tienda.total)}.`;
+        const lista = tiendasEmpatadas.map(item => item.sucursal.nombre).join(', ');
+        const respuesta = tiendasEmpatadas.length === 1
+            ? `La tienda que ${comparativo} ${periodo.etiqueta} es ${lista}, con ${formatearPesos(totalReferencia)}.`
+            : `Las tiendas que ${comparativo} ${periodo.etiqueta} son ${lista}, con ${formatearPesos(totalReferencia)} cada una.`;
         setMensaje(respuesta);
-        setResultado({ tipo: 'ventas', criterio: `${comparativo} ${periodo.etiqueta}`, tiendas: [tienda] });
+        setResultado({ tipo: 'ventas', criterio: `${comparativo} ${periodo.etiqueta}`, tiendas: tiendasEmpatadas });
         hablar(respuesta);
     };
 
@@ -253,10 +267,18 @@ const AdminVoiceAssistant = () => {
                 return;
             }
 
+            if (!esConsultaInventario(consulta)) {
+                const respuesta = 'lo siento, no puedo responder a eso';
+                setMensaje(respuesta);
+                setResultado(null);
+                hablar(respuesta);
+                return;
+            }
+
             const sucursal = detectarSucursal(consulta, sucursales);
 
             if (!sucursal) {
-                const respuesta = 'No identifique la sucursal. Di el nombre de la sucursal en la consulta.';
+                const respuesta = 'lo siento, no puedo responder a eso';
                 setMensaje(respuesta);
                 setResultado(null);
                 hablar(respuesta);
