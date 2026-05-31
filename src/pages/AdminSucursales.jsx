@@ -42,7 +42,7 @@ const AdminSucursales = () => {
 
     const eliminarSucursal = async (id) => {
         if (procesando) return;
-        if (window.confirm("¿Seguro que quieres eliminar esta sucursal?")) {
+        if (await window.sellixConfirm("¿Seguro que quieres eliminar esta sucursal?", { title: 'Eliminar sucursal' })) {
             setProcesando(`eliminar:${id}`);
             try {
                 await deleteDoc(doc(db, "sucursales", id));

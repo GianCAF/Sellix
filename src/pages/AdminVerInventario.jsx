@@ -60,7 +60,7 @@ const AdminVerInventario = () => {
 
     const eliminarProducto = async (id) => {
         if (procesandoEliminar) return;
-        if (window.confirm("¿Eliminar este producto de esta sucursal?")) {
+        if (await window.sellixConfirm("¿Eliminar este producto de esta sucursal?", { title: 'Eliminar de sucursal' })) {
             setProcesandoEliminar(id);
             try {
                 await deleteDoc(doc(db, "inventarios", id));

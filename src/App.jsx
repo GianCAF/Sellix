@@ -9,6 +9,8 @@ import AdminMarcas from './pages/AdminMarcas';
 import AdminInventario from './pages/AdminInventario';
 import AdminVerInventario from './pages/AdminVerInventario';
 import VentaEmpleado from './pages/VentaEmpleado';
+import NotFound from './pages/NotFound';
+import { AppNotificationsProvider } from './components/AppNotifications';
 
 // Componente para proteger las rutas
 const ProtectedRoute = ({ children, roleRequired }) => {
@@ -28,8 +30,9 @@ const ProtectedRoute = ({ children, roleRequired }) => {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+      <AppNotificationsProvider>
+        <BrowserRouter>
+          <Routes>
           {/* Ruta Pública */}
           <Route path="/" element={<Login />} />
 
@@ -85,9 +88,10 @@ function App() {
           } />
 
           {/* Redirección por defecto si la ruta no existe */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </BrowserRouter>
+          <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AppNotificationsProvider>
     </AuthProvider>
   );
 }

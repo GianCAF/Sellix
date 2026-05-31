@@ -376,6 +376,136 @@
         @apply flex justify-between border-b pb-2 items-center;
     }
 
+    .toast-stack {
+        @apply fixed top-5 right-5 z-[900] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-3 pointer-events-none;
+    }
+
+    .toast-card {
+        @apply pointer-events-auto flex items-start gap-3 rounded-2xl border bg-[#FFFDF7] px-4 py-3 text-sm font-black text-[#1A2517] shadow-2xl;
+        animation: sellix-toast-in 220ms ease-out both;
+    }
+
+    .toast-success {
+        @apply border-[#ACC8A2];
+    }
+
+    .toast-error {
+        @apply border-[#E8C9BF];
+    }
+
+    .toast-warning {
+        @apply border-[#D8C7B5];
+    }
+
+    .toast-info {
+        @apply border-[#D8C7B5];
+    }
+
+    .toast-icon {
+        @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1A2517] text-xs text-white;
+    }
+
+    .toast-error .toast-icon {
+        @apply bg-[#9A3B30];
+    }
+
+    .toast-warning .toast-icon {
+        @apply bg-[#67625C];
+    }
+
+    .app-dialog-overlay {
+        @apply fixed inset-0 z-[850] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm;
+    }
+
+    .app-dialog {
+        @apply w-full max-w-md rounded-[34px] border border-[#E3D9C8] bg-[#FFFDF7] p-7 text-center text-[#1A2517] shadow-2xl;
+        animation: sellix-dialog-in 180ms ease-out both;
+    }
+
+    .app-dialog-mark {
+        @apply mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E5EEDC] text-2xl font-black text-[#1A2517];
+    }
+
+    .app-dialog h2 {
+        @apply text-2xl font-black uppercase italic;
+    }
+
+    .app-dialog p {
+        @apply mt-3 text-sm font-bold leading-relaxed text-[#67625C];
+    }
+
+    .app-dialog-input {
+        @apply mt-5 w-full rounded-2xl border-2 border-[#D8C7B5] bg-[#F8F5EC] p-4 font-black outline-none focus:border-[#576238];
+    }
+
+    .app-dialog-actions {
+        @apply mt-6 grid grid-cols-2 gap-3;
+    }
+
+    .app-dialog-cancel {
+        @apply rounded-2xl bg-[#F0EADC] px-4 py-3 text-xs font-black uppercase text-[#67625C] transition-all active:scale-95;
+    }
+
+    .app-dialog-confirm {
+        @apply rounded-2xl bg-[#1A2517] px-4 py-3 text-xs font-black uppercase text-white shadow-lg transition-all active:scale-95;
+    }
+
+    .app-dialog-danger {
+        @apply rounded-2xl bg-[#9A3B30] px-4 py-3 text-xs font-black uppercase text-white shadow-lg transition-all active:scale-95;
+    }
+
+    .not-found-page {
+        @apply min-h-screen bg-[#F0EADC] flex items-center justify-center p-6 text-[#1A2517];
+    }
+
+    .not-found-card {
+        @apply w-full max-w-2xl rounded-[44px] border border-[#E3D9C8] bg-[#FFFDF7] p-8 text-center shadow-2xl;
+    }
+
+    .not-found-illustration {
+        @apply mx-auto mb-4 max-w-md;
+    }
+
+    .not-found-kicker {
+        @apply text-[10px] font-black uppercase tracking-[0.35em] text-[#576238];
+    }
+
+    .not-found-card h1 {
+        @apply mt-3 text-4xl font-black uppercase italic tracking-tighter;
+    }
+
+    .not-found-copy {
+        @apply mx-auto mt-4 max-w-lg text-sm font-bold leading-relaxed text-[#67625C];
+    }
+
+    .not-found-button {
+        @apply mt-7 inline-flex py-4;
+    }
+
+    @keyframes sellix-toast-in {
+        from {
+            opacity: 0;
+            transform: translateX(16px) translateY(-4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0) translateY(0);
+        }
+    }
+
+    @keyframes sellix-dialog-in {
+        from {
+            opacity: 0;
+            transform: scale(0.96) translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
     /* Ticket termico */
     .print-ticket {
         display: none;

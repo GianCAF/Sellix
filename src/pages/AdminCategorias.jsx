@@ -36,7 +36,7 @@ const AdminCategorias = () => {
 
     const editarCategoria = async (id, nombreActual) => {
         if (procesando) return;
-        const nuevoNombre = prompt("Editar nombre de categoría:", nombreActual);
+        const nuevoNombre = await window.sellixPrompt("Editar nombre de categoría:", nombreActual, { title: 'Editar categoría' });
         if (nuevoNombre && nuevoNombre !== nombreActual) {
             setProcesando(`editarCategoria:${id}`);
             try {
@@ -50,7 +50,7 @@ const AdminCategorias = () => {
 
     const eliminarCategoria = async (id) => {
         if (procesando) return;
-        if (window.confirm("¿Eliminar categoría? Esto no borrará las subcategorías, pero quedarán huérfanas.")) {
+        if (await window.sellixConfirm("¿Eliminar categoría? Esto no borrará las subcategorías, pero quedarán huérfanas.", { title: 'Eliminar categoría' })) {
             setProcesando(`eliminarCategoria:${id}`);
             try {
                 await deleteDoc(doc(db, "categorias", id));
@@ -80,7 +80,7 @@ const AdminCategorias = () => {
 
     const editarSubcategoria = async (id, nombreActual) => {
         if (procesando) return;
-        const nuevoNombre = prompt("Editar nombre de subcategoría:", nombreActual);
+        const nuevoNombre = await window.sellixPrompt("Editar nombre de subcategoría:", nombreActual, { title: 'Editar subcategoría' });
         if (nuevoNombre && nuevoNombre !== nombreActual) {
             setProcesando(`editarSubcategoria:${id}`);
             try {
@@ -94,7 +94,7 @@ const AdminCategorias = () => {
 
     const eliminarSubcategoria = async (id) => {
         if (procesando) return;
-        if (window.confirm("¿Eliminar esta subcategoría?")) {
+        if (await window.sellixConfirm("¿Eliminar esta subcategoría?", { title: 'Eliminar subcategoría' })) {
             setProcesando(`eliminarSubcategoria:${id}`);
             try {
                 await deleteDoc(doc(db, "subcategorias", id));

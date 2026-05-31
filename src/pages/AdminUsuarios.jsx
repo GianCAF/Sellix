@@ -84,7 +84,7 @@ const AdminUsuarios = () => {
 
     const eliminarUsuario = async (id) => {
         if (eliminandoId) return;
-        if (window.confirm("¿Seguro que deseas quitar el acceso a este empleado?")) {
+        if (await window.sellixConfirm("¿Seguro que deseas quitar el acceso a este empleado?", { title: 'Quitar acceso' })) {
             setEliminandoId(id);
             try {
                 await deleteDoc(doc(db, "usuarios", id));

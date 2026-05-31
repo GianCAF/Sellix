@@ -124,7 +124,7 @@ const AdminInventario = () => {
 
     const eliminarProductoMaestro = async (id) => {
         if (procesandoEliminar) return;
-        if (window.confirm("¿Eliminar del catálogo maestro? Esto no borrará existencias en sucursales pero ya no podrás surtirlo.")) {
+        if (await window.sellixConfirm("¿Eliminar del catálogo maestro? Esto no borrará existencias en sucursales pero ya no podrás surtirlo.", { title: 'Eliminar producto maestro' })) {
             setProcesandoEliminar(id);
             try {
                 await deleteDoc(doc(db, "productos_maestros", id));

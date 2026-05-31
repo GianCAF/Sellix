@@ -31,7 +31,7 @@ const AdminMarcas = () => {
 
     const editarMarca = async (id, nombreActual) => {
         if (procesando) return;
-        const nuevoNombre = prompt("Editar nombre de la marca:", nombreActual);
+        const nuevoNombre = await window.sellixPrompt("Editar nombre de la marca:", nombreActual, { title: 'Editar marca' });
         if (nuevoNombre && nuevoNombre !== nombreActual) {
             setProcesando(`editar:${id}`);
             try {
@@ -45,7 +45,7 @@ const AdminMarcas = () => {
 
     const eliminarMarca = async (id) => {
         if (procesando) return;
-        if (window.confirm("¿Eliminar esta marca?")) {
+        if (await window.sellixConfirm("¿Eliminar esta marca?", { title: 'Eliminar marca' })) {
             setProcesando(`eliminar:${id}`);
             try {
                 await deleteDoc(doc(db, "marcas", id));
