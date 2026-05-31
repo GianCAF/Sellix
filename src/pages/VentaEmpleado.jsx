@@ -994,7 +994,7 @@ const VentaEmpleado = () => {
             )}
 
             <div className="pos-main-panel">
-                <header className="mb-4 flex justify-between items-center text-gray-800">
+                <header className="pos-header text-gray-800">
                     <div>
                         <h2 className="text-2xl font-black text-blue-600 italic uppercase">{sucursalNombre}</h2>
                         {(modoOffline || ventasPendientes > 0) && (
@@ -1003,9 +1003,10 @@ const VentaEmpleado = () => {
                             </p>
                         )}
                     </div>
-                    <div className="flex gap-2">
-                        <button onClick={() => setMostrarPendientes(true)} className="btn-dark relative">
-                            <span aria-hidden="true">&#128276;</span> Pendientes
+                    <div className="pos-header-actions">
+                        <button onClick={() => setMostrarPendientes(true)} className="btn-icon-status relative" title="Pendientes">
+                            <span aria-hidden="true">&#128276;</span>
+                            <span className="hidden lg:inline">Pendientes</span>
                             {pendientesSucursal.length > 0 && (
                                 <span className="absolute -top-2 -right-2 min-w-6 h-6 px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
                                     {pendientesSucursal.length}
@@ -1016,19 +1017,21 @@ const VentaEmpleado = () => {
                         <button onClick={() => auth.signOut()} className="text-gray-400 font-bold text-xs uppercase">Salir</button>
                     </div>
                 </header>
-                <div className="flex gap-3 mb-6">
-                    <button onClick={() => setMostrarModalTemp(true)} className="btn-orange">➕ Temporal</button>
-                    <button onClick={consultarCorteCompleto} className="btn-primary">📊 Corte</button>
-                </div>
-                <div className="flex flex-wrap gap-3 mb-6">
-                    <button onClick={obtenerInventarioSucursal} className="btn-dark">{cargandoInventario ? 'Cargando...' : 'Ver inventario'}</button>
-                    <button
-                        onClick={toggleAsistenteVoz}
-                        disabled={!vozDisponible}
-                        className={`${escuchandoVoz ? 'btn-orange' : 'btn-dark'} disabled:opacity-40 disabled:cursor-not-allowed`}
-                    >
-                        {escuchandoVoz ? 'Escuchando voz' : 'Asistente voz'}
-                    </button>
+                <div className="pos-action-bar">
+                    <div className="pos-action-group">
+                        <button onClick={() => setMostrarModalTemp(true)} className="btn-orange pos-action-button">➕ Temporal</button>
+                        <button onClick={consultarCorteCompleto} className="btn-primary pos-action-button">📊 Corte</button>
+                    </div>
+                    <div className="pos-action-group">
+                        <button onClick={obtenerInventarioSucursal} className="btn-dark pos-action-button">{cargandoInventario ? 'Cargando...' : 'Ver inventario'}</button>
+                        <button
+                            onClick={toggleAsistenteVoz}
+                            disabled={!vozDisponible}
+                            className={`${escuchandoVoz ? 'btn-orange' : 'btn-dark'} pos-action-button disabled:opacity-40 disabled:cursor-not-allowed`}
+                        >
+                            {escuchandoVoz ? 'Escuchando voz' : 'Asistente voz'}
+                        </button>
+                    </div>
                 </div>
                 {(escuchandoVoz || resultadoAsistente || !vozDisponible) && (
                     <div className="bg-white border border-blue-50 rounded-2xl shadow-sm p-4 mb-6 text-gray-800">
