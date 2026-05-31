@@ -34,6 +34,8 @@ const Login = () => {
                     navigate('/admin');
                 } else if (userData.rol === 'empleado') {
                     navigate('/venta');
+                } else if (userData.rol === 'tecnico') {
+                    navigate('/tecnico');
                 } else {
                     setError("Rol no reconocido en el sistema.");
                 }

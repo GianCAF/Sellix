@@ -10,6 +10,7 @@ import AdminInventario from './pages/AdminInventario';
 import AdminVerInventario from './pages/AdminVerInventario';
 import VentaEmpleado from './pages/VentaEmpleado';
 import NotFound from './pages/NotFound';
+import TecnicoReparaciones from './pages/TecnicoReparaciones';
 import { AppNotificationsProvider } from './components/AppNotifications';
 
 // Componente para proteger las rutas
@@ -84,6 +85,12 @@ function App() {
           <Route path="/venta" element={
             <ProtectedRoute roleRequired="empleado">
               <VentaEmpleado />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/tecnico" element={
+            <ProtectedRoute roleRequired="tecnico">
+              <TecnicoReparaciones />
             </ProtectedRoute>
           } />
 

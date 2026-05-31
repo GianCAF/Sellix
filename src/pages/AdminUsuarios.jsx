@@ -8,6 +8,7 @@ const AdminUsuarios = () => {
     const [password, setPassword] = useState('');
     const [nombre, setNombre] = useState('');
     const [sucursalId, setSucursalId] = useState('');
+    const [rol, setRol] = useState('empleado');
     const [sucursales, setSucursales] = useState([]);
     const [usuarios, setUsuarios] = useState([]);
     const [editandoId, setEditandoId] = useState(null);
@@ -29,7 +30,11 @@ const AdminUsuarios = () => {
 
         try {
             if (editandoId) {
-                await updateDoc(doc(db, "usuarios", editandoId), { nombre, sucursalId });
+                await updateDoc(doc(db, "usuarios", editandoId), {
+                    nombre,
+                    rol,
+                    sucursalId: rol === 'empleado' ? sucursalId : ''
+                });
                 setEditandoId(null);
                 alert("Empleado actualizado con éxito");
             } else {
@@ -57,15 +62,15 @@ const AdminUsuarios = () => {
                         uid: data.localId,
                         nombre,
                         email,
-                        rol: 'empleado',
-                        sucursalId,
+                        rol,
+                        sucursalId: rol === 'empleado' ? sucursalId : '',
                         fechaAlta: new Date()
                     });
                     alert("Empleado registrado correctamente");
                 }
             }
             // Resetear campos
-            setNombre(''); setEmail(''); setPassword(''); setSucursalId('');
+            setNombre(''); setEmail(''); setPassword(''); setSucursalId(''); setRol('empleado');
             await cargarDatos();
         } catch (error) {
             console.error(error);
@@ -78,7 +83,8 @@ const AdminUsuarios = () => {
     const prepararEdicion = (u) => {
         setEditandoId(u.id);
         setNombre(u.nombre);
-        setSucursalId(u.sucursalId);
+        setSucursalId(u.sucursalId || '');
+        setRol(u.rol || 'empleado');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -100,7 +106,7 @@ const AdminUsuarios = () => {
             <AdminNavbar />
             <div className="p-4 md:p-8 max-w-5xl mx-auto">
                 <h2 className="text-2xl font-black mb-6 uppercase italic text-[#1A2517]">
-                    {editandoId ? '✏️ Editando Empleado' : '👥 Nuevo Empleado'}
+                    {editandoId ? 'Editando Usuario' : 'Nuevo Usuario'}
                 </h2>
 
                 {/* Formulario Responsivo */}
@@ -111,8 +117,16 @@ const AdminUsuarios = () => {
                     </div>
 
                     <div className="flex flex-col">
+                        <label className="text-[10px] font-black text-[#8A8377] uppercase ml-2 mb-1">Rol</label>
+                        <select className="p-3 border-2 rounded-xl outline-none font-bold text-[#67625C] bg-[#F8F5EC]" value={rol} onChange={(e) => setRol(e.target.value)} required>
+                            <option value="empleado">Empleado</option>
+                            <option value="tecnico">Tecnico</option>
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col">
                         <label className="text-[10px] font-black text-[#8A8377] uppercase ml-2 mb-1">Sucursal Asignada</label>
-                        <select className="p-3 border-2 rounded-xl outline-none font-bold text-[#67625C] bg-[#F8F5EC]" value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} required>
+                        <select className="p-3 border-2 rounded-xl outline-none font-bold text-[#67625C] bg-[#F8F5EC]" value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} required={rol === 'empleado'} disabled={rol !== 'empleado'}>
                             <option value="">-- Seleccionar --</option>
                             {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                         </select>
@@ -136,11 +150,11 @@ const AdminUsuarios = () => {
                         disabled={cargando}
                         className={`md:col-span-2 py-4 rounded-2xl font-black text-white shadow-lg transition-all active:scale-95 ${editandoId ? 'bg-[#67625C]' : 'bg-[#1A2517] hover:bg-[#576238]'} disabled:bg-[#D8C7B5]`}
                     >
-                        {cargando ? 'PROCESANDO...' : editandoId ? 'ACTUALIZAR DATOS' : 'REGISTRAR EMPLEADO'}
+                        {cargando ? 'PROCESANDO...' : editandoId ? 'ACTUALIZAR DATOS' : 'REGISTRAR USUARIO'}
                     </button>
 
                     {editandoId && (
-                        <button type="button" onClick={() => { setEditandoId(null); setNombre(''); setSucursalId(''); }} className="md:col-span-2 text-[#8A8377] font-black text-xs uppercase italic">Cancelar Edición</button>
+                        <button type="button" onClick={() => { setEditandoId(null); setNombre(''); setSucursalId(''); setRol('empleado'); }} className="md:col-span-2 text-[#8A8377] font-black text-xs uppercase italic">Cancelar Edición</button>
                     )}
                 </form>
 
@@ -151,12 +165,12 @@ const AdminUsuarios = () => {
                             <thead className="bg-[#F8F5EC]">
                                 <tr>
                                     <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest">Empleado</th>
-                                    <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest">Sucursal</th>
+                                    <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest">Rol / Sucursal</th>
                                     <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#F0EADC]">
-                                {usuarios.filter(u => u.rol === 'empleado').map(u => (
+                                {usuarios.filter(u => ['empleado', 'tecnico'].includes(u.rol)).map(u => (
                                     <tr key={u.id} className="hover:bg-[#E5EEDC]/20 transition-colors">
                                         <td className="p-5">
                                             <p className="font-black text-[#3E4635] uppercase text-sm">{u.nombre}</p>
@@ -164,7 +178,7 @@ const AdminUsuarios = () => {
                                         </td>
                                         <td className="p-5">
                                             <span className="bg-[#E5EEDC] text-[#1A2517] px-4 py-1.5 rounded-full text-[10px] font-black uppercase italic border border-[#D9E5D3]">
-                                                {sucursales.find(s => s.id === u.sucursalId)?.nombre || '---'}
+                                                {u.rol === 'tecnico' ? 'Tecnico' : sucursales.find(s => s.id === u.sucursalId)?.nombre || '---'}
                                             </span>
                                         </td>
                                         <td className="p-5 text-right">
@@ -175,7 +189,7 @@ const AdminUsuarios = () => {
                                         </td>
                                     </tr>
                                 ))}
-                                {usuarios.filter(u => u.rol === 'empleado').length === 0 && (
+                                {usuarios.filter(u => ['empleado', 'tecnico'].includes(u.rol)).length === 0 && (
                                     <tr>
                                         <td colSpan="3" className="p-10 text-center text-[#B8AD9D] font-black uppercase italic">No hay empleados registrados</td>
                                     </tr>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../services/firebase';
-import { collection, getDocs, query, where, addDoc, doc, updateDoc, increment, Timestamp, getDoc, setDoc, writeBatch, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, addDoc, doc, updateDoc, increment, Timestamp, getDoc, setDoc, writeBatch, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -26,6 +26,9 @@ const VentaEmpleado = () => {
     const [verDetallesCorte, setVerDetallesCorte] = useState(false);
     const [ventasHoy, setVentasHoy] = useState([]);
     const [movimientosHoy, setMovimientosHoy] = useState([]);
+    const [cierreCaja, setCierreCaja] = useState(null);
+    const [efectivoReal, setEfectivoReal] = useState('');
+    const [procesandoCierreCaja, setProcesandoCierreCaja] = useState(false);
     const [mostrarModalTemp, setMostrarModalTemp] = useState(false);
     const [tempNombre, setTempNombre] = useState('');
     const [tempPrecio, setTempPrecio] = useState('');
@@ -49,6 +52,7 @@ const VentaEmpleado = () => {
     const [mostrarPendientes, setMostrarPendientes] = useState(false);
     const [pendientesSucursal, setPendientesSucursal] = useState([]);
     const [nuevaNotaPendiente, setNuevaNotaPendiente] = useState('');
+    const [tipoPendiente, setTipoPendiente] = useState('general');
     const [procesandoPendiente, setProcesandoPendiente] = useState(false);
     const [pendienteCompletandoId, setPendienteCompletandoId] = useState(null);
     const [vozDisponible, setVozDisponible] = useState(false);
@@ -230,6 +234,8 @@ const VentaEmpleado = () => {
                 sucursalId: user.sucursalId,
                 sucursalNombre,
                 nota,
+                tipo: tipoPendiente,
+                tipoLabel: tipoPendiente === 'celular_por_venir' ? 'Celular por venir' : 'General',
                 estado: 'pendiente',
                 creadoPorId: user.uid,
                 creadoPorNombre: user.nombre || 'Empleado',
@@ -237,6 +243,7 @@ const VentaEmpleado = () => {
                 fechaString: getFechaLocalID()
             });
             setNuevaNotaPendiente('');
+            setTipoPendiente('general');
         } catch (error) {
             alert("Error al guardar pendiente");
         } finally {
@@ -248,7 +255,12 @@ const VentaEmpleado = () => {
         if (pendienteCompletandoId) return;
         setPendienteCompletandoId(id);
         try {
-            await deleteDoc(doc(db, "pendientes_sucursal", id));
+            await updateDoc(doc(db, "pendientes_sucursal", id), {
+                estado: 'hecho',
+                completadoPorId: user.uid,
+                completadoPorNombre: user.nombre || 'Empleado',
+                completadoEn: Timestamp.now()
+            });
         } catch (error) {
             alert("Error al completar pendiente");
         } finally {
@@ -265,7 +277,9 @@ const VentaEmpleado = () => {
             ]);
             const vData = snapV.docs.map(d => ({ id: d.id, ...d.data() })).filter(v => v.fecha && `${String(v.fecha.toDate().getDate()).padStart(2, '0')}-${String(v.fecha.toDate().getMonth() + 1).padStart(2, '0')}-${v.fecha.toDate().getFullYear()}` === fechaHoy).sort((a, b) => b.fecha.toMillis() - a.fecha.toMillis());
             const mData = snapM.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.fechaString === fechaHoy).sort((a, b) => b.fecha.toMillis() - a.fecha.toMillis());
-            setVentasHoy(vData); setMovimientosHoy(mData); setMostrarCorte(true);
+            const cierreSnap = await getDoc(doc(db, "cajas_cierre", `${user.sucursalId}_${fechaHoy}`));
+            const cierreData = cierreSnap.exists() ? { id: cierreSnap.id, ...cierreSnap.data() } : null;
+            setVentasHoy(vData); setMovimientosHoy(mData); setCierreCaja(cierreData); setEfectivoReal(cierreData ? String(cierreData.efectivoReal || '') : ''); setMostrarCorte(true);
         } catch (error) { alert("Error"); }
     };
 
@@ -670,6 +684,8 @@ const VentaEmpleado = () => {
     const totalEntradas = movimientosHoy.filter(m => m.tipo === 'entrada').reduce((acc, m) => acc + (Number(m.monto) || 0), 0);
     const totalSalidas = movimientosHoy.filter(m => m.tipo === 'salida').reduce((acc, m) => acc + (Number(m.monto) || 0), 0);
     const netoCaja = Number(fondoInicial) + totalVentas + totalEntradas - totalSalidas;
+    const efectivoRealNumero = Number(efectivoReal) || 0;
+    const diferenciaCaja = efectivoReal ? efectivoRealNumero - netoCaja : Number(cierreCaja?.diferencia) || 0;
     const formatearFechaTicket = (fecha) => fecha.toLocaleString('es-MX', {
         day: '2-digit',
         month: '2-digit',
@@ -716,7 +732,9 @@ const VentaEmpleado = () => {
                 ['Ventas', moneda.format(totalVentas)],
                 ['Entradas', moneda.format(totalEntradas)],
                 ['Salidas', moneda.format(totalSalidas)],
-                ['Caja Actual', moneda.format(netoCaja)]
+                ['Caja Esperada', moneda.format(netoCaja)],
+                ['Efectivo Real', cierreCaja ? moneda.format(Number(cierreCaja.efectivoReal) || 0) : 'Sin cierre'],
+                ['Diferencia', cierreCaja ? moneda.format(Number(cierreCaja.diferencia) || 0) : 'Sin cierre']
             ],
             theme: 'grid'
         });
@@ -743,6 +761,37 @@ const VentaEmpleado = () => {
         });
 
         doc.save(`corte_${sucursalNombre}.pdf`);
+    };
+
+    const registrarCierreCaja = async () => {
+        if (procesandoCierreCaja) return;
+        if (efectivoReal === '' || Number.isNaN(Number(efectivoReal)) || Number(efectivoReal) < 0) return alert("Ingresa el efectivo real");
+        setProcesandoCierreCaja(true);
+        try {
+            const fechaHoy = getFechaLocalID();
+            const data = {
+                sucursalId: user.sucursalId,
+                sucursalNombre,
+                empleadoId: user.uid,
+                nombreEmpleado: user.nombre || 'Empleado',
+                fecha: Timestamp.now(),
+                fechaString: fechaHoy,
+                fondoInicial: Number(fondoInicial) || 0,
+                totalVentas,
+                totalEntradas,
+                totalSalidas,
+                cajaEsperada: netoCaja,
+                efectivoReal: Number(efectivoReal),
+                diferencia: Number(efectivoReal) - netoCaja
+            };
+            await setDoc(doc(db, "cajas_cierre", `${user.sucursalId}_${fechaHoy}`), data);
+            setCierreCaja(data);
+            window.sellixNotify?.('Cierre de caja guardado', { type: 'success' });
+        } catch {
+            alert("No pude guardar el cierre de caja");
+        } finally {
+            setProcesandoCierreCaja(false);
+        }
     };
 
     const crearVentaPayload = () => {
@@ -1142,7 +1191,29 @@ const VentaEmpleado = () => {
                             <div className="p-4 bg-[#F8F5EC] rounded-2xl"><p className="text-[10px] font-black text-[#8A8377] uppercase">Fondo</p><p className="text-xl font-black">${Number(fondoInicial).toFixed(2)}</p></div>
                             <div className="p-4 bg-[#E5EEDC] rounded-2xl text-[#1A2517]"><p className="text-[10px] font-black uppercase">Ventas</p><p className="text-xl font-black">${totalVentas.toFixed(2)}</p></div>
                             <div className="p-4 bg-[#F4E6E1] rounded-2xl text-[#7E2F28]"><p className="text-[10px] font-black uppercase">Salidas</p><p className="text-xl font-black">${totalSalidas.toFixed(2)}</p></div>
-                            <div className="p-4 bg-[#1A2517] rounded-2xl text-white"><p className="text-[10px] font-black uppercase font-black">Caja Actual</p><p className="text-xl font-black">${netoCaja.toFixed(2)}</p></div>
+                            <div className="p-4 bg-[#1A2517] rounded-2xl text-white"><p className="text-[10px] font-black uppercase font-black">Caja Esperada</p><p className="text-xl font-black">${netoCaja.toFixed(2)}</p></div>
+                        </div>
+                        <div className="bg-[#F8F5EC] border border-[#E3D9C8] rounded-2xl p-4 mb-5">
+                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+                                <div>
+                                    <label className="text-[10px] font-black text-[#8A8377] uppercase ml-2">Efectivo real entregado</label>
+                                    <input
+                                        type="number"
+                                        className="input-modal !mb-0 bg-[#FFFDF7]"
+                                        placeholder="Monto fisico contado"
+                                        value={efectivoReal}
+                                        onChange={(e) => setEfectivoReal(e.target.value)}
+                                    />
+                                </div>
+                                <button onClick={registrarCierreCaja} disabled={procesandoCierreCaja} className="btn-primary py-4 disabled:opacity-50">
+                                    {procesandoCierreCaja ? 'Guardando...' : cierreCaja ? 'Actualizar cierre' : 'Cerrar caja'}
+                                </button>
+                            </div>
+                            {(efectivoReal || cierreCaja) && (
+                                <div className={`mt-3 rounded-2xl p-3 text-center font-black uppercase ${diferenciaCaja < 0 ? 'bg-[#F4E6E1] text-[#9A3B30]' : diferenciaCaja > 0 ? 'bg-[#EFE2B8] text-[#9A6B3F]' : 'bg-[#E5EEDC] text-[#1A2517]'}`}>
+                                    {diferenciaCaja < 0 ? 'Faltante' : diferenciaCaja > 0 ? 'Sobrante' : 'Cuadre exacto'}: {moneda.format(Math.abs(diferenciaCaja))}
+                                </div>
+                            )}
                         </div>
                         <div className="flex gap-2 mb-4">
                             <button onClick={() => setVerDetallesCorte(!verDetallesCorte)} className="btn-dark flex-1">👁️ Detalles</button>
@@ -1209,6 +1280,22 @@ const VentaEmpleado = () => {
                         </div>
 
                         <div className="bg-[#F8F5EC] border border-[#E3D9C8] rounded-2xl p-4 mb-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setTipoPendiente('general')}
+                                    className={`rounded-2xl py-3 text-xs font-black uppercase ${tipoPendiente === 'general' ? 'bg-[#1A2517] text-white' : 'bg-[#F0EADC] text-[#67625C]'}`}
+                                >
+                                    Pendiente general
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setTipoPendiente('celular_por_venir')}
+                                    className={`rounded-2xl py-3 text-xs font-black uppercase ${tipoPendiente === 'celular_por_venir' ? 'bg-[#576238] text-white' : 'bg-[#F0EADC] text-[#67625C]'}`}
+                                >
+                                    Celular por venir
+                                </button>
+                            </div>
                             <textarea
                                 className="w-full min-h-28 p-4 rounded-2xl border-2 border-[#FFFDF7] outline-none focus:border-[#576238] font-bold resize-none"
                                 placeholder="Escribe que queda pendiente para el siguiente turno..."
@@ -1225,6 +1312,9 @@ const VentaEmpleado = () => {
                                 <div key={item.id} className="bg-[#FFFDF7] border border-[#E3D9C8] rounded-2xl p-4 shadow-sm">
                                     <div className="flex justify-between gap-4">
                                         <div className="flex-1">
+                                            <span className={`inline-flex mb-2 rounded-full px-3 py-1 text-[9px] font-black uppercase ${item.tipo === 'celular_por_venir' ? 'bg-[#E5EEDC] text-[#1A2517]' : 'bg-[#F0EADC] text-[#67625C]'}`}>
+                                                {item.tipoLabel || (item.tipo === 'celular_por_venir' ? 'Celular por venir' : 'General')}
+                                            </span>
                                             <p className="text-sm font-black text-[#1A2517] whitespace-pre-wrap">{item.nota}</p>
                                             <p className="text-[10px] font-black text-[#8A8377] uppercase mt-3">
                                                 {item.creadoPorNombre || 'Empleado'} | {formatearFechaPendiente(item.fecha)}

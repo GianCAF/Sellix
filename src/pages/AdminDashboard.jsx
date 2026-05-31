@@ -7,9 +7,11 @@ const AdminDashboard = () => {
     const [sucursales, setSucursales] = useState([]);
     const [ventas, setVentas] = useState([]);
     const [inventario, setInventario] = useState([]);
+    const [ultimaVentaPorSucursal, setUltimaVentaPorSucursal] = useState({});
     const [filtroSucursal, setFiltroSucursal] = useState('todas');
     const [sucursalAlerta, setSucursalAlerta] = useState(null);
     const [procesandoAlertaId, setProcesandoAlertaId] = useState(null);
+    const [umbralVentaLenta, setUmbralVentaLenta] = useState(0);
 
     // Filtros de fecha (Hoy por defecto)
     const hoyStr = new Date().toISOString().split('T')[0];
@@ -21,13 +23,20 @@ const AdminDashboard = () => {
     const cargarDatos = async () => {
         setLoading(true);
         try {
-            const [sucSnap, invSnap] = await Promise.all([
+            const [sucSnap, invSnap, ultimasSnap] = await Promise.all([
                 getDocs(collection(db, "sucursales")),
-                getDocs(collection(db, "inventarios"))
+                getDocs(collection(db, "inventarios")),
+                getDocs(query(collection(db, "ventas"), orderBy("fecha", "desc")))
             ]);
             const listaSucursales = sucSnap.docs.map(d => ({ id: d.id, ...d.data() }));
             setSucursales(listaSucursales);
             setInventario(invSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+            const ultimas = {};
+            ultimasSnap.docs.forEach(d => {
+                const venta = { id: d.id, ...d.data() };
+                if (venta.sucursalId && !ultimas[venta.sucursalId]) ultimas[venta.sucursalId] = venta;
+            });
+            setUltimaVentaPorSucursal(ultimas);
 
             const inicio = new Date(fechaInicio + "T00:00:00");
             const fin = new Date(fechaFin + "T23:59:59");
@@ -123,6 +132,45 @@ const AdminDashboard = () => {
         return Object.values(productosMap).sort((a, b) => b.cantidadAcumulada - a.cantidadAcumulada);
     };
 
+    const formatearUltimaVenta = (venta) => {
+        if (!venta?.fecha?.toDate) return 'Sin ventas registradas';
+        return venta.fecha.toDate().toLocaleString('es-MX', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const obtenerProductosPocoVendidos = () => {
+        const ventasFiltradas = ventas.filter(v => filtroSucursal === 'todas' || v.sucursalId === filtroSucursal);
+        const ventasPorProducto = {};
+        ventasFiltradas.forEach(venta => {
+            (venta.productos || []).forEach(prod => {
+                const llave = `${venta.sucursalId || 'sin-sucursal'}_${prod.productoId || prod.id || prod.descripcion}`;
+                if (!ventasPorProducto[llave]) ventasPorProducto[llave] = { cantidad: 0, total: 0 };
+                ventasPorProducto[llave].cantidad += Number(prod.cantidadVenta) || 0;
+                ventasPorProducto[llave].total += Number(prod.subtotal) || ((Number(prod.precio) || 0) * (Number(prod.cantidadVenta) || 0));
+            });
+        });
+
+        return inventario
+            .filter(item => filtroSucursal === 'todas' || item.sucursalId === filtroSucursal)
+            .map(item => {
+                const llave = `${item.sucursalId || 'sin-sucursal'}_${item.productoId || item.id || item.descripcion}`;
+                const venta = ventasPorProducto[llave] || { cantidad: 0, total: 0 };
+                return {
+                    ...item,
+                    cantidadVendidaPeriodo: venta.cantidad,
+                    totalVendidoPeriodo: venta.total,
+                    sucursalNombre: sucursales.find(s => s.id === item.sucursalId)?.nombre || item.sucursalNombre || 'Sucursal'
+                };
+            })
+            .filter(item => item.cantidadVendidaPeriodo <= Number(umbralVentaLenta || 0))
+            .sort((a, b) => a.cantidadVendidaPeriodo - b.cantidadVendidaPeriodo || (a.descripcion || '').localeCompare(b.descripcion || ''));
+    };
+
     return (
         <div className="admin-page">
             <AdminNavbar />
@@ -211,9 +259,68 @@ const AdminDashboard = () => {
                                                 <p className="admin-metric-label">Venta en Periodo</p>
                                                 <p className="admin-metric-value">${totalSuc.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
                                             </div>
+                                            <div className="mt-4 w-full rounded-2xl bg-[#F8F5EC] px-4 py-3">
+                                                <p className="text-[10px] font-black uppercase text-[#8A8377]">Ultima venta</p>
+                                                <p className="text-xs font-black text-[#3E4635]">{formatearUltimaVenta(ultimaVentaPorSucursal[suc.id])}</p>
+                                            </div>
                                         </div>
                                     );
                                 })}
+                        </div>
+
+                        <div className="admin-table-panel mb-12">
+                            <div className="p-8 border-b bg-[#F8F5EC]/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <h2 className="admin-section-title">Productos que se venden poco o nada</h2>
+                                    <p className="admin-section-subtitle">Usa el rango de fechas y sucursal seleccionados arriba</p>
+                                </div>
+                                <div className="flex items-center gap-3 bg-[#FFFDF7] border border-[#E3D9C8] rounded-2xl p-3">
+                                    <label className="text-[10px] font-black uppercase text-[#8A8377]">Max. piezas vendidas</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-20 bg-transparent font-black text-[#1A2517] outline-none"
+                                        value={umbralVentaLenta}
+                                        onChange={(e) => setUmbralVentaLenta(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="admin-table">
+                                    <thead className="admin-table-head">
+                                        <tr>
+                                            <th className="admin-th">Producto</th>
+                                            <th className="admin-th">Sucursal</th>
+                                            <th className="admin-th text-center">Stock</th>
+                                            <th className="admin-th text-center">Vendido</th>
+                                            <th className="admin-th text-right">Importe</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[#F0EADC]">
+                                        {obtenerProductosPocoVendidos().slice(0, 80).map(item => (
+                                            <tr key={item.id} className="admin-row">
+                                                <td className="admin-td">
+                                                    <p className="font-black text-[#3E4635] uppercase text-sm">{item.descripcion}</p>
+                                                    <p className="text-[10px] font-bold text-[#8A8377] uppercase">{item.marcaNombre || item.marca || 'N/A'} | {item.codigos?.[0] || 'Sin codigo'}</p>
+                                                </td>
+                                                <td className="admin-td font-black text-xs uppercase text-[#67625C]">{item.sucursalNombre}</td>
+                                                <td className="admin-td text-center">
+                                                    <span className="bg-[#F0EADC] text-[#1A2517] px-3 py-1 rounded-lg font-black text-xs">{Number(item.cantidad) || 0} pz</span>
+                                                </td>
+                                                <td className="admin-td text-center font-black text-[#9A3B30]">{item.cantidadVendidaPeriodo} pz</td>
+                                                <td className="admin-td text-right font-black text-[#1A2517]">{item.totalVendidoPeriodo.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</td>
+                                            </tr>
+                                        ))}
+                                        {obtenerProductosPocoVendidos().length === 0 && (
+                                            <tr>
+                                                <td colSpan="5" className="p-16 text-center text-[#B8AD9D] font-black uppercase italic">
+                                                    No hay productos dentro de ese criterio
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         {sucursalAlerta && (

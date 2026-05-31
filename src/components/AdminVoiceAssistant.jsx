@@ -335,6 +335,9 @@ const AdminVoiceAssistant = () => {
 
     const esConsultaVentas = (texto) => /\b(venta|ventas|vendido|vendio|vendieron|lleva vendido|facturo|ingreso|ingresos)\b/.test(texto);
     const esConsultaInventario = (texto) => /\b(inventario|stock|existencia|existencias|producto|productos|pieza|piezas|agotado|agotados|tenemos|hay)\b/.test(texto);
+    const esConsultaProductosPocoVendidos = (texto) => /\b(producto|productos)\b/.test(texto)
+        && /\b(venden|vendieron|vendido|ventas|venta)\b/.test(texto)
+        && /\b(poco|poca|nada|menos|bajo|baja|lento|lentos|sin venta|sin ventas)\b/.test(texto);
 
     const obtenerGuiaAdmin = (consulta) => {
         return Object.values(GUIAS_ADMIN).find(guia => guia.activadores.some(regex => regex.test(consulta))) || null;
@@ -565,6 +568,61 @@ const AdminVoiceAssistant = () => {
         hablar(respuesta);
     };
 
+    const responderProductosPocoVendidos = async (consulta, sucursales, inventario) => {
+        const periodo = detectarPeriodoVentas(consulta);
+        const ventas = await obtenerVentasPeriodo(periodo);
+        const sucursal = detectarSucursal(consulta, sucursales);
+        const umbral = /\b(sin venta|sin ventas|nada|cero|0)\b/.test(consulta) ? 0 : obtenerNumero(consulta) ?? 2;
+        const ventasPeriodo = sucursal ? ventas.filter(v => v.sucursalId === sucursal.id) : ventas;
+        const ventasPorProducto = {};
+
+        ventasPeriodo.forEach(venta => {
+            (venta.productos || []).forEach(prod => {
+                const llave = `${venta.sucursalId || 'sin-sucursal'}_${prod.productoId || prod.id || prod.descripcion}`;
+                if (!ventasPorProducto[llave]) ventasPorProducto[llave] = { cantidad: 0, total: 0 };
+                ventasPorProducto[llave].cantidad += Number(prod.cantidadVenta) || 0;
+                ventasPorProducto[llave].total += Number(prod.subtotal) || ((Number(prod.precio) || 0) * (Number(prod.cantidadVenta) || 0));
+            });
+        });
+
+        const productos = inventario
+            .filter(item => !sucursal || item.sucursalId === sucursal.id)
+            .map(item => {
+                const llave = `${item.sucursalId || 'sin-sucursal'}_${item.productoId || item.id || item.descripcion}`;
+                const venta = ventasPorProducto[llave] || { cantidad: 0, total: 0 };
+                const sucursalItem = sucursales.find(s => s.id === item.sucursalId);
+                return {
+                    ...item,
+                    cantidad: venta.cantidad,
+                    cantidadVendidaPeriodo: venta.cantidad,
+                    totalVendidoPeriodo: venta.total,
+                    sucursalNombre: sucursalItem?.nombre || item.sucursalNombre || 'Sucursal'
+                };
+            })
+            .filter(item => item.cantidadVendidaPeriodo <= umbral)
+            .sort((a, b) => a.cantidadVendidaPeriodo - b.cantidadVendidaPeriodo || (a.descripcion || '').localeCompare(b.descripcion || ''))
+            .slice(0, 20);
+
+        const criterio = umbral === 0 ? `sin ventas ${periodo.etiqueta}` : `con ${umbral} ventas o menos ${periodo.etiqueta}`;
+        if (productos.length === 0) {
+            const respuesta = sucursal
+                ? `En ${sucursal.nombre} no encontre productos ${criterio}.`
+                : `No encontre productos ${criterio}.`;
+            setMensaje(respuesta);
+            setResultado({ sucursal: sucursal?.nombre || 'Todas', criterio, productos: [] });
+            hablar(respuesta);
+            return;
+        }
+
+        const lista = productos.map(item => `${item.descripcion} en ${item.sucursalNombre}, ${item.cantidadVendidaPeriodo} piezas`).join(', ');
+        const respuesta = sucursal
+            ? `En ${sucursal.nombre} encontre ${productos.length} productos ${criterio}: ${lista}.`
+            : `En todas las sucursales encontre ${productos.length} productos ${criterio}: ${lista}.`;
+        setMensaje(respuesta);
+        setResultado({ sucursal: sucursal?.nombre || 'Todas', criterio, productos });
+        hablar(respuesta);
+    };
+
     const procesarConsulta = async (texto) => {
         const consulta = extraerConsulta(texto);
         if (consulta === null) return;
@@ -597,6 +655,11 @@ const AdminVoiceAssistant = () => {
             }
 
             const { sucursales, inventario } = await obtenerDatos();
+
+            if (esConsultaProductosPocoVendidos(consulta)) {
+                await responderProductosPocoVendidos(consulta, sucursales, inventario);
+                return;
+            }
 
             if (esConsultaVentas(consulta)) {
                 await responderConsultaVentas(consulta, sucursales);
