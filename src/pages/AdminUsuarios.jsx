@@ -96,23 +96,23 @@ const AdminUsuarios = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#F8F5EC]">
             <AdminNavbar />
             <div className="p-4 md:p-8 max-w-5xl mx-auto">
-                <h2 className="text-2xl font-black mb-6 uppercase italic text-gray-800">
+                <h2 className="text-2xl font-black mb-6 uppercase italic text-[#1A2517]">
                     {editandoId ? '✏️ Editando Empleado' : '👥 Nuevo Empleado'}
                 </h2>
 
                 {/* Formulario Responsivo */}
-                <form onSubmit={handleCrearOEditar} className="bg-white p-6 rounded-[30px] shadow-sm mb-10 grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-100">
+                <form onSubmit={handleCrearOEditar} className="bg-[#FFFDF7] p-6 rounded-[30px] shadow-sm mb-10 grid grid-cols-1 md:grid-cols-2 gap-4 border border-[#E3D9C8]">
                     <div className="flex flex-col">
-                        <label className="text-[10px] font-black text-gray-400 uppercase ml-2 mb-1">Nombre Completo</label>
-                        <input type="text" className="p-3 border-2 rounded-xl outline-none focus:border-blue-500 font-bold" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+                        <label className="text-[10px] font-black text-[#8A8377] uppercase ml-2 mb-1">Nombre Completo</label>
+                        <input type="text" className="p-3 border-2 rounded-xl outline-none focus:border-[#576238] font-bold" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
                     </div>
 
                     <div className="flex flex-col">
-                        <label className="text-[10px] font-black text-gray-400 uppercase ml-2 mb-1">Sucursal Asignada</label>
-                        <select className="p-3 border-2 rounded-xl outline-none font-bold text-gray-600 bg-gray-50" value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} required>
+                        <label className="text-[10px] font-black text-[#8A8377] uppercase ml-2 mb-1">Sucursal Asignada</label>
+                        <select className="p-3 border-2 rounded-xl outline-none font-bold text-[#67625C] bg-[#F8F5EC]" value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} required>
                             <option value="">-- Seleccionar --</option>
                             {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                         </select>
@@ -121,12 +121,12 @@ const AdminUsuarios = () => {
                     {!editandoId && (
                         <>
                             <div className="flex flex-col">
-                                <label className="text-[10px] font-black text-gray-400 uppercase ml-2 mb-1">Correo Electrónico</label>
-                                <input type="email" className="p-3 border-2 rounded-xl outline-none focus:border-blue-500 font-bold" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                                <label className="text-[10px] font-black text-[#8A8377] uppercase ml-2 mb-1">Correo Electrónico</label>
+                                <input type="email" className="p-3 border-2 rounded-xl outline-none focus:border-[#576238] font-bold" value={email} onChange={(e) => setEmail(e.target.value)} required />
                             </div>
                             <div className="flex flex-col">
-                                <label className="text-[10px] font-black text-gray-400 uppercase ml-2 mb-1">Contraseña</label>
-                                <input type="password" placeholder="Mín. 6 caracteres" className="p-3 border-2 rounded-xl outline-none focus:border-blue-500 font-bold" value={password} onChange={(e) => setPassword(e.target.value)} required={!editandoId} />
+                                <label className="text-[10px] font-black text-[#8A8377] uppercase ml-2 mb-1">Contraseña</label>
+                                <input type="password" placeholder="Mín. 6 caracteres" className="p-3 border-2 rounded-xl outline-none focus:border-[#576238] font-bold" value={password} onChange={(e) => setPassword(e.target.value)} required={!editandoId} />
                             </div>
                         </>
                     )}
@@ -134,50 +134,50 @@ const AdminUsuarios = () => {
                     <button
                         type="submit"
                         disabled={cargando}
-                        className={`md:col-span-2 py-4 rounded-2xl font-black text-white shadow-lg transition-all active:scale-95 ${editandoId ? 'bg-orange-500' : 'bg-blue-600 hover:bg-blue-700'} disabled:bg-gray-300`}
+                        className={`md:col-span-2 py-4 rounded-2xl font-black text-white shadow-lg transition-all active:scale-95 ${editandoId ? 'bg-[#67625C]' : 'bg-[#1A2517] hover:bg-[#576238]'} disabled:bg-[#D8C7B5]`}
                     >
                         {cargando ? 'PROCESANDO...' : editandoId ? 'ACTUALIZAR DATOS' : 'REGISTRAR EMPLEADO'}
                     </button>
 
                     {editandoId && (
-                        <button type="button" onClick={() => { setEditandoId(null); setNombre(''); setSucursalId(''); }} className="md:col-span-2 text-gray-400 font-black text-xs uppercase italic">Cancelar Edición</button>
+                        <button type="button" onClick={() => { setEditandoId(null); setNombre(''); setSucursalId(''); }} className="md:col-span-2 text-[#8A8377] font-black text-xs uppercase italic">Cancelar Edición</button>
                     )}
                 </form>
 
                 {/* Tabla Responsiva con Scroll Horizontal */}
-                <div className="bg-white rounded-[30px] shadow-sm overflow-hidden border border-gray-100">
+                <div className="bg-[#FFFDF7] rounded-[30px] shadow-sm overflow-hidden border border-[#E3D9C8]">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-[#F8F5EC]">
                                 <tr>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Empleado</th>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Sucursal</th>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Acciones</th>
+                                    <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest">Empleado</th>
+                                    <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest">Sucursal</th>
+                                    <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest text-right">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-50">
+                            <tbody className="divide-y divide-[#F0EADC]">
                                 {usuarios.filter(u => u.rol === 'empleado').map(u => (
-                                    <tr key={u.id} className="hover:bg-blue-50/20 transition-colors">
+                                    <tr key={u.id} className="hover:bg-[#E5EEDC]/20 transition-colors">
                                         <td className="p-5">
-                                            <p className="font-black text-gray-700 uppercase text-sm">{u.nombre}</p>
-                                            <p className="text-[10px] font-bold text-gray-400 italic">{u.email}</p>
+                                            <p className="font-black text-[#3E4635] uppercase text-sm">{u.nombre}</p>
+                                            <p className="text-[10px] font-bold text-[#8A8377] italic">{u.email}</p>
                                         </td>
                                         <td className="p-5">
-                                            <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase italic border border-blue-100">
+                                            <span className="bg-[#E5EEDC] text-[#1A2517] px-4 py-1.5 rounded-full text-[10px] font-black uppercase italic border border-[#D9E5D3]">
                                                 {sucursales.find(s => s.id === u.sucursalId)?.nombre || '---'}
                                             </span>
                                         </td>
                                         <td className="p-5 text-right">
                                             <div className="flex gap-2 justify-end">
-                                                <button onClick={() => prepararEdicion(u)} className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">✏️</button>
-                                                <button onClick={() => eliminarUsuario(u.id)} disabled={eliminandoId === u.id} className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm disabled:opacity-50">🗑️</button>
+                                                <button onClick={() => prepararEdicion(u)} className="p-2 bg-[#E5EEDC] text-[#1A2517] rounded-xl hover:bg-[#1A2517] hover:text-white transition-all shadow-sm">✏️</button>
+                                                <button onClick={() => eliminarUsuario(u.id)} disabled={eliminandoId === u.id} className="p-2 bg-[#F4E6E1] text-[#9A3B30] rounded-xl hover:bg-[#9A3B30] hover:text-white transition-all shadow-sm disabled:opacity-50">🗑️</button>
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
                                 {usuarios.filter(u => u.rol === 'empleado').length === 0 && (
                                     <tr>
-                                        <td colSpan="3" className="p-10 text-center text-gray-300 font-black uppercase italic">No hay empleados registrados</td>
+                                        <td colSpan="3" className="p-10 text-center text-[#B8AD9D] font-black uppercase italic">No hay empleados registrados</td>
                                     </tr>
                                 )}
                             </tbody>

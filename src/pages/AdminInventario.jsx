@@ -161,21 +161,21 @@ const AdminInventario = () => {
                     <form onSubmit={guardarOActualizar} className="inventory-form">
                         <div className="inventory-grid-3">
                             <div>
-                                <label className="block text-xs font-black text-blue-600 uppercase mb-2">Categoría *</label>
+                                <label className="block text-xs font-black text-[#1A2517] uppercase mb-2">Categoría *</label>
                                 <select className="inventory-select-primary" value={catSel} onChange={(e) => { setCatSel(e.target.value); setSubSel(''); }} required>
                                     <option value="">Seleccionar...</option>
                                     {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase mb-2">Subcategoría</label>
+                                <label className="block text-xs font-black text-[#8A8377] uppercase mb-2">Subcategoría</label>
                                 <select className="inventory-select" value={subSel} onChange={(e) => setSubSel(e.target.value)} disabled={!catSel}>
                                     <option value="">Seleccionar...</option>
                                     {subcategorias.filter(s => s.categoriaId === catSel).map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase mb-2">Marca</label>
+                                <label className="block text-xs font-black text-[#8A8377] uppercase mb-2">Marca</label>
                                 <select className="inventory-select" value={marcaSel} onChange={(e) => setMarcaSel(e.target.value)}>
                                     <option value="">Seleccionar...</option>
                                     {marcas.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
@@ -185,18 +185,18 @@ const AdminInventario = () => {
 
                         <div className="inventory-grid-2">
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase mb-2">Modelo</label>
+                                <label className="block text-xs font-black text-[#8A8377] uppercase mb-2">Modelo</label>
                                 <input type="text" className="inventory-input" value={modelo} onChange={(e) => setModelo(e.target.value)} placeholder="Ej: iPhone 15 Pro" />
                             </div>
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase mb-2">Descripción (Ficha Técnica)</label>
+                                <label className="block text-xs font-black text-[#8A8377] uppercase mb-2">Descripción (Ficha Técnica)</label>
                                 <input type="text" className="inventory-input-soft" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
                             </div>
                         </div>
 
                         <div className="inventory-array-section">
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase mb-4">Colores</label>
+                                <label className="block text-xs font-black text-[#8A8377] uppercase mb-4">Colores</label>
                                 <div className="flex flex-wrap gap-2">
                                     {colores.map((color, idx) => (
                                         <input key={idx} type="text" className="inventory-pill-input" value={color} onChange={(e) => handleUpdateArray(idx, e.target.value, setColores)} />
@@ -205,7 +205,7 @@ const AdminInventario = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-black text-gray-400 uppercase mb-4">Códigos Globales</label>
+                                <label className="block text-xs font-black text-[#8A8377] uppercase mb-4">Códigos Globales</label>
                                 <div className="space-y-2">
                                     {codigos.map((cod, idx) => (
                                         <input key={idx} type="text" className="inventory-code-input" value={cod} onChange={(e) => handleUpdateArray(idx, e.target.value, setCodigos)} />
@@ -216,7 +216,7 @@ const AdminInventario = () => {
                         </div>
 
                         <div className="pt-6">
-                            <label className="block text-xs font-black text-green-500 uppercase mb-2">Precio Maestro Sugerido *</label>
+                            <label className="block text-xs font-black text-[#576238] uppercase mb-2">Precio Maestro Sugerido *</label>
                             <input type="number" step="0.01" className="inventory-price-input" placeholder="$ 0.00" value={precio} onChange={(e) => setPrecio(e.target.value)} required />
                         </div>
 
@@ -228,15 +228,15 @@ const AdminInventario = () => {
                     /* VISTA LISTADO DEL CATÁLOGO */
                     <div className="inventory-list-panel">
                         <table className="admin-table">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-[#F8F5EC]">
                                 <tr>
-                                    <th className="p-5 text-xs font-black text-gray-400 uppercase">Información del Producto</th>
-                                    <th className="p-5 text-xs font-black text-gray-400 uppercase text-center">Códigos</th>
-                                    <th className="p-5 text-xs font-black text-gray-400 uppercase text-center">Precio</th>
-                                    <th className="p-5 text-xs font-black text-gray-400 uppercase text-right">Acciones</th>
+                                    <th className="p-5 text-xs font-black text-[#8A8377] uppercase">Información del Producto</th>
+                                    <th className="p-5 text-xs font-black text-[#8A8377] uppercase text-center">Códigos</th>
+                                    <th className="p-5 text-xs font-black text-[#8A8377] uppercase text-center">Precio</th>
+                                    <th className="p-5 text-xs font-black text-[#8A8377] uppercase text-right">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-50">
+                            <tbody className="divide-y divide-[#F0EADC]">
                                 {productosMaestros.map(prod => (
                                     <tr key={prod.id} className="admin-row">
                                         <td className="admin-td">
@@ -250,7 +250,7 @@ const AdminInventario = () => {
                                                 ))}
                                             </div>
                                         </td>
-                                        <td className="admin-td text-center font-black text-green-600">${prod.precio}</td>
+                                        <td className="admin-td text-center font-black text-[#576238]">${prod.precio}</td>
                                         <td className="admin-td text-right flex gap-2 justify-end">
                                             <button onClick={() => prepararEdicion(prod)} className="inventory-edit-btn">✏️</button>
                                             <button onClick={() => eliminarProductoMaestro(prod.id)} disabled={procesandoEliminar === prod.id} className="inventory-delete-btn disabled:opacity-50">🗑️</button>

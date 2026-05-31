@@ -29,25 +29,25 @@ const AdminNavbar = () => {
 
     return (
         <>
-        <nav className="bg-white border-b border-gray-200 p-4 sticky top-0 z-[100] shadow-sm">
+        <nav className="bg-[#FFFDF7] border-b border-[#D8C7B5] p-4 sticky top-0 z-[100] shadow-sm">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
                 {/* LOGO */}
                 <h1
                     onClick={() => navigate('/admin')}
-                    className="font-black text-2xl text-blue-600 cursor-pointer uppercase italic tracking-tighter"
+                    className="font-black text-2xl text-[#1A2517] cursor-pointer uppercase italic tracking-tighter"
                 >
-                    POS <span className="text-gray-800">ADMIN</span>
+                    POS <span className="text-[#1A2517]">ADMIN</span>
                 </h1>
 
                 {/* BOTÓN HAMBURGUESA (Solo visible en móvil) */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="lg:hidden text-gray-800 focus:outline-none p-2"
+                    className="lg:hidden text-[#1A2517] focus:outline-none p-2"
                 >
                     <div className="space-y-1.5">
-                        <span className={`block w-6 h-0.5 bg-gray-800 transition-transform ${isOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-                        <span className={`block w-6 h-0.5 bg-gray-800 ${isOpen ? 'opacity-0' : ''}`}></span>
-                        <span className={`block w-6 h-0.5 bg-gray-800 transition-transform ${isOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+                        <span className={`block w-6 h-0.5 bg-[#1A2517] transition-transform ${isOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+                        <span className={`block w-6 h-0.5 bg-[#1A2517] ${isOpen ? 'opacity-0' : ''}`}></span>
+                        <span className={`block w-6 h-0.5 bg-[#1A2517] transition-transform ${isOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
                     </div>
                 </button>
 
@@ -57,14 +57,14 @@ const AdminNavbar = () => {
                         <button
                             key={item.path}
                             onClick={() => navigate(item.path)}
-                            className="text-gray-600 hover:text-blue-600 font-black text-xs uppercase tracking-widest transition-colors"
+                            className="text-[#67625C] hover:text-[#1A2517] font-black text-xs uppercase tracking-widest transition-colors"
                         >
                             {item.label}
                         </button>
                     ))}
                     <button
                         onClick={handleLogout}
-                        className="bg-red-50 text-red-600 px-4 py-2 rounded-xl font-black text-xs uppercase hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                        className="bg-[#F4E6E1] text-[#9A3B30] px-4 py-2 rounded-xl font-black text-xs uppercase hover:bg-[#9A3B30] hover:text-white transition-all shadow-sm"
                     >
                         Salir
                     </button>
@@ -81,20 +81,20 @@ const AdminNavbar = () => {
                     ></div>
 
                     {/* Lista de botones a la izquierda */}
-                    <div className="absolute top-full left-0 w-64 bg-white/95 backdrop-blur-md shadow-2xl border-r border-b border-gray-100 py-4 flex flex-col items-start z-[100] animate-in slide-in-from-left duration-300 lg:hidden">
+                    <div className="absolute top-full left-0 w-64 bg-[#FFFDF7]/95 backdrop-blur-md shadow-2xl border-r border-b border-[#E3D9C8] py-4 flex flex-col items-start z-[100] animate-in slide-in-from-left duration-300 lg:hidden">
                         {menuItems.map((item) => (
                             <button
                                 key={item.path}
                                 onClick={() => navegarYEnchufar(item.path)}
-                                className="w-full text-left px-8 py-4 text-gray-600 hover:text-blue-600 font-black text-xs uppercase tracking-widest border-l-4 border-transparent hover:border-blue-600 hover:bg-blue-50/50 transition-all"
+                                className="w-full text-left px-8 py-4 text-[#67625C] hover:text-[#1A2517] font-black text-xs uppercase tracking-widest border-l-4 border-transparent hover:border-[#1A2517] hover:bg-[#E5EEDC]/50 transition-all"
                             >
                                 {item.label}
                             </button>
                         ))}
-                        <div className="w-full px-6 pt-4 mt-2 border-t border-gray-100">
+                        <div className="w-full px-6 pt-4 mt-2 border-t border-[#E3D9C8]">
                             <button
                                 onClick={handleLogout}
-                                className="w-full bg-red-50 text-red-600 py-3 rounded-xl font-black text-xs uppercase shadow-sm"
+                                className="w-full bg-[#F4E6E1] text-[#9A3B30] py-3 rounded-xl font-black text-xs uppercase shadow-sm"
                             >
                                 Cerrar Sesión
                             </button>

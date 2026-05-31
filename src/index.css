@@ -6,11 +6,11 @@
 @layer components {
     /* Login */
     .login-page {
-        @apply min-h-screen bg-gray-100 flex items-center justify-center p-4;
+        @apply min-h-screen bg-[#F0EADC] flex items-center justify-center p-4;
     }
 
     .login-card {
-        @apply max-w-md w-full bg-white rounded-2xl shadow-xl p-8 transition-all;
+        @apply max-w-md w-full bg-[#FFFDF7] rounded-2xl shadow-xl p-8 transition-all;
     }
 
     .login-header {
@@ -18,11 +18,11 @@
     }
 
     .login-title {
-        @apply text-4xl font-extrabold text-blue-600;
+        @apply text-4xl font-extrabold text-[#1A2517];
     }
 
     .login-subtitle {
-        @apply text-gray-500 mt-2 font-medium;
+        @apply text-[#67625C] mt-2 font-medium;
     }
 
     .form-stack {
@@ -30,15 +30,15 @@
     }
 
     .form-label {
-        @apply block text-sm font-semibold text-gray-700 mb-1;
+        @apply block text-sm font-semibold text-[#3E4635] mb-1;
     }
 
     .login-input {
-        @apply w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all;
+        @apply w-full px-4 py-3 bg-[#F8F5EC] border border-[#D8C7B5] rounded-xl focus:ring-2 focus:ring-[#576238] focus:border-transparent outline-none transition-all;
     }
 
     .login-error {
-        @apply bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm animate-pulse;
+        @apply bg-[#F4E6E1] border-l-4 border-[#9A3B30] text-[#7E2F28] p-4 rounded shadow-sm animate-pulse;
     }
 
     .login-submit {
@@ -46,20 +46,20 @@
     }
 
     .login-submit-active {
-        @apply bg-blue-600 hover:bg-blue-700;
+        @apply bg-[#1A2517] hover:bg-[#576238];
     }
 
     .login-submit-loading {
-        @apply bg-blue-300 cursor-not-allowed;
+        @apply bg-[#ACC8A2] cursor-not-allowed;
     }
 
     .app-footer-note {
-        @apply text-xs text-gray-400;
+        @apply text-xs text-[#8A8377];
     }
 
     /* Admin Layout */
     .admin-page {
-        @apply min-h-screen bg-gray-50 pb-20;
+        @apply min-h-screen bg-[#F8F5EC] pb-20;
     }
 
     .admin-shell {
@@ -71,39 +71,39 @@
     }
 
     .admin-panel {
-        @apply bg-white shadow-sm border border-gray-100;
+        @apply bg-[#FFFDF7] shadow-sm border border-[#E3D9C8];
     }
 
     .admin-summary-panel {
-        @apply bg-white p-8 rounded-[30px] shadow-sm mb-8 border border-gray-100;
+        @apply bg-[#FFFDF7] p-8 rounded-[30px] shadow-sm mb-8 border border-[#E3D9C8];
     }
 
     .admin-filter-bar {
-        @apply flex flex-wrap gap-4 justify-center bg-gray-50 p-4 rounded-3xl;
+        @apply flex flex-wrap gap-4 justify-center bg-[#F8F5EC] p-4 rounded-3xl;
     }
 
     .admin-filter-label {
-        @apply text-[10px] font-black text-gray-400 uppercase ml-2;
+        @apply text-[10px] font-black text-[#8A8377] uppercase ml-2;
     }
 
     .admin-filter-input {
-        @apply bg-transparent font-bold text-gray-700 outline-none;
+        @apply bg-transparent font-bold text-[#3E4635] outline-none;
     }
 
     .admin-filter-select {
-        @apply bg-transparent font-bold text-gray-700 outline-none p-1;
+        @apply bg-transparent font-bold text-[#3E4635] outline-none p-1;
     }
 
     .admin-empty-state {
-        @apply text-center py-20 font-black text-gray-300 text-2xl uppercase animate-pulse italic;
+        @apply text-center py-20 font-black text-[#B8AD9D] text-2xl uppercase animate-pulse italic;
     }
 
     .admin-section-title {
-        @apply text-2xl font-black text-gray-800 uppercase italic;
+        @apply text-2xl font-black text-[#1A2517] uppercase italic;
     }
 
     .admin-section-subtitle {
-        @apply text-gray-400 text-xs font-bold uppercase mt-1;
+        @apply text-[#8A8377] text-xs font-bold uppercase mt-1;
     }
 
     .admin-card-grid {
@@ -111,7 +111,7 @@
     }
 
     .admin-branch-card {
-        @apply bg-white p-10 rounded-[45px] shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:shadow-2xl hover:scale-[1.02] transition-all;
+        @apply bg-[#FFFDF7] p-10 rounded-[45px] shadow-sm border border-[#E3D9C8] flex flex-col items-center justify-center text-center hover:shadow-2xl hover:scale-[1.02] transition-all;
     }
 
     .admin-branch-icon {
@@ -119,27 +119,27 @@
     }
 
     .admin-branch-name {
-        @apply text-xl font-black text-gray-800 uppercase tracking-tighter;
+        @apply text-xl font-black text-[#1A2517] uppercase tracking-tighter;
     }
 
     .admin-branch-location {
-        @apply text-gray-400 text-xs font-bold mb-6 italic;
+        @apply text-[#8A8377] text-xs font-bold mb-6 italic;
     }
 
     .admin-metric-box {
-        @apply bg-blue-50 w-full py-6 rounded-[30px];
+        @apply bg-[#E5EEDC] w-full py-6 rounded-[30px];
     }
 
     .admin-metric-label {
-        @apply text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1;
+        @apply text-[10px] font-black text-[#ACC8A2] uppercase tracking-widest mb-1;
     }
 
     .admin-metric-value {
-        @apply text-4xl font-black text-blue-600;
+        @apply text-4xl font-black text-[#1A2517];
     }
 
     .admin-table-panel {
-        @apply bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden;
+        @apply bg-[#FFFDF7] rounded-[40px] shadow-sm border border-[#E3D9C8] overflow-hidden;
     }
 
     .admin-table {
@@ -147,15 +147,15 @@
     }
 
     .admin-table-head {
-        @apply bg-gray-50 border-b;
+        @apply bg-[#F8F5EC] border-b;
     }
 
     .admin-th {
-        @apply p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest;
+        @apply p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest;
     }
 
     .admin-th-lg {
-        @apply p-5 text-xs font-black text-gray-400 uppercase;
+        @apply p-5 text-xs font-black text-[#8A8377] uppercase;
     }
 
     .admin-td {
@@ -163,16 +163,16 @@
     }
 
     .admin-row {
-        @apply hover:bg-blue-50/20 transition-colors;
+        @apply hover:bg-[#E5EEDC]/20 transition-colors;
     }
 
     .admin-badge {
-        @apply bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase italic;
+        @apply bg-[#1A2517] text-white px-4 py-2 rounded-xl text-xs font-black uppercase italic;
     }
 
     /* Inventario Maestro */
     .inventory-tabs {
-        @apply flex gap-4 mb-10 bg-white p-2 rounded-[25px] shadow-sm border border-gray-100 max-w-md mx-auto;
+        @apply flex gap-4 mb-10 bg-[#FFFDF7] p-2 rounded-[25px] shadow-sm border border-[#E3D9C8] max-w-md mx-auto;
     }
 
     .inventory-tab {
@@ -180,15 +180,15 @@
     }
 
     .inventory-tab-active {
-        @apply bg-blue-600 text-white shadow-lg;
+        @apply bg-[#1A2517] text-white shadow-lg;
     }
 
     .inventory-tab-idle {
-        @apply text-gray-400 hover:text-blue-600;
+        @apply text-[#8A8377] hover:text-[#1A2517];
     }
 
     .inventory-form {
-        @apply bg-white p-8 rounded-[40px] shadow-sm space-y-6 border border-gray-100;
+        @apply bg-[#FFFDF7] p-8 rounded-[40px] shadow-sm space-y-6 border border-[#E3D9C8];
     }
 
     .inventory-grid-3 {
@@ -200,23 +200,23 @@
     }
 
     .inventory-label-primary {
-        @apply block text-xs font-black text-blue-600 uppercase mb-2;
+        @apply block text-xs font-black text-[#1A2517] uppercase mb-2;
     }
 
     .inventory-label-muted {
-        @apply block text-xs font-black text-gray-400 uppercase mb-2;
+        @apply block text-xs font-black text-[#8A8377] uppercase mb-2;
     }
 
     .inventory-label-green {
-        @apply block text-xs font-black text-green-500 uppercase mb-2;
+        @apply block text-xs font-black text-[#576238] uppercase mb-2;
     }
 
     .inventory-select-primary {
-        @apply w-full border-2 border-blue-100 p-3 rounded-xl bg-blue-50 font-bold outline-none;
+        @apply w-full border-2 border-[#D9E5D3] p-3 rounded-xl bg-[#E5EEDC] font-bold outline-none;
     }
 
     .inventory-select {
-        @apply w-full border-2 p-3 rounded-xl bg-gray-50 font-bold outline-none;
+        @apply w-full border-2 p-3 rounded-xl bg-[#F8F5EC] font-bold outline-none;
     }
 
     .inventory-input {
@@ -224,11 +224,11 @@
     }
 
     .inventory-input-soft {
-        @apply w-full border-2 border-gray-100 p-3 rounded-xl bg-gray-50 font-black text-gray-700 outline-none;
+        @apply w-full border-2 border-[#E3D9C8] p-3 rounded-xl bg-[#F8F5EC] font-black text-[#3E4635] outline-none;
     }
 
     .inventory-array-section {
-        @apply grid grid-cols-1 md:grid-cols-2 gap-10 border-t pt-6 border-gray-100;
+        @apply grid grid-cols-1 md:grid-cols-2 gap-10 border-t pt-6 border-[#E3D9C8];
     }
 
     .inventory-pill-input {
@@ -236,52 +236,52 @@
     }
 
     .inventory-code-input {
-        @apply border-2 p-2 rounded-xl w-full font-mono font-bold outline-none focus:border-blue-500;
+        @apply border-2 p-2 rounded-xl w-full font-mono font-bold outline-none focus:border-[#576238];
     }
 
     .inventory-add-small {
-        @apply bg-orange-100 text-orange-600 px-4 py-2 rounded-xl font-black;
+        @apply bg-[#D8C7B5] text-[#67625C] px-4 py-2 rounded-xl font-black;
     }
 
     .inventory-add-link {
-        @apply text-blue-600 text-[10px] font-black uppercase tracking-widest;
+        @apply text-[#1A2517] text-[10px] font-black uppercase tracking-widest;
     }
 
     .inventory-price-input {
-        @apply w-full border-4 border-green-50 p-4 rounded-[25px] text-4xl font-black text-green-600 outline-none;
+        @apply w-full border-4 border-[#E5EEDC] p-4 rounded-[25px] text-4xl font-black text-[#576238] outline-none;
     }
 
     .inventory-submit {
-        @apply w-full bg-blue-600 text-white py-6 rounded-[30px] font-black text-2xl hover:bg-blue-700 shadow-xl uppercase italic;
+        @apply w-full bg-[#1A2517] text-white py-6 rounded-[30px] font-black text-2xl hover:bg-[#576238] shadow-xl uppercase italic;
     }
 
     .inventory-list-panel {
-        @apply bg-white rounded-[40px] shadow-sm overflow-hidden border border-gray-100;
+        @apply bg-[#FFFDF7] rounded-[40px] shadow-sm overflow-hidden border border-[#E3D9C8];
     }
 
     .inventory-product-title {
-        @apply font-black text-gray-700 uppercase leading-tight;
+        @apply font-black text-[#3E4635] uppercase leading-tight;
     }
 
     .inventory-product-meta {
-        @apply text-[10px] text-blue-500 font-bold uppercase;
+        @apply text-[10px] text-[#576238] font-bold uppercase;
     }
 
     .inventory-code-badge {
-        @apply text-[9px] font-mono bg-gray-100 px-2 py-1 rounded text-gray-500;
+        @apply text-[9px] font-mono bg-[#F0EADC] px-2 py-1 rounded text-[#67625C];
     }
 
     .inventory-edit-btn {
-        @apply p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all;
+        @apply p-2 bg-[#E5EEDC] text-[#1A2517] rounded-lg hover:bg-[#1A2517] hover:text-white transition-all;
     }
 
     .inventory-delete-btn {
-        @apply p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all;
+        @apply p-2 bg-[#F4E6E1] text-[#9A3B30] rounded-lg hover:bg-[#9A3B30] hover:text-white transition-all;
     }
 
     /* Contenedores de la App */
     .pos-container {
-        @apply min-h-screen bg-gray-100 flex flex-col md:flex-row relative text-gray-800;
+        @apply min-h-screen bg-[#F0EADC] flex flex-col md:flex-row relative text-[#1A2517];
     }
 
     .pos-main-panel {
@@ -289,7 +289,7 @@
     }
 
     .pos-sidebar {
-        @apply w-full md:w-[420px] bg-white p-8 shadow-2xl flex flex-col h-screen sticky top-0;
+        @apply w-full md:w-[420px] bg-[#FFFDF7] p-8 shadow-2xl flex flex-col h-screen sticky top-0;
     }
 
     .pos-header {
@@ -305,7 +305,7 @@
     }
 
     .pos-action-group {
-        @apply bg-white/70 border border-white rounded-2xl p-3 shadow-sm grid grid-cols-2 gap-3;
+        @apply bg-[#FFFDF7]/70 border border-[#FFFDF7] rounded-2xl p-3 shadow-sm grid grid-cols-2 gap-3;
     }
 
     .pos-action-button {
@@ -318,49 +318,49 @@
     }
 
     .modal-apertura-overlay {
-        @apply fixed inset-0 bg-blue-600 flex items-center justify-center p-4 z-[500] backdrop-blur-md text-gray-800;
+        @apply fixed inset-0 bg-[#1A2517] flex items-center justify-center p-4 z-[500] backdrop-blur-md text-[#1A2517];
     }
 
     .modal-content {
-        @apply bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col;
+        @apply bg-[#FFFDF7] p-8 rounded-[40px] shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col;
     }
 
     .modal-content-sm {
-        @apply bg-white p-10 rounded-[45px] shadow-2xl w-full max-w-md text-center;
+        @apply bg-[#FFFDF7] p-10 rounded-[45px] shadow-2xl w-full max-w-md text-center;
     }
 
     /* Botones Reutilizables */
     .btn-primary {
-        @apply bg-blue-600 text-white px-5 py-2 rounded-xl font-bold shadow-lg uppercase text-xs transition-all active:scale-95;
+        @apply bg-[#1A2517] text-white px-5 py-2 rounded-xl font-bold shadow-lg uppercase text-xs transition-all active:scale-95;
     }
 
     .btn-orange {
-        @apply bg-orange-500 text-white px-5 py-2 rounded-xl font-bold shadow-lg uppercase text-xs transition-all active:scale-95;
+        @apply bg-[#67625C] text-white px-5 py-2 rounded-xl font-bold shadow-lg uppercase text-xs transition-all active:scale-95;
     }
 
     .btn-green {
-        @apply bg-green-500 text-white py-5 rounded-[25px] font-black text-2xl shadow-xl disabled:bg-gray-100 transition-all active:scale-95;
+        @apply bg-[#576238] text-white py-5 rounded-[25px] font-black text-2xl shadow-xl disabled:bg-[#F0EADC] transition-all active:scale-95;
     }
 
     .btn-dark {
-        @apply bg-gray-800 text-white px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-tighter transition-all;
+        @apply bg-[#1A2517] text-white px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-tighter transition-all;
     }
 
     .btn-icon-status {
-        @apply bg-gray-800 text-white px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-tighter transition-all flex items-center gap-2;
+        @apply bg-[#1A2517] text-white px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-tighter transition-all flex items-center gap-2;
     }
 
     .btn-remove {
-        @apply text-red-500 hover:text-red-700 font-black px-2 transition-colors text-xl;
+        @apply text-[#9A3B30] hover:text-[#7E2F28] font-black px-2 transition-colors text-xl;
     }
 
     .btn-close-modal {
-        @apply absolute top-4 right-6 text-2xl text-gray-400 hover:text-gray-600 font-bold transition-colors;
+        @apply absolute top-4 right-6 text-2xl text-[#8A8377] hover:text-[#67625C] font-bold transition-colors;
     }
 
     /* Inputs del Punto de Venta */
     .input-pos {
-        @apply w-full p-5 rounded-2xl shadow-sm outline-none text-xl border-2 border-transparent focus:border-blue-400;
+        @apply w-full p-5 rounded-2xl shadow-sm outline-none text-xl border-2 border-transparent focus:border-[#576238];
     }
 
     .input-modal {
@@ -369,7 +369,7 @@
 
     /* Elementos de Lista */
     .product-card {
-        @apply bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm hover:shadow-md transition-shadow;
+        @apply bg-[#FFFDF7] p-4 rounded-2xl flex justify-between items-center shadow-sm hover:shadow-md transition-shadow;
     }
 
     .ticket-item {

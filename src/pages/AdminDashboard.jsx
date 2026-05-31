@@ -98,8 +98,8 @@ const AdminDashboard = () => {
                 <div className="admin-summary-panel">
                     <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
                         <div className="text-center lg:text-left">
-                            <h1 className="text-4xl font-black text-gray-800 italic uppercase leading-none">Ventas Totales</h1>
-                            <p className="text-3xl font-black text-green-600 mt-2">
+                            <h1 className="text-4xl font-black text-[#1A2517] italic uppercase leading-none">Ventas Totales</h1>
+                            <p className="text-3xl font-black text-[#576238] mt-2">
                                 ${totalGlobal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                             </p>
                         </div>
@@ -116,7 +116,7 @@ const AdminDashboard = () => {
                                     {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                                 </select>
                             </div>
-                            <div className="flex flex-col border-l border-gray-200 pl-4">
+                            <div className="flex flex-col border-l border-[#D8C7B5] pl-4">
                                 <label className="admin-filter-label">Desde</label>
                                 <input
                                     type="date"
@@ -125,7 +125,7 @@ const AdminDashboard = () => {
                                     onChange={(e) => setFechaInicio(e.target.value)}
                                 />
                             </div>
-                            <div className="flex flex-col border-l border-gray-200 pl-4">
+                            <div className="flex flex-col border-l border-[#D8C7B5] pl-4">
                                 <label className="admin-filter-label">Hasta</label>
                                 <input
                                     type="date"
@@ -168,7 +168,7 @@ const AdminDashboard = () => {
                         {/* DESGLOSE AGRUPADO POR PRODUCTO (Solo si hay sucursal seleccionada) */}
                         {filtroSucursal !== 'todas' && (
                             <div className="admin-table-panel">
-                                <div className="p-8 border-b bg-gray-50/50 flex justify-between items-center">
+                                <div className="p-8 border-b bg-[#F8F5EC]/50 flex justify-between items-center">
                                     <div>
                                         <h2 className="admin-section-title">Resumen de Productos Vendidos</h2>
                                         <p className="admin-section-subtitle">Consolidado del periodo seleccionado</p>
@@ -183,35 +183,35 @@ const AdminDashboard = () => {
                                     <table className="admin-table">
                                         <thead className="admin-table-head">
                                             <tr>
-                                                <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Descripción del Producto</th>
-                                                <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Cant. Acumulada</th>
-                                                <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Precio Unitario</th>
-                                                <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Total Vendido</th>
+                                                <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest">Descripción del Producto</th>
+                                                <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest text-center">Cant. Acumulada</th>
+                                                <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest text-center">Precio Unitario</th>
+                                                <th className="p-5 text-[10px] font-black text-[#8A8377] uppercase tracking-widest text-right">Total Vendido</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-50">
+                                        <tbody className="divide-y divide-[#F0EADC]">
                                             {obtenerProductosAgrupados().length > 0 ? obtenerProductosAgrupados().map((p, idx) => (
                                                 <tr key={idx} className="admin-row">
                                                     <td className="admin-td">
-                                                        <p className="font-black text-gray-700 uppercase text-sm">{p.descripcion}</p>
+                                                        <p className="font-black text-[#3E4635] uppercase text-sm">{p.descripcion}</p>
                                                     </td>
                                                     <td className="admin-td text-center">
-                                                        <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-lg font-black text-xs">
+                                                        <span className="bg-[#F0EADC] text-[#1A2517] px-3 py-1 rounded-lg font-black text-xs">
                                                             {p.cantidadAcumulada} pz
                                                         </span>
                                                     </td>
-                                                    <td className="admin-td text-center font-bold text-gray-500">
+                                                    <td className="admin-td text-center font-bold text-[#67625C]">
                                                         ${p.precioUnitario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                                     </td>
                                                     <td className="admin-td text-right">
-                                                        <p className="text-lg font-black text-blue-600 italic">
+                                                        <p className="text-lg font-black text-[#1A2517] italic">
                                                             ${p.subtotalAcumulado.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                                         </p>
                                                     </td>
                                                 </tr>
                                             )) : (
                                                 <tr>
-                                                    <td colSpan="4" className="p-20 text-center text-gray-300 font-black uppercase italic">
+                                                    <td colSpan="4" className="p-20 text-center text-[#B8AD9D] font-black uppercase italic">
                                                         No hay registros para agrupar
                                                     </td>
                                                 </tr>

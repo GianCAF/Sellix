@@ -735,10 +735,10 @@ const AdminVoiceAssistant = () => {
 
     return (
         <div className="fixed bottom-5 right-5 z-[180] w-[min(360px,calc(100vw-40px))]">
-            <div className="bg-white border border-blue-100 rounded-2xl shadow-2xl p-4 text-gray-800">
+            <div className="bg-[#FFFDF7] border border-[#D9E5D3] rounded-2xl shadow-2xl p-4 text-[#1A2517]">
                 <div className="flex items-center justify-between gap-3">
                     <div>
-                        <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Asistente Admin</p>
+                        <p className="text-[10px] font-black text-[#576238] uppercase tracking-widest">Asistente Admin</p>
                         <p className="text-xs font-bold mt-1">{mensaje}</p>
                     </div>
                     <button
@@ -752,34 +752,34 @@ const AdminVoiceAssistant = () => {
                 </div>
 
                 {resultado && (
-                    <div className="mt-3 border-t border-gray-100 pt-3">
-                        <p className="text-[10px] font-black uppercase text-gray-400">
+                    <div className="mt-3 border-t border-[#E3D9C8] pt-3">
+                        <p className="text-[10px] font-black uppercase text-[#8A8377]">
                             {resultado.tipo === 'ventas' ? 'Ventas' : resultado.tipo === 'guia' ? 'Guia' : resultado.sucursal} | {resultado.tipo === 'guia' ? resultado.titulo : resultado.criterio}
                         </p>
                         <div className="max-h-40 overflow-y-auto mt-2 space-y-2">
                             {resultado.tipo === 'guia' && resultado.pasos.map((paso, index) => (
                                 <div key={paso} className="flex gap-2 text-xs">
-                                    <span className="font-black text-blue-600 shrink-0">{index + 1}.</span>
-                                    <span className="font-bold text-gray-600">{paso}</span>
+                                    <span className="font-black text-[#1A2517] shrink-0">{index + 1}.</span>
+                                    <span className="font-bold text-[#67625C]">{paso}</span>
                                 </div>
                             ))}
                             {resultado.tipo === 'ventas' && resultado.tiendas.length === 0 && (
-                                <p className="text-xs font-bold text-green-600">Sin tiendas en este criterio</p>
+                                <p className="text-xs font-bold text-[#576238]">Sin tiendas en este criterio</p>
                             )}
                             {resultado.tipo === 'ventas' && resultado.tiendas.map(item => (
                                 <div key={item.sucursal.id} className="flex justify-between gap-3 text-xs">
                                     <span className="font-bold uppercase">{item.sucursal.nombre}</span>
-                                    <span className="font-black text-blue-600 shrink-0">
+                                    <span className="font-black text-[#1A2517] shrink-0">
                                         {item.total.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
                                     </span>
                                 </div>
                             ))}
                             {resultado.tipo !== 'ventas' && resultado.tipo !== 'guia' && resultado.productos.length === 0 ? (
-                                <p className="text-xs font-bold text-green-600">Sin productos en alerta</p>
+                                <p className="text-xs font-bold text-[#576238]">Sin productos en alerta</p>
                             ) : resultado.tipo !== 'ventas' && resultado.tipo !== 'guia' && resultado.productos.map(item => (
                                 <div key={item.id} className="flex justify-between gap-3 text-xs">
                                     <span className="font-bold uppercase">{item.descripcion}</span>
-                                    <span className="font-black text-red-500 shrink-0">{Number(item.cantidad) || 0} PZ</span>
+                                    <span className="font-black text-[#9A3B30] shrink-0">{Number(item.cantidad) || 0} PZ</span>
                                 </div>
                             ))}
                         </div>

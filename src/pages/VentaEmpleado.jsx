@@ -977,28 +977,28 @@ const VentaEmpleado = () => {
         setCarrito(carrito.map(item => item.id === id ? { ...item, descuento: 0, motivoDescuento: '' } : item));
     };
 
-    if (verificandoCaja) return <div className="pos-container items-center justify-center font-black italic text-blue-600">SINCRONIZANDO...</div>;
+    if (verificandoCaja) return <div className="pos-container items-center justify-center font-black italic text-[#1A2517]">SINCRONIZANDO...</div>;
 
     return (
         <div className="pos-container">
             {/* MODAL APERTURA */}
             {mostrarModalFondo && (
                 <div className="modal-apertura-overlay">
-                    <div className="modal-content-sm text-gray-800">
+                    <div className="modal-content-sm text-[#1A2517]">
                         <h2 className="text-3xl font-black italic uppercase">Apertura</h2>
-                        <p className="text-gray-400 font-bold mb-8 uppercase text-[10px] tracking-widest">{sucursalNombre}</p>
-                        <input type="number" className="w-full p-5 border-4 border-blue-50 rounded-[30px] text-5xl font-black text-center mb-8 outline-none" value={inputFondo} onChange={(e) => setInputFondo(e.target.value)} autoFocus />
+                        <p className="text-[#8A8377] font-bold mb-8 uppercase text-[10px] tracking-widest">{sucursalNombre}</p>
+                        <input type="number" className="w-full p-5 border-4 border-[#E5EEDC] rounded-[30px] text-5xl font-black text-center mb-8 outline-none" value={inputFondo} onChange={(e) => setInputFondo(e.target.value)} autoFocus />
                         <button onClick={abrirCaja} disabled={procesandoCaja} className="btn-primary w-full py-6 text-2xl rounded-[30px] disabled:opacity-50">{procesandoCaja ? 'Abriendo...' : 'Abrir Turno'}</button>
                     </div>
                 </div>
             )}
 
             <div className="pos-main-panel">
-                <header className="pos-header text-gray-800">
+                <header className="pos-header text-[#1A2517]">
                     <div>
-                        <h2 className="text-2xl font-black text-blue-600 italic uppercase">{sucursalNombre}</h2>
+                        <h2 className="text-2xl font-black text-[#1A2517] italic uppercase">{sucursalNombre}</h2>
                         {(modoOffline || ventasPendientes > 0) && (
-                            <p className="text-[10px] font-black text-orange-500 uppercase">
+                            <p className="text-[10px] font-black text-[#9A6B3F] uppercase">
                                 Modo offline {ventasPendientes > 0 ? `| ${ventasPendientes} venta(s) pendiente(s)` : ''}
                             </p>
                         )}
@@ -1008,13 +1008,13 @@ const VentaEmpleado = () => {
                             <span aria-hidden="true">&#128276;</span>
                             <span className="hidden lg:inline">Pendientes</span>
                             {pendientesSucursal.length > 0 && (
-                                <span className="absolute -top-2 -right-2 min-w-6 h-6 px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
+                                <span className="absolute -top-2 -right-2 min-w-6 h-6 px-1 rounded-full bg-[#9A3B30] text-white text-[10px] font-black flex items-center justify-center border-2 border-[#FFFDF7]">
                                     {pendientesSucursal.length}
                                 </span>
                             )}
                         </button>
                         <button onClick={() => setMostrarModalMov(true)} className="btn-dark">💸 Efectivo</button>
-                        <button onClick={() => auth.signOut()} className="text-gray-400 font-bold text-xs uppercase">Salir</button>
+                        <button onClick={() => auth.signOut()} className="text-[#8A8377] font-bold text-xs uppercase">Salir</button>
                     </div>
                 </header>
                 <div className="pos-action-bar">
@@ -1034,17 +1034,17 @@ const VentaEmpleado = () => {
                     </div>
                 </div>
                 {(escuchandoVoz || resultadoAsistente || !vozDisponible) && (
-                    <div className="bg-white border border-blue-50 rounded-2xl shadow-sm p-4 mb-6 text-gray-800">
-                        <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Asistente Sellix</p>
+                    <div className="bg-[#FFFDF7] border border-[#E5EEDC] rounded-2xl shadow-sm p-4 mb-6 text-[#1A2517]">
+                        <p className="text-[10px] font-black text-[#576238] uppercase tracking-widest">Asistente Sellix</p>
                         <p className="text-sm font-bold mt-1">{mensajeAsistente}</p>
                         {resultadoAsistente?.encontrado && (
-                            <div className="mt-3 text-xs font-black uppercase text-gray-400">
+                            <div className="mt-3 text-xs font-black uppercase text-[#8A8377]">
                                 {(resultadoAsistente.productos || []).length > 1 ? (
                                     <div className="space-y-2">
                                         {resultadoAsistente.productos.map(producto => (
                                             <div key={producto.id} className="flex justify-between gap-3">
                                                 <span>{producto.descripcion}</span>
-                                                <span className="text-green-600 shrink-0">{producto.stock} PZ</span>
+                                                <span className="text-[#576238] shrink-0">{producto.stock} PZ</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1063,19 +1063,19 @@ const VentaEmpleado = () => {
                 </form>
                 <div className="space-y-3">
                     {productos.map(p => (
-                        <div key={p.id} className="product-card text-gray-800">
+                        <div key={p.id} className="product-card text-[#1A2517]">
                             <div className="flex-1 pr-4">
                                 <p className="font-bold uppercase text-sm">{p.descripcion}</p>
-                                <p className="text-[10px] text-gray-400 font-black uppercase">
+                                <p className="text-[10px] text-[#8A8377] font-black uppercase">
                                     Stock: {p.cantidad ?? 0} | Codigo: {p.codigos?.[0] || 'N/A'}
                                 </p>
-                                <p className="text-lg font-black text-green-600">{moneda.format(Number(p.precio) || 0)}</p>
+                                <p className="text-lg font-black text-[#576238]">{moneda.format(Number(p.precio) || 0)}</p>
                             </div>
                             <button onClick={() => agregarAlCarrito(p)} className="btn-primary">Agregar</button>
                         </div>
                     ))}
                     {busqueda && productos.length === 0 && (
-                        <div className="text-center py-10 text-gray-300 font-black uppercase italic">
+                        <div className="text-center py-10 text-[#B8AD9D] font-black uppercase italic">
                             Sin resultados
                         </div>
                     )}
@@ -1083,25 +1083,25 @@ const VentaEmpleado = () => {
             </div>
 
             <div className="pos-sidebar">
-                <h3 className="text-2xl font-black italic uppercase mb-6 tracking-tighter text-gray-800">🛒 Venta Actual</h3>
-                <div className="flex-1 overflow-y-auto space-y-4 text-gray-700">
+                <h3 className="text-2xl font-black italic uppercase mb-6 tracking-tighter text-[#1A2517]">🛒 Venta Actual</h3>
+                <div className="flex-1 overflow-y-auto space-y-4 text-[#3E4635]">
                     {carrito.map(item => (
                         <div key={item.id} className="ticket-item">
                             <div className="flex-1">
                                 <p className="font-bold uppercase text-xs">{item.descripcion}</p>
-                                <p className="text-[10px] text-gray-400">{item.cantidadVenta} x {moneda.format(Number(item.precio) || 0)}</p>
+                                <p className="text-[10px] text-[#8A8377]">{item.cantidadVenta} x {moneda.format(Number(item.precio) || 0)}</p>
                                 {Number(item.descuento) > 0 && (
-                                    <p className="text-[10px] text-red-500 font-black uppercase">
+                                    <p className="text-[10px] text-[#9A3B30] font-black uppercase">
                                         Desc: -{moneda.format(Number(item.descuento) || 0)} | {item.motivoDescuento}
                                     </p>
                                 )}
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className="text-right">
-                                    <p className="font-black text-blue-600">{moneda.format(subtotalProducto(item))}</p>
-                                    <button onClick={() => abrirDescuento(item)} className="text-[9px] font-black text-orange-500 uppercase">Descuento</button>
+                                    <p className="font-black text-[#1A2517]">{moneda.format(subtotalProducto(item))}</p>
+                                    <button onClick={() => abrirDescuento(item)} className="text-[9px] font-black text-[#9A6B3F] uppercase">Descuento</button>
                                     {Number(item.descuento) > 0 && (
-                                        <button onClick={() => quitarDescuento(item.id)} className="block text-[9px] font-black text-gray-400 uppercase">Quitar</button>
+                                        <button onClick={() => quitarDescuento(item.id)} className="block text-[9px] font-black text-[#8A8377] uppercase">Quitar</button>
                                     )}
                                 </div>
                                 <button onClick={() => eliminarDelCarrito(item.id)} className="btn-remove">✕</button>
@@ -1110,7 +1110,7 @@ const VentaEmpleado = () => {
                     ))}
                 </div>
                 <div className="mt-6 pt-6 border-t-4 border-double">
-                    <p className="text-4xl font-black text-green-600 mb-6 text-center">{moneda.format(totalCarrito)}</p>
+                    <p className="text-4xl font-black text-[#576238] mb-6 text-center">{moneda.format(totalCarrito)}</p>
                     <button onClick={finalizarVenta} disabled={carrito.length === 0 || procesandoVenta} className="btn-green w-full uppercase">
                         {procesandoVenta ? "Procesando..." : "Cobrar"}
                     </button>
@@ -1120,16 +1120,16 @@ const VentaEmpleado = () => {
             {/* MODAL CORTE */}
             {mostrarCorte && (
                 <div className="modal-overlay">
-                    <div className="modal-content text-gray-800">
+                    <div className="modal-content text-[#1A2517]">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-2xl font-black uppercase italic">Resumen Diario</h3>
                             <button onClick={() => { setMostrarCorte(false); setVerDetallesCorte(false); }} className="text-3xl">✕</button>
                         </div>
                         <div className="grid grid-cols-2 gap-4 mb-6 text-center">
-                            <div className="p-4 bg-gray-50 rounded-2xl"><p className="text-[10px] font-black text-gray-400 uppercase">Fondo</p><p className="text-xl font-black">${Number(fondoInicial).toFixed(2)}</p></div>
-                            <div className="p-4 bg-green-50 rounded-2xl text-green-700"><p className="text-[10px] font-black uppercase">Ventas</p><p className="text-xl font-black">${totalVentas.toFixed(2)}</p></div>
-                            <div className="p-4 bg-red-50 rounded-2xl text-red-700"><p className="text-[10px] font-black uppercase">Salidas</p><p className="text-xl font-black">${totalSalidas.toFixed(2)}</p></div>
-                            <div className="p-4 bg-blue-600 rounded-2xl text-white"><p className="text-[10px] font-black uppercase font-black">Caja Actual</p><p className="text-xl font-black">${netoCaja.toFixed(2)}</p></div>
+                            <div className="p-4 bg-[#F8F5EC] rounded-2xl"><p className="text-[10px] font-black text-[#8A8377] uppercase">Fondo</p><p className="text-xl font-black">${Number(fondoInicial).toFixed(2)}</p></div>
+                            <div className="p-4 bg-[#E5EEDC] rounded-2xl text-[#1A2517]"><p className="text-[10px] font-black uppercase">Ventas</p><p className="text-xl font-black">${totalVentas.toFixed(2)}</p></div>
+                            <div className="p-4 bg-[#F4E6E1] rounded-2xl text-[#7E2F28]"><p className="text-[10px] font-black uppercase">Salidas</p><p className="text-xl font-black">${totalSalidas.toFixed(2)}</p></div>
+                            <div className="p-4 bg-[#1A2517] rounded-2xl text-white"><p className="text-[10px] font-black uppercase font-black">Caja Actual</p><p className="text-xl font-black">${netoCaja.toFixed(2)}</p></div>
                         </div>
                         <div className="flex gap-2 mb-4">
                             <button onClick={() => setVerDetallesCorte(!verDetallesCorte)} className="btn-dark flex-1">👁️ Detalles</button>
@@ -1139,9 +1139,9 @@ const VentaEmpleado = () => {
                             <div className="flex-1 overflow-y-auto space-y-4 italic text-sm">
                                 {ventasHoy.map((v, i) => (
                                     <div key={i} className="border-b pb-1 mb-2">
-                                        <div className="flex justify-between text-[10px] font-black text-gray-400">
+                                        <div className="flex justify-between text-[10px] font-black text-[#8A8377]">
                                             <span>{v.fecha?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                            <span className="uppercase text-blue-500">Vendedor: {v.nombreEmpleado || 'N/A'}</span>
+                                            <span className="uppercase text-[#576238]">Vendedor: {v.nombreEmpleado || 'N/A'}</span>
                                         </div>
                                         {v.productos.map((p, idx) => (
                                             <div key={idx}>
@@ -1150,7 +1150,7 @@ const VentaEmpleado = () => {
                                                     <span className="font-bold">{moneda.format(Number(p.subtotal) || ((Number(p.precio) || 0) * (Number(p.cantidadVenta) || 0)))}</span>
                                                 </div>
                                                 {Number(p.descuento) > 0 && (
-                                                    <div className="text-[10px] text-red-500 font-black uppercase">
+                                                    <div className="text-[10px] text-[#9A3B30] font-black uppercase">
                                                         Descuento: -{moneda.format(Number(p.descuento) || 0)} | {p.motivoDescuento}
                                                     </div>
                                                 )}
@@ -1167,15 +1167,15 @@ const VentaEmpleado = () => {
             {/* MODAL EFECTIVO - CON BOTÓN DE CIERRE "X" */}
             {mostrarModalMov && (
                 <div className="modal-overlay">
-                    <div className="modal-content-sm text-gray-800 relative">
+                    <div className="modal-content-sm text-[#1A2517] relative">
                         <button
                             onClick={() => setMostrarModalMov(false)}
                             className="btn-close-modal"
                         >✕</button>
                         <h3 className="text-2xl font-black mb-6 italic uppercase text-center">Movimiento Efectivo</h3>
-                        <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-2xl">
-                            <button onClick={() => setMovTipo('entrada')} className={`flex-1 py-3 rounded-xl font-black text-xs ${movTipo === 'entrada' ? 'bg-green-500 text-white shadow-md' : 'text-gray-400'}`}>ENTRADA</button>
-                            <button onClick={() => setMovTipo('salida')} className={`flex-1 py-3 rounded-xl font-black text-xs ${movTipo === 'salida' ? 'bg-red-500 text-white shadow-md' : 'text-gray-400'}`}>SALIDA</button>
+                        <div className="flex gap-2 mb-6 bg-[#F0EADC] p-1 rounded-2xl">
+                            <button onClick={() => setMovTipo('entrada')} className={`flex-1 py-3 rounded-xl font-black text-xs ${movTipo === 'entrada' ? 'bg-[#576238] text-white shadow-md' : 'text-[#8A8377]'}`}>ENTRADA</button>
+                            <button onClick={() => setMovTipo('salida')} className={`flex-1 py-3 rounded-xl font-black text-xs ${movTipo === 'salida' ? 'bg-[#9A3B30] text-white shadow-md' : 'text-[#8A8377]'}`}>SALIDA</button>
                         </div>
                         <input type="number" placeholder="Monto $" className="input-modal" value={movCantidad} onChange={(e) => setMovCantidad(e.target.value)} />
                         <input type="text" placeholder="Motivo..." className="input-modal" value={movMotivo} onChange={(e) => setMovMotivo(e.target.value)} />
@@ -1186,18 +1186,18 @@ const VentaEmpleado = () => {
 
             {mostrarPendientes && (
                 <div className="modal-overlay">
-                    <div className="modal-content text-gray-800">
+                    <div className="modal-content text-[#1A2517]">
                         <div className="flex justify-between items-start gap-4 mb-6">
                             <div>
                                 <h3 className="text-2xl font-black uppercase italic">Pendientes</h3>
-                                <p className="text-[10px] font-black text-gray-400 uppercase">{sucursalNombre}</p>
+                                <p className="text-[10px] font-black text-[#8A8377] uppercase">{sucursalNombre}</p>
                             </div>
-                            <button onClick={() => setMostrarPendientes(false)} className="text-3xl font-black text-gray-800">X</button>
+                            <button onClick={() => setMostrarPendientes(false)} className="text-3xl font-black text-[#1A2517]">X</button>
                         </div>
 
-                        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 mb-5">
+                        <div className="bg-[#F8F5EC] border border-[#E3D9C8] rounded-2xl p-4 mb-5">
                             <textarea
-                                className="w-full min-h-28 p-4 rounded-2xl border-2 border-white outline-none focus:border-blue-500 font-bold resize-none"
+                                className="w-full min-h-28 p-4 rounded-2xl border-2 border-[#FFFDF7] outline-none focus:border-[#576238] font-bold resize-none"
                                 placeholder="Escribe que queda pendiente para el siguiente turno..."
                                 value={nuevaNotaPendiente}
                                 onChange={(e) => setNuevaNotaPendiente(e.target.value)}
@@ -1209,11 +1209,11 @@ const VentaEmpleado = () => {
 
                         <div className="flex-1 overflow-y-auto space-y-3">
                             {pendientesSucursal.map(item => (
-                                <div key={item.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                                <div key={item.id} className="bg-[#FFFDF7] border border-[#E3D9C8] rounded-2xl p-4 shadow-sm">
                                     <div className="flex justify-between gap-4">
                                         <div className="flex-1">
-                                            <p className="text-sm font-black text-gray-800 whitespace-pre-wrap">{item.nota}</p>
-                                            <p className="text-[10px] font-black text-gray-400 uppercase mt-3">
+                                            <p className="text-sm font-black text-[#1A2517] whitespace-pre-wrap">{item.nota}</p>
+                                            <p className="text-[10px] font-black text-[#8A8377] uppercase mt-3">
                                                 {item.creadoPorNombre || 'Empleado'} | {formatearFechaPendiente(item.fecha)}
                                             </p>
                                         </div>
@@ -1228,7 +1228,7 @@ const VentaEmpleado = () => {
                                 </div>
                             ))}
                             {pendientesSucursal.length === 0 && (
-                                <div className="text-center py-12 text-gray-300 font-black uppercase italic">
+                                <div className="text-center py-12 text-[#B8AD9D] font-black uppercase italic">
                                     No hay pendientes para esta sucursal
                                 </div>
                             )}
@@ -1239,35 +1239,35 @@ const VentaEmpleado = () => {
 
             {mostrarInventario && (
                 <div className="modal-overlay">
-                    <div className="modal-content text-gray-800">
+                    <div className="modal-content text-[#1A2517]">
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h3 className="text-2xl font-black uppercase italic">Inventario de Sucursal</h3>
-                                <p className="text-[10px] font-black text-gray-400 uppercase">{sucursalNombre}</p>
+                                <p className="text-[10px] font-black text-[#8A8377] uppercase">{sucursalNombre}</p>
                                 <button onClick={exportarInventarioExcel} className="btn-primary mt-2">Descargar Excel</button>
                             </div>
-                            <button onClick={() => setMostrarInventario(false)} className="text-3xl font-black text-gray-800">X</button>
+                            <button onClick={() => setMostrarInventario(false)} className="text-3xl font-black text-[#1A2517]">X</button>
                         </div>
                         <div className="flex-1 overflow-y-auto space-y-3">
                             {inventarioSucursal.map(item => (
-                                <div key={item.id} className="product-card text-gray-800">
+                                <div key={item.id} className="product-card text-[#1A2517]">
                                     <div className="flex-1 pr-4">
                                         <p className="font-black uppercase text-sm">{item.descripcion}</p>
-                                        <p className="text-[10px] text-gray-400 font-black uppercase">
+                                        <p className="text-[10px] text-[#8A8377] font-black uppercase">
                                             Codigo: {item.codigos?.[0] || 'N/A'} | Stock: {item.cantidad ?? 0}
                                         </p>
-                                        <p className="text-[10px] text-gray-400 font-black uppercase">
+                                        <p className="text-[10px] text-[#8A8377] font-black uppercase">
                                             Marca: {item.marcaNombre || item.marca || 'N/A'} | Modelo: {item.modelo || 'N/A'}
                                         </p>
-                                        <p className="text-[10px] text-gray-400 font-black uppercase">
+                                        <p className="text-[10px] text-[#8A8377] font-black uppercase">
                                             Categoria: {item.categoriaNombre || item.categoria || 'N/A'} | Colores: {item.colores?.join(', ') || 'N/A'}
                                         </p>
-                                        <p className="text-lg font-black text-green-600">{moneda.format(Number(item.precio) || 0)}</p>
+                                        <p className="text-lg font-black text-[#576238]">{moneda.format(Number(item.precio) || 0)}</p>
                                     </div>
                                 </div>
                             ))}
                             {inventarioSucursal.length === 0 && (
-                                <div className="text-center py-12 text-gray-300 font-black uppercase italic">
+                                <div className="text-center py-12 text-[#B8AD9D] font-black uppercase italic">
                                     Sin inventario en esta sucursal
                                 </div>
                             )}
@@ -1278,10 +1278,10 @@ const VentaEmpleado = () => {
 
             {mostrarModalDescuento && productoDescuento && (
                 <div className="modal-overlay">
-                    <div className="modal-content-sm text-gray-800 relative">
+                    <div className="modal-content-sm text-[#1A2517] relative">
                         <button onClick={() => setMostrarModalDescuento(false)} className="btn-close-modal">âœ•</button>
                         <h3 className="text-2xl font-black mb-2 italic uppercase text-center">Descuento</h3>
-                        <p className="text-[10px] text-gray-400 font-black uppercase mb-6">{productoDescuento.descripcion}</p>
+                        <p className="text-[10px] text-[#8A8377] font-black uppercase mb-6">{productoDescuento.descripcion}</p>
                         <input
                             type="number"
                             placeholder="Monto a descontar $"
@@ -1306,21 +1306,21 @@ const VentaEmpleado = () => {
             {/* MODAL VENTA MANUAL */}
             {mostrarModalTemp && (
                 <div className="modal-overlay">
-                    <div className="modal-content-sm text-gray-800">
+                    <div className="modal-content-sm text-[#1A2517]">
                         <h3 className="text-2xl font-black mb-6 italic uppercase">Venta Manual</h3>
                         <input type="text" placeholder="¿Qué es?" className="input-modal" value={tempNombre} onChange={(e) => setTempNombre(e.target.value)} />
                         <input type="number" placeholder="Precio $" className="input-modal" value={tempPrecio} onChange={(e) => setTempPrecio(e.target.value)} />
                         <button onClick={agregarTempAlCarrito} disabled={procesandoTemporal} className="btn-orange w-full py-4 rounded-xl mb-2 disabled:opacity-50">{procesandoTemporal ? 'Añadiendo...' : 'Añadir'}</button>
-                        <button onClick={() => setMostrarModalTemp(false)} className="text-xs font-bold text-gray-400 uppercase">Cerrar</button>
+                        <button onClick={() => setMostrarModalTemp(false)} className="text-xs font-bold text-[#8A8377] uppercase">Cerrar</button>
                     </div>
                 </div>
             )}
 
             {mostrarConfirmacionVenta && (
                 <div className="modal-overlay">
-                    <div className="modal-content-sm text-gray-800">
+                    <div className="modal-content-sm text-[#1A2517]">
                         <h3 className="text-2xl font-black mb-3 italic uppercase">{ultimaVentaOffline ? 'Modo offline' : 'Venta procesada'}</h3>
-                        <p className="text-gray-400 text-xs font-bold uppercase mb-6">
+                        <p className="text-[#8A8377] text-xs font-bold uppercase mb-6">
                             {ultimaVentaOffline ? 'Venta guardada localmente. Se sincronizara al volver internet.' : 'El ticket esta listo para imprimir'}
                         </p>
                         <button onClick={imprimirTicketConfirmado} disabled={procesandoImpresion} className="btn-green w-full uppercase">
