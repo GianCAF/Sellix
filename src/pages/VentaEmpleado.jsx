@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../services/firebase';
-import { collection, getDocs, query, where, addDoc, doc, updateDoc, increment, Timestamp, getDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, query, where, addDoc, doc, updateDoc, increment, Timestamp, getDoc, setDoc, writeBatch, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -46,6 +46,11 @@ const VentaEmpleado = () => {
     const [procesandoMovimiento, setProcesandoMovimiento] = useState(false);
     const [procesandoTemporal, setProcesandoTemporal] = useState(false);
     const [procesandoImpresion, setProcesandoImpresion] = useState(false);
+    const [mostrarPendientes, setMostrarPendientes] = useState(false);
+    const [pendientesSucursal, setPendientesSucursal] = useState([]);
+    const [nuevaNotaPendiente, setNuevaNotaPendiente] = useState('');
+    const [procesandoPendiente, setProcesandoPendiente] = useState(false);
+    const [pendienteCompletandoId, setPendienteCompletandoId] = useState(null);
     const [vozDisponible, setVozDisponible] = useState(false);
     const [escuchandoVoz, setEscuchandoVoz] = useState(false);
     const [mensajeAsistente, setMensajeAsistente] = useState('Asistente apagado');
@@ -98,6 +103,25 @@ const VentaEmpleado = () => {
         };
     }, [user?.sucursalId]);
 
+    useEffect(() => {
+        if (!user?.sucursalId) return;
+        const pendientesQuery = query(
+            collection(db, "pendientes_sucursal"),
+            where("sucursalId", "==", user.sucursalId)
+        );
+        const unsub = onSnapshot(pendientesQuery, (snap) => {
+            const items = snap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(item => (item.estado || 'pendiente') === 'pendiente')
+                .sort((a, b) => obtenerMillisFecha(b.fecha) - obtenerMillisFecha(a.fecha));
+            setPendientesSucursal(items);
+        }, () => {
+            setPendientesSucursal([]);
+        });
+
+        return () => unsub();
+    }, [user?.sucursalId]);
+
     const leerJsonLocal = (key, fallback = []) => {
         try {
             return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
@@ -127,6 +151,25 @@ const VentaEmpleado = () => {
     const actualizarConteoPendientes = () => {
         if (!ventasOfflineKey) return;
         setVentasPendientes(leerJsonLocal(ventasOfflineKey, []).length);
+    };
+
+    const obtenerMillisFecha = (fecha) => {
+        if (!fecha) return 0;
+        if (typeof fecha.toMillis === 'function') return fecha.toMillis();
+        const valor = new Date(fecha).getTime();
+        return Number.isNaN(valor) ? 0 : valor;
+    };
+
+    const formatearFechaPendiente = (fecha) => {
+        const millis = obtenerMillisFecha(fecha);
+        if (!millis) return 'Sin fecha';
+        return new Date(millis).toLocaleString('es-MX', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
     const obtenerSucursal = async () => {
@@ -175,6 +218,42 @@ const VentaEmpleado = () => {
             });
             setMostrarModalMov(false); setMovCantidad(''); setMovMotivo(''); alert("Registrado");
         } catch (e) { alert("Error"); } finally { setProcesandoMovimiento(false); }
+    };
+
+    const agregarPendienteSucursal = async () => {
+        const nota = nuevaNotaPendiente.trim();
+        if (procesandoPendiente) return;
+        if (!nota) return alert("Escribe la nota pendiente");
+        setProcesandoPendiente(true);
+        try {
+            await addDoc(collection(db, "pendientes_sucursal"), {
+                sucursalId: user.sucursalId,
+                sucursalNombre,
+                nota,
+                estado: 'pendiente',
+                creadoPorId: user.uid,
+                creadoPorNombre: user.nombre || 'Empleado',
+                fecha: Timestamp.now(),
+                fechaString: getFechaLocalID()
+            });
+            setNuevaNotaPendiente('');
+        } catch (error) {
+            alert("Error al guardar pendiente");
+        } finally {
+            setProcesandoPendiente(false);
+        }
+    };
+
+    const completarPendienteSucursal = async (id) => {
+        if (pendienteCompletandoId) return;
+        setPendienteCompletandoId(id);
+        try {
+            await deleteDoc(doc(db, "pendientes_sucursal", id));
+        } catch (error) {
+            alert("Error al completar pendiente");
+        } finally {
+            setPendienteCompletandoId(null);
+        }
     };
 
     const consultarCorteCompleto = async () => {
@@ -925,6 +1004,14 @@ const VentaEmpleado = () => {
                         )}
                     </div>
                     <div className="flex gap-2">
+                        <button onClick={() => setMostrarPendientes(true)} className="btn-dark relative">
+                            <span aria-hidden="true">&#128276;</span> Pendientes
+                            {pendientesSucursal.length > 0 && (
+                                <span className="absolute -top-2 -right-2 min-w-6 h-6 px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
+                                    {pendientesSucursal.length}
+                                </span>
+                            )}
+                        </button>
                         <button onClick={() => setMostrarModalMov(true)} className="btn-dark">💸 Efectivo</button>
                         <button onClick={() => auth.signOut()} className="text-gray-400 font-bold text-xs uppercase">Salir</button>
                     </div>
@@ -1090,6 +1177,59 @@ const VentaEmpleado = () => {
                         <input type="number" placeholder="Monto $" className="input-modal" value={movCantidad} onChange={(e) => setMovCantidad(e.target.value)} />
                         <input type="text" placeholder="Motivo..." className="input-modal" value={movMotivo} onChange={(e) => setMovMotivo(e.target.value)} />
                         <button onClick={registrarMovimiento} disabled={procesandoMovimiento} className="btn-dark w-full py-4 rounded-2xl disabled:opacity-50">{procesandoMovimiento ? 'Registrando...' : 'Registrar'}</button>
+                    </div>
+                </div>
+            )}
+
+            {mostrarPendientes && (
+                <div className="modal-overlay">
+                    <div className="modal-content text-gray-800">
+                        <div className="flex justify-between items-start gap-4 mb-6">
+                            <div>
+                                <h3 className="text-2xl font-black uppercase italic">Pendientes</h3>
+                                <p className="text-[10px] font-black text-gray-400 uppercase">{sucursalNombre}</p>
+                            </div>
+                            <button onClick={() => setMostrarPendientes(false)} className="text-3xl font-black text-gray-800">X</button>
+                        </div>
+
+                        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 mb-5">
+                            <textarea
+                                className="w-full min-h-28 p-4 rounded-2xl border-2 border-white outline-none focus:border-blue-500 font-bold resize-none"
+                                placeholder="Escribe que queda pendiente para el siguiente turno..."
+                                value={nuevaNotaPendiente}
+                                onChange={(e) => setNuevaNotaPendiente(e.target.value)}
+                            />
+                            <button onClick={agregarPendienteSucursal} disabled={procesandoPendiente} className="btn-primary mt-3 w-full disabled:opacity-50">
+                                {procesandoPendiente ? 'Guardando...' : 'Agregar nota'}
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto space-y-3">
+                            {pendientesSucursal.map(item => (
+                                <div key={item.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                                    <div className="flex justify-between gap-4">
+                                        <div className="flex-1">
+                                            <p className="text-sm font-black text-gray-800 whitespace-pre-wrap">{item.nota}</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase mt-3">
+                                                {item.creadoPorNombre || 'Empleado'} | {formatearFechaPendiente(item.fecha)}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => completarPendienteSucursal(item.id)}
+                                            disabled={pendienteCompletandoId === item.id}
+                                            className="btn-green self-start disabled:opacity-50"
+                                        >
+                                            {pendienteCompletandoId === item.id ? '...' : 'Hecho'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {pendientesSucursal.length === 0 && (
+                                <div className="text-center py-12 text-gray-300 font-black uppercase italic">
+                                    No hay pendientes para esta sucursal
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
