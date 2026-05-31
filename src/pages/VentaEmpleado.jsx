@@ -862,7 +862,7 @@ const VentaEmpleado = () => {
                 contacto: CONTACTO_TICKET
             });
             setCarrito([]);
-            setMostrarConfirmacionVenta(true);
+            return true;
         } catch (e) {
             if (venta) {
                 guardarVentaOffline(venta);
@@ -876,21 +876,34 @@ const VentaEmpleado = () => {
                     contacto: CONTACTO_TICKET
                 });
                 setCarrito([]);
-                setMostrarConfirmacionVenta(true);
+                return true;
             } else {
                 alert("Error");
+                return false;
             }
         } finally { setProcesandoVenta(false); }
     };
 
-    const imprimirTicketConfirmado = () => {
-        if (procesandoImpresion) return;
+    const abrirConfirmacionVenta = () => {
+        if (carrito.length === 0 || procesandoVenta) return;
+        setMostrarConfirmacionVenta(true);
+    };
+
+    const cancelarConfirmacionVenta = () => {
+        if (procesandoVenta || procesandoImpresion) return;
+        setMostrarConfirmacionVenta(false);
+    };
+
+    const confirmarVentaEImprimir = async () => {
+        if (procesandoVenta || procesandoImpresion) return;
+        const ventaLista = await finalizarVenta();
+        if (!ventaLista) return;
         setProcesandoImpresion(true);
         setMostrarConfirmacionVenta(false);
-        requestAnimationFrame(() => {
+        window.setTimeout(() => {
             window.print();
             setTimeout(() => setProcesandoImpresion(false), 1000);
-        });
+        }, 150);
     };
 
     const buscarProducto = async (e, autoAgregarExacto = true) => {
@@ -1111,7 +1124,7 @@ const VentaEmpleado = () => {
                 </div>
                 <div className="mt-6 pt-6 border-t-4 border-double">
                     <p className="text-4xl font-black text-[#576238] mb-6 text-center">{moneda.format(totalCarrito)}</p>
-                    <button onClick={finalizarVenta} disabled={carrito.length === 0 || procesandoVenta} className="btn-green w-full uppercase">
+                    <button onClick={abrirConfirmacionVenta} disabled={carrito.length === 0 || procesandoVenta} className="btn-green w-full uppercase">
                         {procesandoVenta ? "Procesando..." : "Cobrar"}
                     </button>
                 </div>
@@ -1319,13 +1332,22 @@ const VentaEmpleado = () => {
             {mostrarConfirmacionVenta && (
                 <div className="modal-overlay">
                     <div className="modal-content-sm text-[#1A2517]">
-                        <h3 className="text-2xl font-black mb-3 italic uppercase">{ultimaVentaOffline ? 'Modo offline' : 'Venta procesada'}</h3>
+                        <h3 className="text-2xl font-black mb-3 italic uppercase">Confirmar compra</h3>
                         <p className="text-[#8A8377] text-xs font-bold uppercase mb-6">
-                            {ultimaVentaOffline ? 'Venta guardada localmente. Se sincronizara al volver internet.' : 'El ticket esta listo para imprimir'}
+                            Revisa la venta antes de registrarla. Si cancelas, los productos se quedan en venta actual.
                         </p>
-                        <button onClick={imprimirTicketConfirmado} disabled={procesandoImpresion} className="btn-green w-full uppercase">
-                            {procesandoImpresion ? 'Imprimiendo...' : 'Aceptar e imprimir'}
-                        </button>
+                        <div className="bg-[#F8F5EC] rounded-2xl p-4 mb-6">
+                            <p className="text-[10px] font-black uppercase text-[#8A8377]">Total a cobrar</p>
+                            <p className="text-4xl font-black text-[#576238]">{moneda.format(totalCarrito)}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={cancelarConfirmacionVenta} disabled={procesandoVenta || procesandoImpresion} className="app-dialog-cancel">
+                                Cancelar venta
+                            </button>
+                            <button onClick={confirmarVentaEImprimir} disabled={procesandoVenta || procesandoImpresion} className="app-dialog-confirm">
+                                {procesandoVenta || procesandoImpresion ? 'Procesando...' : 'Confirmar compra'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
