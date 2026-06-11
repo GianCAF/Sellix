@@ -157,10 +157,13 @@
 
     .admin-brand-title {
         @apply text-xl font-black leading-none;
+        font-family: "Castoro Titling", serif;
+        font-weight: 400;
     }
 
     .admin-brand-subtitle {
         @apply mt-1 text-sm font-bold text-[#ACC8A2];
+        font-family: "Google Sans Flex", sans-serif;
     }
 
     .admin-side-menu {
@@ -169,6 +172,13 @@
 
     .admin-side-link {
         @apply flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-base font-bold text-[#FFFDF7] transition-all hover:bg-[#576238]/70;
+        font-family: "Google Sans Flex", sans-serif;
+        font-optical-sizing: auto;
+        font-variation-settings:
+            "slnt" 0,
+            "wdth" 100,
+            "GRAD" 0,
+            "ROND" 0;
     }
 
     .admin-side-link-active {
@@ -181,6 +191,7 @@
 
     .admin-user-foot {
         @apply mt-auto border-t border-[#576238]/50 pt-5 text-sm font-bold text-[#F0EADC]/80;
+        font-family: "Google Sans Flex", sans-serif;
     }
 
     .admin-user-foot span {
@@ -279,15 +290,15 @@
     }
 
     .admin-metric-box {
-        @apply bg-[#E5EEDC] w-full py-6 rounded-[30px];
+        @apply bg-[#E5EEDC] flex min-h-[135px] w-full flex-col items-center justify-center rounded-[30px] px-5 py-6 text-center;
     }
 
     .admin-metric-label {
-        @apply text-[10px] font-black text-[#ACC8A2] uppercase tracking-widest mb-1;
+        @apply text-[10px] font-black text-[#ACC8A2] uppercase tracking-widest mb-2;
     }
 
     .admin-metric-value {
-        @apply text-4xl font-black text-[#1A2517];
+        @apply w-full text-center text-4xl font-black text-[#1A2517];
     }
 
     .admin-table-panel {
