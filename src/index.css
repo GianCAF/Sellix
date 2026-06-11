@@ -6,43 +6,51 @@
 @layer components {
     /* Login */
     .login-page {
-        @apply min-h-screen bg-[#F0EADC] flex items-center justify-center p-4;
+        @apply min-h-screen bg-[#F0EADC] flex items-center justify-center p-4 text-[#1A2517];
+    }
+
+    .login-shell {
+        @apply w-full max-w-xl flex flex-col items-center;
     }
 
     .login-card {
-        @apply max-w-md w-full bg-[#FFFDF7] rounded-2xl shadow-xl p-8 transition-all;
+        @apply w-full bg-[#FFFDF7] rounded-2xl border border-[#D8C7B5] shadow-lg p-8 transition-all;
     }
 
     .login-header {
-        @apply text-center mb-10;
+        @apply text-center mb-8 flex flex-col items-center;
+    }
+
+    .login-logo {
+        @apply mb-5 flex h-[70px] w-[70px] items-center justify-center rounded-[20px] bg-[#1A2517] text-3xl font-black text-[#F0EADC] shadow-xl;
     }
 
     .login-title {
-        @apply text-4xl font-extrabold text-[#1A2517];
+        @apply text-4xl font-black text-[#1A2517] leading-none tracking-tight;
     }
 
     .login-subtitle {
-        @apply text-[#67625C] mt-2 font-medium;
+        @apply text-[#67625C] mt-2 text-base font-medium;
     }
 
     .form-stack {
-        @apply space-y-6;
+        @apply space-y-5;
     }
 
     .form-label {
-        @apply block text-sm font-semibold text-[#3E4635] mb-1;
+        @apply block text-base font-black text-[#1A2517] mb-1;
     }
 
     .login-input {
-        @apply w-full px-4 py-3 bg-[#F8F5EC] border border-[#D8C7B5] rounded-xl focus:ring-2 focus:ring-[#576238] focus:border-transparent outline-none transition-all;
+        @apply w-full px-4 py-3 bg-[#FFFDF7] border border-[#D8C7B5] rounded-lg text-base font-medium text-[#1A2517] shadow-sm outline-none transition-all focus:border-[#576238] focus:ring-2 focus:ring-[#ACC8A2]/50;
     }
 
     .login-error {
-        @apply bg-[#F4E6E1] border-l-4 border-[#9A3B30] text-[#7E2F28] p-4 rounded shadow-sm animate-pulse;
+        @apply bg-[#F4E6E1] border-l-4 border-[#9A3B30] text-[#7E2F28] p-4 rounded-xl shadow-sm;
     }
 
     .login-submit {
-        @apply w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transform transition-all active:scale-95;
+        @apply w-full py-4 rounded-lg text-white font-black text-base shadow-lg transform transition-all active:scale-95;
     }
 
     .login-submit-active {
@@ -53,8 +61,20 @@
         @apply bg-[#ACC8A2] cursor-not-allowed;
     }
 
+    .login-auto-role {
+        @apply flex items-center gap-3 pt-1 text-center text-sm font-medium text-[#67625C];
+    }
+
+    .login-auto-role span {
+        @apply h-px flex-1 bg-[#D8C7B5];
+    }
+
+    .login-auto-role p {
+        @apply whitespace-nowrap;
+    }
+
     .app-footer-note {
-        @apply text-xs text-[#8A8377];
+        @apply mt-6 text-center text-sm text-[#67625C];
     }
 
     /* Admin Layout */
