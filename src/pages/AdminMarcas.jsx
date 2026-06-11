@@ -3,6 +3,23 @@ import { db } from '../services/firebase';
 import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 
+const IconEditar = () => (
+    <svg className="admin-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+    </svg>
+);
+
+const IconEliminar = () => (
+    <svg className="admin-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 6h18" />
+        <path d="M8 6V4h8v2" />
+        <path d="M6 6l1 15h10l1-15" />
+        <path d="M10 11v6" />
+        <path d="M14 11v6" />
+    </svg>
+);
+
 const AdminMarcas = () => {
     const [nombreMarca, setNombreMarca] = useState('');
     const [marcas, setMarcas] = useState([]);
@@ -94,20 +111,24 @@ const AdminMarcas = () => {
                                             <span className="font-bold text-[#3E4635] uppercase text-sm tracking-tighter">{m.nombre}</span>
                                         </td>
                                         <td className="p-4 text-right">
-                                            <div className="flex justify-end gap-3">
+                                            <div className="admin-icon-actions">
                                                 <button
                                                     onClick={() => editarMarca(m.id, m.nombre)}
                                                     disabled={procesando === `editar:${m.id}`}
-                                                    className="text-[#576238] hover:text-[#1A2517] text-xs font-black uppercase tracking-tighter disabled:opacity-50"
+                                                    className="admin-icon-btn"
+                                                    title="Editar marca"
+                                                    aria-label="Editar marca"
                                                 >
-                                                    Editar
+                                                    <IconEditar />
                                                 </button>
                                                 <button
                                                     onClick={() => eliminarMarca(m.id)}
                                                     disabled={procesando === `eliminar:${m.id}`}
-                                                    className="text-[#9A3B30] hover:text-[#7E2F28] text-xs font-black uppercase tracking-tighter disabled:opacity-50"
+                                                    className="admin-icon-btn admin-icon-btn-danger"
+                                                    title="Eliminar marca"
+                                                    aria-label="Eliminar marca"
                                                 >
-                                                    Borrar
+                                                    <IconEliminar />
                                                 </button>
                                             </div>
                                         </td>

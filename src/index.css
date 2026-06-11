@@ -1,7 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Castoro+Titling&family=Google+Sans+Flex:opsz,wght@6..144,300..900&display=swap');
 @import "tailwindcss";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html,
+    body,
+    button,
+    input,
+    select,
+    textarea {
+        font-family: "Google Sans Flex", sans-serif;
+        font-optical-sizing: auto;
+        font-style: normal;
+        font-variation-settings:
+            "slnt" 0,
+            "wdth" 100,
+            "GRAD" 0,
+            "ROND" 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .castoro-title {
+        font-family: "Castoro Titling", serif;
+        font-weight: 400;
+        font-style: normal;
+    }
+
+    .castoro-titling-regular {
+        font-family: "Castoro Titling", serif;
+        font-weight: 400;
+        font-style: normal;
+    }
+
+    .google-sans-flex-regular {
+        font-family: "Google Sans Flex", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+        font-variation-settings:
+            "slnt" 0,
+            "wdth" 100,
+            "GRAD" 0,
+            "ROND" 0;
+    }
+}
 
 @layer components {
     /* Login */
@@ -271,6 +320,22 @@
 
     .admin-badge {
         @apply bg-[#1A2517] text-white px-4 py-2 rounded-xl text-xs font-black uppercase italic;
+    }
+
+    .admin-icon-actions {
+        @apply flex items-center justify-end gap-2;
+    }
+
+    .admin-icon-btn {
+        @apply inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[#D8C7B5] bg-[#F8F5EC] text-[#1A2517] shadow-sm transition-all hover:bg-[#1A2517] hover:text-white disabled:opacity-50;
+    }
+
+    .admin-icon-btn-danger {
+        @apply border-[#9A3B30] bg-[#9A3B30] text-white hover:bg-[#7E2F28];
+    }
+
+    .admin-icon-svg {
+        @apply h-5 w-5;
     }
 
     /* Inventario Maestro */
