@@ -178,46 +178,45 @@ const AdminDashboard = () => {
             <div className="admin-shell">
 
                 {/* SECCIÓN DE FILTROS Y TOTAL GLOBAL */}
-                <div className="admin-summary-panel">
-                    <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
-                        <div className="text-center lg:text-left">
-                            <h1 className="text-4xl font-black text-[#1A2517] italic uppercase leading-none">Ventas Totales</h1>
-                            <p className="text-3xl font-black text-[#576238] mt-2">
-                                ${totalGlobal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                            </p>
+                <div className="admin-dashboard-head">
+                    <div className="admin-filter-bar">
+                        <div className="flex flex-col">
+                            <label className="admin-filter-label">Sucursal</label>
+                            <select
+                                className="admin-filter-select"
+                                value={filtroSucursal}
+                                onChange={(e) => setFiltroSucursal(e.target.value)}
+                            >
+                                <option value="todas">Todas</option>
+                                {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                            </select>
                         </div>
+                        <div className="flex flex-col">
+                            <label className="admin-filter-label">Desde</label>
+                            <input
+                                type="date"
+                                className="admin-filter-input"
+                                value={fechaInicio}
+                                onChange={(e) => setFechaInicio(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="admin-filter-label">Hasta</label>
+                            <input
+                                type="date"
+                                className="admin-filter-input"
+                                value={fechaFin}
+                                onChange={(e) => setFechaFin(e.target.value)}
+                            />
+                        </div>
+                    </div>
 
-                        <div className="admin-filter-bar">
-                            <div className="flex flex-col">
-                                <label className="admin-filter-label">Sede</label>
-                                <select
-                                    className="admin-filter-select"
-                                    value={filtroSucursal}
-                                    onChange={(e) => setFiltroSucursal(e.target.value)}
-                                >
-                                    <option value="todas">Todas</option>
-                                    {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-                                </select>
-                            </div>
-                            <div className="flex flex-col border-l border-[#D8C7B5] pl-4">
-                                <label className="admin-filter-label">Desde</label>
-                                <input
-                                    type="date"
-                                    className="admin-filter-input"
-                                    value={fechaInicio}
-                                    onChange={(e) => setFechaInicio(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex flex-col border-l border-[#D8C7B5] pl-4">
-                                <label className="admin-filter-label">Hasta</label>
-                                <input
-                                    type="date"
-                                    className="admin-filter-input"
-                                    value={fechaFin}
-                                    onChange={(e) => setFechaFin(e.target.value)}
-                                />
-                            </div>
-                        </div>
+                    <div className="admin-total-card">
+                        <p className="text-sm font-medium text-[#67625C]">Total de ventas del periodo</p>
+                        <p className="text-4xl font-black text-[#1A2517]">
+                            ${totalGlobal.toLocaleString('es-MX', { maximumFractionDigits: 0 })}
+                        </p>
+                        <p className="text-sm font-bold text-[#1A2517]">{ventas.length} tickets</p>
                     </div>
                 </div>
 

@@ -105,9 +105,9 @@ const AdminVerInventario = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F5EC] pb-20">
+        <div className="admin-page">
             <AdminNavbar />
-            <div className="p-8 max-w-7xl mx-auto">
+            <div className="admin-shell">
 
                 <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
                     <div>

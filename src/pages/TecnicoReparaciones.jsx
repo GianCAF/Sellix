@@ -66,7 +66,7 @@ const TecnicoReparaciones = () => {
     };
 
     return (
-        <div className="admin-page">
+        <div className="min-h-screen bg-[#F0EADC] pb-20">
             <nav className="bg-[#FFFDF7] border-b border-[#D8C7B5] p-4 sticky top-0 z-[100] shadow-sm">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div>

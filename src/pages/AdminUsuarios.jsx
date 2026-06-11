@@ -102,9 +102,9 @@ const AdminUsuarios = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F5EC]">
+        <div className="admin-page">
             <AdminNavbar />
-            <div className="p-4 md:p-8 max-w-5xl mx-auto">
+            <div className="admin-shell">
                 <h2 className="text-2xl font-black mb-6 uppercase italic text-[#1A2517]">
                     {editandoId ? 'Editando Usuario' : 'Nuevo Usuario'}
                 </h2>

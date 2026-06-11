@@ -79,39 +79,122 @@
 
     /* Admin Layout */
     .admin-page {
-        @apply min-h-screen bg-[#F8F5EC] pb-20;
+        @apply min-h-screen bg-[#F0EADC] pb-20 pt-[74px] text-[#1A2517] lg:pl-[320px];
+    }
+
+    .admin-sidebar {
+        @apply fixed left-0 top-0 z-[220] flex h-screen w-[320px] -translate-x-full flex-col bg-[#1A2517] px-6 py-6 text-white shadow-2xl transition-transform duration-200 lg:translate-x-0;
+    }
+
+    .admin-sidebar-open {
+        @apply translate-x-0;
+    }
+
+    .admin-sidebar-backdrop {
+        @apply fixed inset-0 z-[210] bg-black/40 backdrop-blur-sm lg:hidden;
+    }
+
+    .admin-mobile-menu {
+        @apply fixed left-4 top-4 z-[260] flex h-11 w-11 items-center justify-center rounded-xl bg-[#1A2517] text-xl font-black text-white shadow-lg lg:hidden;
+    }
+
+    .admin-brand {
+        @apply mb-8 flex cursor-pointer items-center gap-3;
+    }
+
+    .admin-brand-mark {
+        @apply flex h-12 w-12 items-center justify-center rounded-xl bg-[#ACC8A2] text-xl font-black text-[#1A2517];
+    }
+
+    .admin-brand-title {
+        @apply text-xl font-black leading-none;
+    }
+
+    .admin-brand-subtitle {
+        @apply mt-1 text-sm font-bold text-[#ACC8A2];
+    }
+
+    .admin-side-menu {
+        @apply flex flex-1 flex-col gap-2;
+    }
+
+    .admin-side-link {
+        @apply flex w-full items-center gap-4 rounded-lg px-4 py-3 text-left text-base font-bold text-[#FFFDF7] transition-all hover:bg-[#576238]/70;
+    }
+
+    .admin-side-link-active {
+        @apply bg-[#576238] text-white shadow-sm;
+    }
+
+    .admin-side-icon {
+        @apply flex w-6 justify-center text-xl leading-none;
+    }
+
+    .admin-user-foot {
+        @apply mt-auto border-t border-[#576238]/50 pt-5 text-sm font-bold text-[#F0EADC]/80;
+    }
+
+    .admin-user-foot span {
+        @apply mt-1 block text-[#ACC8A2];
+    }
+
+    .admin-topbar {
+        @apply fixed right-0 top-0 z-[180] flex h-[74px] items-center justify-between border-b border-[#D8C7B5] bg-[#FFFDF7] px-6 shadow-sm lg:left-[320px];
+        left: 0;
+    }
+
+    @media (min-width: 1024px) {
+        .admin-topbar {
+            left: 320px;
+        }
+    }
+
+    .admin-topbar h1 {
+        @apply pl-12 text-xl font-black text-[#1A2517] lg:pl-0;
+    }
+
+    .admin-topbar p {
+        @apply hidden text-sm font-medium text-[#67625C] sm:block;
     }
 
     .admin-shell {
-        @apply p-4 md:p-8 max-w-7xl mx-auto;
+        @apply mx-auto max-w-none p-4 md:p-7;
     }
 
     .admin-shell-md {
-        @apply p-8 max-w-6xl mx-auto;
+        @apply mx-auto max-w-none p-4 md:p-7;
     }
 
     .admin-panel {
-        @apply bg-[#FFFDF7] shadow-sm border border-[#E3D9C8];
+        @apply bg-[#FFFDF7] shadow-sm border border-[#D8C7B5];
     }
 
     .admin-summary-panel {
-        @apply bg-[#FFFDF7] p-8 rounded-[30px] shadow-sm mb-8 border border-[#E3D9C8];
+        @apply bg-[#FFFDF7] p-6 rounded-2xl shadow-sm mb-7 border border-[#D8C7B5];
+    }
+
+    .admin-dashboard-head {
+        @apply mb-7 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px] xl:items-end;
     }
 
     .admin-filter-bar {
-        @apply flex flex-wrap gap-4 justify-center bg-[#F8F5EC] p-4 rounded-3xl;
+        @apply grid grid-cols-1 gap-4 md:grid-cols-3;
     }
 
     .admin-filter-label {
-        @apply text-[10px] font-black text-[#8A8377] uppercase ml-2;
+        @apply text-base font-black text-[#1A2517] mb-1;
     }
 
     .admin-filter-input {
-        @apply bg-transparent font-bold text-[#3E4635] outline-none;
+        @apply h-11 rounded-lg border border-[#D8C7B5] bg-[#FFFDF7] px-4 font-medium text-[#1A2517] shadow-sm outline-none focus:border-[#576238];
     }
 
     .admin-filter-select {
-        @apply bg-transparent font-bold text-[#3E4635] outline-none p-1;
+        @apply h-11 rounded-lg border border-[#D8C7B5] bg-[#FFFDF7] px-4 font-medium text-[#1A2517] shadow-sm outline-none focus:border-[#576238];
+    }
+
+    .admin-total-card {
+        @apply rounded-2xl border border-[#D8C7B5] bg-[#FFFDF7] p-6 shadow-sm;
     }
 
     .admin-empty-state {
@@ -127,11 +210,11 @@
     }
 
     .admin-card-grid {
-        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[30px] mb-12;
+        @apply grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-7;
     }
 
     .admin-branch-card {
-        @apply bg-[#FFFDF7] p-10 rounded-[45px] shadow-sm border border-[#E3D9C8] flex flex-col items-center justify-center text-center hover:shadow-2xl hover:scale-[1.02] transition-all;
+        @apply bg-[#FFFDF7] p-6 rounded-2xl shadow-sm border border-[#D8C7B5] flex flex-col items-start justify-center text-left hover:shadow-lg transition-all;
     }
 
     .admin-branch-icon {
@@ -159,7 +242,7 @@
     }
 
     .admin-table-panel {
-        @apply bg-[#FFFDF7] rounded-[40px] shadow-sm border border-[#E3D9C8] overflow-hidden;
+        @apply bg-[#FFFDF7] rounded-2xl shadow-sm border border-[#D8C7B5] overflow-hidden;
     }
 
     .admin-table {
@@ -192,23 +275,23 @@
 
     /* Inventario Maestro */
     .inventory-tabs {
-        @apply flex gap-4 mb-10 bg-[#FFFDF7] p-2 rounded-[25px] shadow-sm border border-[#E3D9C8] max-w-md mx-auto;
+        @apply flex gap-2 mb-4 bg-[#D8C7B5] p-1 rounded-lg shadow-sm border border-[#D8C7B5] max-w-md;
     }
 
     .inventory-tab {
-        @apply flex-1 py-4 rounded-2xl font-black text-xs uppercase italic transition-all;
+        @apply flex-1 py-3 rounded-md font-black text-sm transition-all;
     }
 
     .inventory-tab-active {
-        @apply bg-[#1A2517] text-white shadow-lg;
+        @apply bg-[#FFFDF7] text-[#1A2517] shadow-sm;
     }
 
     .inventory-tab-idle {
-        @apply text-[#8A8377] hover:text-[#1A2517];
+        @apply text-[#67625C] hover:text-[#1A2517];
     }
 
     .inventory-form {
-        @apply bg-[#FFFDF7] p-8 rounded-[40px] shadow-sm space-y-6 border border-[#E3D9C8];
+        @apply bg-[#FFFDF7] p-5 md:p-6 rounded-2xl shadow-sm space-y-5 border border-[#D8C7B5];
     }
 
     .inventory-grid-3 {
@@ -272,11 +355,11 @@
     }
 
     .inventory-submit {
-        @apply w-full bg-[#1A2517] text-white py-6 rounded-[30px] font-black text-2xl hover:bg-[#576238] shadow-xl uppercase italic;
+        @apply w-full bg-[#1A2517] text-white py-4 rounded-lg font-black text-base hover:bg-[#576238] shadow-lg;
     }
 
     .inventory-list-panel {
-        @apply bg-[#FFFDF7] rounded-[40px] shadow-sm overflow-hidden border border-[#E3D9C8];
+        @apply bg-[#FFFDF7] rounded-2xl shadow-sm overflow-hidden border border-[#D8C7B5];
     }
 
     .inventory-product-title {

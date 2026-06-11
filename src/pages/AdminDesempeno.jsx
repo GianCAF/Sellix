@@ -58,9 +58,9 @@ const AdminDesempeno = () => {
     useEffect(() => { cargarDatos(); }, [fechaInicio, fechaFin]);
 
     return (
-        <div className="min-h-screen bg-[#F8F5EC] pb-20">
+        <div className="admin-page">
             <AdminNavbar />
-            <div className="p-8 max-w-4xl mx-auto">
+            <div className="admin-shell">
 
                 <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
                     <h2 className="text-4xl font-black uppercase italic text-[#1A2517] leading-none">Ranking de Desempeño</h2>

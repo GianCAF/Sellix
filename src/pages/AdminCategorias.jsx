@@ -106,9 +106,9 @@ const AdminCategorias = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F5EC]">
+        <div className="admin-page">
             <AdminNavbar />
-            <div className="p-4 md:p-8 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="admin-shell grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* Sección Categorías */}
                 <div className="bg-[#FFFDF7] p-5 md:p-6 rounded-xl shadow-sm h-fit">

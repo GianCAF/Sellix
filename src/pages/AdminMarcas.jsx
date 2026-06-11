@@ -57,9 +57,9 @@ const AdminMarcas = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F5EC]">
+        <div className="admin-page">
             <AdminNavbar />
-            <div className="p-4 md:p-8 max-w-2xl mx-auto">
+            <div className="admin-shell max-w-4xl">
                 <h2 className="text-2xl font-black mb-6 text-[#1A2517] uppercase italic">Registrar Marcas</h2>
 
                 {/* Formulario Responsivo */}

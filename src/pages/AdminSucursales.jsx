@@ -54,9 +54,9 @@ const AdminSucursales = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F5EC]">
+        <div className="admin-page">
             <AdminNavbar />
-            <div className="p-8 max-w-4xl mx-auto">
+            <div className="admin-shell">
                 <h2 className="text-2xl font-black mb-6 uppercase italic">
                     {editandoId ? '📝 Editando Sucursal' : '🏢 Nueva Sucursal'}
                 </h2>
