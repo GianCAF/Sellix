@@ -38,6 +38,9 @@ const VentaEmpleado = () => {
     const [inventarioSucursal, setInventarioSucursal] = useState([]);
     const [mostrarInventario, setMostrarInventario] = useState(false);
     const [cargandoInventario, setCargandoInventario] = useState(false);
+    const [modoComprobarInventario, setModoComprobarInventario] = useState(false);
+    const [busquedaComprobarInventario, setBusquedaComprobarInventario] = useState('');
+    const [existenciasReales, setExistenciasReales] = useState({});
     const [mostrarModalDescuento, setMostrarModalDescuento] = useState(false);
     const [productoDescuento, setProductoDescuento] = useState(null);
     const [descuentoCantidad, setDescuentoCantidad] = useState('');
@@ -377,6 +380,27 @@ const VentaEmpleado = () => {
         ].map(normalizarTexto).join(' ');
 
         return textoProducto.includes(termino);
+    };
+
+    const obtenerInventarioComprobacion = () => {
+        const termino = normalizarTexto(busquedaComprobarInventario.trim());
+        if (!termino) return inventarioSucursal;
+        return inventarioSucursal.filter(item => coincideBusquedaProducto(item, termino));
+    };
+
+    const calcularDiferenciaInventario = (item) => {
+        const valorReal = existenciasReales[item.id];
+        if (valorReal === undefined || valorReal === '') return null;
+        return (Number(valorReal) || 0) - (Number(item.cantidad) || 0);
+    };
+
+    const describirDiferenciaInventario = (diferencia) => {
+        if (diferencia === null) return 'Pendiente';
+        if (diferencia === 0) return 'Cuadra';
+        const piezas = Math.abs(diferencia);
+        return diferencia < 0
+            ? `${piezas} pieza${piezas === 1 ? '' : 's'} faltante${piezas === 1 ? '' : 's'}`
+            : `${piezas} pieza${piezas === 1 ? '' : 's'} sobrante${piezas === 1 ? '' : 's'}`;
     };
 
     const hablarAsistente = (texto) => {
@@ -1343,16 +1367,96 @@ const VentaEmpleado = () => {
             {mostrarInventario && (
                 <div className="modal-overlay">
                     <div className="modal-content text-[#1A2517]">
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-start md:justify-between">
                             <div>
                                 <h3 className="text-2xl font-black uppercase italic">Inventario de Sucursal</h3>
                                 <p className="text-[10px] font-black text-[#8A8377] uppercase">{sucursalNombre}</p>
-                                <button onClick={exportarInventarioExcel} className="btn-primary mt-2">Descargar Excel</button>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    <button onClick={exportarInventarioExcel} className="btn-primary">Descargar Excel</button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setModoComprobarInventario(prev => !prev)}
+                                        className={modoComprobarInventario ? 'btn-green !py-2 !text-xs !rounded-xl' : 'btn-dark'}
+                                    >
+                                        {modoComprobarInventario ? 'Vista normal' : 'Comprobar'}
+                                    </button>
+                                </div>
                             </div>
                             <button onClick={() => setMostrarInventario(false)} className="text-3xl font-black text-[#1A2517]">X</button>
                         </div>
-                        <div className="flex-1 overflow-y-auto space-y-3">
-                            {inventarioSucursal.map(item => (
+                        {modoComprobarInventario && (
+                            <div className="mb-4 rounded-2xl border border-[#D8C7B5] bg-[#F8F5EC] p-4">
+                                <label className="mb-2 block text-[10px] font-black uppercase text-[#8A8377]">Buscar producto para auditoria</label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-2xl border-2 border-[#FFFDF7] bg-[#FFFDF7] p-4 font-black outline-none focus:border-[#576238]"
+                                    placeholder="Codigo, nombre, marca, modelo..."
+                                    value={busquedaComprobarInventario}
+                                    onChange={(e) => setBusquedaComprobarInventario(e.target.value)}
+                                />
+                            </div>
+                        )}
+                        <div className={modoComprobarInventario ? 'flex-1 overflow-y-auto' : 'flex-1 overflow-y-auto space-y-3'}>
+                            {modoComprobarInventario ? (
+                                <div className="overflow-x-auto rounded-2xl border border-[#D8C7B5] bg-[#FFFDF7]">
+                                    <table className="w-full min-w-[820px] text-left">
+                                        <thead className="bg-[#F0EADC]">
+                                            <tr>
+                                                <th className="p-3 text-[10px] font-black uppercase text-[#8A8377]">Codigo</th>
+                                                <th className="p-3 text-[10px] font-black uppercase text-[#8A8377]">Producto</th>
+                                                <th className="p-3 text-[10px] font-black uppercase text-[#8A8377] text-right">Precio</th>
+                                                <th className="p-3 text-[10px] font-black uppercase text-[#8A8377] text-center">Inventario</th>
+                                                <th className="p-3 text-[10px] font-black uppercase text-[#8A8377] text-center">Existencia real</th>
+                                                <th className="p-3 text-[10px] font-black uppercase text-[#8A8377]">Resultado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-[#F0EADC]">
+                                            {obtenerInventarioComprobacion().map(item => {
+                                                const diferencia = calcularDiferenciaInventario(item);
+                                                return (
+                                                    <tr key={item.id} className="hover:bg-[#E5EEDC]/20">
+                                                        <td className="p-3 align-top text-xs font-black text-[#67625C]">{item.codigos?.[0] || 'N/A'}</td>
+                                                        <td className="p-3 align-top">
+                                                            <p className="text-sm font-black uppercase text-[#1A2517]">{item.descripcion}</p>
+                                                            <p className="text-[10px] font-black uppercase text-[#8A8377]">
+                                                                {item.marcaNombre || item.marca || 'N/A'} | {item.modelo || 'N/A'}
+                                                            </p>
+                                                        </td>
+                                                        <td className="p-3 align-top text-right text-sm font-black text-[#576238]">{moneda.format(Number(item.precio) || 0)}</td>
+                                                        <td className="p-3 align-top text-center">
+                                                            <span className="inline-flex min-w-14 justify-center rounded-xl bg-[#E5EEDC] px-3 py-2 text-sm font-black text-[#1A2517]">
+                                                                {item.cantidad ?? 0}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-3 align-top text-center">
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                className="w-24 rounded-xl border-2 border-[#D8C7B5] bg-[#FFFDF7] p-2 text-center font-black outline-none focus:border-[#576238]"
+                                                                value={existenciasReales[item.id] ?? ''}
+                                                                onChange={(e) => setExistenciasReales(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                                                placeholder="0"
+                                                            />
+                                                        </td>
+                                                        <td className="p-3 align-top">
+                                                            <span className={`inline-flex rounded-xl px-3 py-2 text-xs font-black uppercase ${diferencia === null ? 'bg-[#F0EADC] text-[#67625C]' : diferencia === 0 ? 'bg-[#E5EEDC] text-[#1A2517]' : diferencia < 0 ? 'bg-[#F4E6E1] text-[#9A3B30]' : 'bg-[#EFE2B8] text-[#9A6B3F]'}`}>
+                                                                {describirDiferenciaInventario(diferencia)}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {obtenerInventarioComprobacion().length === 0 && (
+                                                <tr>
+                                                    <td colSpan="6" className="p-12 text-center text-[#B8AD9D] font-black uppercase italic">
+                                                        Sin productos para comprobar
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : inventarioSucursal.map(item => (
                                 <div key={item.id} className="product-card text-[#1A2517]">
                                     <div className="flex-1 pr-4">
                                         <p className="font-black uppercase text-sm">{item.descripcion}</p>
@@ -1369,9 +1473,14 @@ const VentaEmpleado = () => {
                                     </div>
                                 </div>
                             ))}
-                            {inventarioSucursal.length === 0 && (
+                            {!modoComprobarInventario && inventarioSucursal.length === 0 && (
                                 <div className="text-center py-12 text-[#B8AD9D] font-black uppercase italic">
                                     Sin inventario en esta sucursal
+                                </div>
+                            )}
+                            {modoComprobarInventario && inventarioSucursal.length > 0 && (
+                                <div className="mt-4 rounded-2xl bg-[#F8F5EC] p-4 text-[10px] font-black uppercase text-[#8A8377]">
+                                    Captura la existencia fisica real. Sellix calcula faltantes o sobrantes contra el inventario registrado.
                                 </div>
                             )}
                         </div>
