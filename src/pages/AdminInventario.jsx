@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, getDocs, addDoc, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
+import { useAuth } from '../context/AuthContext';
+import { aplicarTenant, perteneceAlTenant } from '../utils/tenant';
 
 const AdminInventario = () => {
+    const { user } = useAuth();
     // Datos de catálogos
     const [categorias, setCategorias] = useState([]);
     const [subcategorias, setSubcategorias] = useState([]);
@@ -32,13 +35,13 @@ const AdminInventario = () => {
         const marSnap = await getDocs(query(collection(db, "marcas"), orderBy("nombre")));
         const prodSnap = await getDocs(query(collection(db, "productos_maestros"), orderBy("fechaRegistro", "desc")));
 
-        setCategorias(catSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-        setSubcategorias(subSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-        setMarcas(marSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-        setProductosMaestros(prodSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setCategorias(catSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
+        setSubcategorias(subSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
+        setMarcas(marSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
+        setProductosMaestros(prodSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
     };
 
-    useEffect(() => { cargarCatalogos(); }, []);
+    useEffect(() => { if (user) cargarCatalogos(); }, [user]);
 
     // Lógica de descripción automática
     useEffect(() => {
@@ -77,7 +80,7 @@ const AdminInventario = () => {
         if (procesandoGuardar) return;
         setProcesandoGuardar(true);
         try {
-            const data = {
+            const data = aplicarTenant(user, {
                 categoriaId: catSel,
                 subcategoriaId: subSel || null,
                 marcaId: marcaSel || null,
@@ -87,7 +90,7 @@ const AdminInventario = () => {
                 colores: colores.filter(c => c.trim() !== ''),
                 codigos: codigos.filter(c => c.trim() !== '').map(c => c.toUpperCase()),
                 fechaRegistro: new Date()
-            };
+            });
 
             if (editandoId) {
                 await updateDoc(doc(db, "productos_maestros", editandoId), data);

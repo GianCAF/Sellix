@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../services/firebase';
+import { useAuth } from '../context/AuthContext';
+import { perteneceAlTenant } from '../utils/tenant';
 
 const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const normalizarBusqueda = (texto) => normalizarTexto(texto).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -169,6 +171,7 @@ const palabrasNumero = {
 };
 
 const AdminVoiceAssistant = () => {
+    const { user } = useAuth();
     const guiaPersistida = cargarGuiaPersistida();
     const [vozDisponible, setVozDisponible] = useState(false);
     const [escuchando, setEscuchando] = useState(false);
@@ -227,8 +230,8 @@ const AdminVoiceAssistant = () => {
         ]);
 
         const datos = {
-            sucursales: sSnap.docs.map(d => ({ id: d.id, ...d.data() })),
-            inventario: iSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+            sucursales: sSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)),
+            inventario: iSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)),
             actualizado: ahora
         };
         cacheDatos.current = datos;
@@ -317,7 +320,7 @@ const AdminVoiceAssistant = () => {
             where("fecha", "<=", periodo.fin)
         ));
 
-        const ventas = ventasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const ventas = ventasSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item));
         cacheVentas.current = { key: periodo.key, ventas, actualizado: ahora };
         return ventas;
     };

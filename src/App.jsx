@@ -11,6 +11,7 @@ import AdminVerInventario from './pages/AdminVerInventario';
 import VentaEmpleado from './pages/VentaEmpleado';
 import NotFound from './pages/NotFound';
 import TecnicoReparaciones from './pages/TecnicoReparaciones';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import { AppNotificationsProvider } from './components/AppNotifications';
 
 // Componente para proteger las rutas
@@ -21,7 +22,8 @@ const ProtectedRoute = ({ children, roleRequired }) => {
 
   if (!user) return <Navigate to="/" />;
 
-  if (roleRequired && user.rol !== roleRequired) {
+  const rolesPermitidos = Array.isArray(roleRequired) ? roleRequired : [roleRequired];
+  if (roleRequired && !rolesPermitidos.includes(user.rol)) {
     return <Navigate to="/" />;
   }
 
@@ -38,6 +40,12 @@ function App() {
           <Route path="/" element={<Login />} />
 
           {/* Rutas de Administrador */}
+          <Route path="/super-admin" element={
+            <ProtectedRoute roleRequired="super_admin">
+              <SuperAdminDashboard />
+            </ProtectedRoute>
+          } />
+
           <Route path="/admin" element={
             <ProtectedRoute roleRequired="admin">
               <AdminDashboard />

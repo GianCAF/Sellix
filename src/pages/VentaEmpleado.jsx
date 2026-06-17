@@ -4,6 +4,7 @@ import { collection, getDocs, query, where, addDoc, doc, updateDoc, increment, T
 import { useAuth } from '../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { obtenerNegocioId } from '../utils/tenant';
 
 const NOMBRE_TIENDA_TICKET = 'ARCHICELL';
 const CONTACTO_TICKET = '7731708400';
@@ -68,6 +69,8 @@ const VentaEmpleado = () => {
     const asistenteEscuchando = useRef(false);
     const inventarioSucursalRef = useRef([]);
     const productosAgregandoRef = useRef(new Set());
+    const ticketRef = useRef(null);
+    const ticketPrintStyleRef = useRef(null);
     const moneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
     const monedaSinCentavos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
     const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -206,6 +209,7 @@ const VentaEmpleado = () => {
         if (!inputFondo || isNaN(inputFondo) || parseFloat(inputFondo) < 0) return alert("Monto no válido");
         try {
             await setDoc(doc(db, "cajas_inicio", `${user.sucursalId}_${getFechaLocalID()}`), {
+                negocioId: obtenerNegocioId(user),
                 monto: parseFloat(inputFondo), sucursalId: user.sucursalId, empleadoId: user.uid,
                 nombreEmpleado: user.nombre || 'Empleado', fecha: Timestamp.now(), fechaString: getFechaLocalID()
             });
@@ -220,6 +224,7 @@ const VentaEmpleado = () => {
         if (!movCantidad || !movMotivo) return alert("Faltan datos");
         try {
             await addDoc(collection(db, "movimientos_caja"), {
+                negocioId: obtenerNegocioId(user),
                 tipo: movTipo, monto: parseFloat(movCantidad), motivo: movMotivo, sucursalId: user.sucursalId,
                 empleadoId: user.uid, nombreEmpleado: user.nombre || 'Empleado', fecha: Timestamp.now(), fechaString: getFechaLocalID()
             });
@@ -234,6 +239,7 @@ const VentaEmpleado = () => {
         setProcesandoPendiente(true);
         try {
             await addDoc(collection(db, "pendientes_sucursal"), {
+                negocioId: obtenerNegocioId(user),
                 sucursalId: user.sucursalId,
                 sucursalNombre,
                 nota,
@@ -794,6 +800,7 @@ const VentaEmpleado = () => {
         try {
             const fechaHoy = getFechaLocalID();
             const data = {
+                negocioId: obtenerNegocioId(user),
                 sucursalId: user.sucursalId,
                 sucursalNombre,
                 empleadoId: user.uid,
@@ -830,6 +837,7 @@ const VentaEmpleado = () => {
             productosVendidos,
             totalVenta,
             data: {
+                negocioId: obtenerNegocioId(user),
                 empleadoId: user.uid,
                 nombreEmpleado: user.nombre || 'Empleado',
                 sucursalId: user.sucursalId,
@@ -967,15 +975,57 @@ const VentaEmpleado = () => {
         setMostrarConfirmacionVenta(false);
     };
 
+    const esperarFrame = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    const limpiarPreparacionImpresionTicket = () => {
+        document.body.classList.remove('preparing-ticket-print');
+        if (ticketPrintStyleRef.current) {
+            ticketPrintStyleRef.current.remove();
+            ticketPrintStyleRef.current = null;
+        }
+    };
+
+    const prepararImpresionTicket = async () => {
+        document.body.classList.add('preparing-ticket-print');
+        await esperarFrame();
+        const ticket = ticketRef.current;
+        const altoPx = Math.ceil(ticket?.getBoundingClientRect().height || 0);
+        const altoMm = Math.max(58, Math.ceil((altoPx * 25.4) / 96) + 6);
+        limpiarPreparacionImpresionTicket();
+
+        const style = document.createElement('style');
+        style.id = 'sellix-ticket-page-size';
+        style.textContent = `
+            @media print {
+                @page { size: 58mm ${altoMm}mm; margin: 0; }
+                html, body, .pos-container {
+                    height: ${altoMm}mm !important;
+                    max-height: ${altoMm}mm !important;
+                    overflow: hidden !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        ticketPrintStyleRef.current = style;
+    };
+
     const confirmarVentaEImprimir = async () => {
         if (procesandoVenta || procesandoImpresion) return;
         const ventaLista = await finalizarVenta();
         if (!ventaLista) return;
         setProcesandoImpresion(true);
         setMostrarConfirmacionVenta(false);
-        window.setTimeout(() => {
-            window.print();
-            setTimeout(() => setProcesandoImpresion(false), 1000);
+        window.setTimeout(async () => {
+            try {
+                await prepararImpresionTicket();
+                window.print();
+            } finally {
+                setTimeout(() => {
+                    limpiarPreparacionImpresionTicket();
+                    setTicketActual(null);
+                    setProcesandoImpresion(false);
+                }, 1400);
+            }
         }, 150);
     };
 
@@ -1552,7 +1602,7 @@ const VentaEmpleado = () => {
             )}
 
             {ticketActual && (
-                <div className="print-ticket">
+                <div ref={ticketRef} className="print-ticket">
                     <div className="print-ticket-title">{ticketActual.tienda}</div>
                     <div className="print-ticket-center print-ticket-header-line">{ticketActual.sucursal}</div>
                     <div className="print-ticket-center print-ticket-header-line">{formatearFechaTicket(ticketActual.fecha)}</div>

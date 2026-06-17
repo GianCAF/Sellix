@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
+import { useAuth } from '../context/AuthContext';
+import { aplicarTenant, perteneceAlTenant } from '../utils/tenant';
 
 const IconEditar = () => (
     <svg className="admin-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -21,6 +23,7 @@ const IconEliminar = () => (
 );
 
 const AdminMarcas = () => {
+    const { user } = useAuth();
     const [nombreMarca, setNombreMarca] = useState('');
     const [marcas, setMarcas] = useState([]);
     const [procesando, setProcesando] = useState('');
@@ -28,17 +31,17 @@ const AdminMarcas = () => {
     const cargarMarcas = async () => {
         const q = query(collection(db, "marcas"), orderBy("nombre"));
         const querySnapshot = await getDocs(q);
-        setMarcas(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setMarcas(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => perteneceAlTenant(user, item)));
     };
 
-    useEffect(() => { cargarMarcas(); }, []);
+    useEffect(() => { if (user) cargarMarcas(); }, [user]);
 
     const crearMarca = async (e) => {
         e.preventDefault();
         if (procesando) return;
         setProcesando('crear');
         try {
-            await addDoc(collection(db, "marcas"), { nombre: nombreMarca });
+            await addDoc(collection(db, "marcas"), aplicarTenant(user, { nombre: nombreMarca }));
             setNombreMarca('');
             await cargarMarcas();
         } finally {
@@ -52,7 +55,7 @@ const AdminMarcas = () => {
         if (nuevoNombre && nuevoNombre !== nombreActual) {
             setProcesando(`editar:${id}`);
             try {
-                await updateDoc(doc(db, "marcas", id), { nombre: nuevoNombre });
+                await updateDoc(doc(db, "marcas", id), aplicarTenant(user, { nombre: nuevoNombre }));
                 await cargarMarcas();
             } finally {
                 setProcesando('');

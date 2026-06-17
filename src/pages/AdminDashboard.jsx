@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, getDocs, query, where, orderBy, doc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
+import { useAuth } from '../context/AuthContext';
+import { perteneceAlTenant } from '../utils/tenant';
 
 const AdminDashboard = () => {
+    const { user } = useAuth();
     const [sucursales, setSucursales] = useState([]);
     const [ventas, setVentas] = useState([]);
     const [inventario, setInventario] = useState([]);
@@ -29,12 +32,13 @@ const AdminDashboard = () => {
                 getDocs(query(collection(db, "ventas"), orderBy("fecha", "desc")))
             ]);
             const listaSucursales = sucSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-            setSucursales(listaSucursales);
-            setInventario(invSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+            const sucursalesTenant = listaSucursales.filter(item => perteneceAlTenant(user, item));
+            setSucursales(sucursalesTenant);
+            setInventario(invSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
             const ultimas = {};
             ultimasSnap.docs.forEach(d => {
                 const venta = { id: d.id, ...d.data() };
-                if (venta.sucursalId && !ultimas[venta.sucursalId]) ultimas[venta.sucursalId] = venta;
+                if (perteneceAlTenant(user, venta) && venta.sucursalId && !ultimas[venta.sucursalId]) ultimas[venta.sucursalId] = venta;
             });
             setUltimaVentaPorSucursal(ultimas);
 
@@ -60,7 +64,7 @@ const AdminDashboard = () => {
             }
 
             const ventSnap = await getDocs(qVentas);
-            setVentas(ventSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+            setVentas(ventSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
 
         } catch (error) {
             console.error("Error al cargar ventas:", error);
@@ -70,7 +74,7 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         cargarDatos();
-    }, [filtroSucursal, fechaInicio, fechaFin]);
+    }, [filtroSucursal, fechaInicio, fechaFin, user]);
 
     const obtenerVentaSucursal = (sucId) => {
         return ventas

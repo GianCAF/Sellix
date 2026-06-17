@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../services/firebase';
 import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
+import { useAuth } from '../context/AuthContext';
+import { aplicarTenant, perteneceAlTenant } from '../utils/tenant';
 
 const IconEditar = () => (
     <svg className="admin-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -21,6 +23,7 @@ const IconEliminar = () => (
 );
 
 const AdminSucursales = () => {
+    const { user } = useAuth();
     const [nombre, setNombre] = useState('');
     const [ubicacion, setUbicacion] = useState('');
     const [sucursales, setSucursales] = useState([]);
@@ -29,10 +32,10 @@ const AdminSucursales = () => {
 
     const cargarSucursales = async () => {
         const querySnapshot = await getDocs(collection(db, "sucursales"));
-        setSucursales(querySnapshot.docs.map(documento => ({ id: documento.id, ...documento.data() })));
+        setSucursales(querySnapshot.docs.map(documento => ({ id: documento.id, ...documento.data() })).filter(item => perteneceAlTenant(user, item)));
     };
 
-    useEffect(() => { cargarSucursales(); }, []);
+    useEffect(() => { if (user) cargarSucursales(); }, [user]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -40,10 +43,10 @@ const AdminSucursales = () => {
         setProcesando('guardar');
         try {
             if (editandoId) {
-                await updateDoc(doc(db, "sucursales", editandoId), { nombre, ubicacion });
+                await updateDoc(doc(db, "sucursales", editandoId), aplicarTenant(user, { nombre, ubicacion }));
                 setEditandoId(null);
             } else {
-                await addDoc(collection(db, "sucursales"), { nombre, ubicacion });
+                await addDoc(collection(db, "sucursales"), aplicarTenant(user, { nombre, ubicacion }));
             }
             setNombre('');
             setUbicacion('');

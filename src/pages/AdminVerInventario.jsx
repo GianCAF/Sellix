@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, getDocs, deleteDoc, doc, updateDoc, query, where, addDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
+import { useAuth } from '../context/AuthContext';
+import { aplicarTenant, perteneceAlTenant } from '../utils/tenant';
 
 const AdminVerInventario = () => {
+    const { user } = useAuth();
     const [inventario, setInventario] = useState([]);
     const [sucursales, setSucursales] = useState([]);
     const [catalogoMaestro, setCatalogoMaestro] = useState([]);
@@ -25,12 +28,12 @@ const AdminVerInventario = () => {
         const iSnap = await getDocs(collection(db, "inventarios"));
         const cSnap = await getDocs(collection(db, "productos_maestros"));
 
-        setSucursales(sSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-        setInventario(iSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-        setCatalogoMaestro(cSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setSucursales(sSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
+        setInventario(iSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
+        setCatalogoMaestro(cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
     };
 
-    useEffect(() => { cargarDatos(); }, []);
+    useEffect(() => { if (user) cargarDatos(); }, [user]);
 
     // --- LÓGICA DE CÁLCULO DE VALOR ---
     const obtenerResumenSucursal = (id) => {
@@ -83,7 +86,7 @@ const AdminVerInventario = () => {
                 const ref = doc(db, "inventarios", existe.id);
                 await updateDoc(ref, { cantidad: existe.cantidad + parseInt(cantidadSurtir) });
             } else {
-                await addDoc(collection(db, "inventarios"), {
+                await addDoc(collection(db, "inventarios"), aplicarTenant(user, {
                     productoId: prodMaestro.id,
                     sucursalId: filtroSucursal,
                     descripcion: prodMaestro.descripcion,
@@ -91,7 +94,7 @@ const AdminVerInventario = () => {
                     codigos: prodMaestro.codigos,
                     cantidad: parseInt(cantidadSurtir),
                     fechaAsignacion: new Date()
-                });
+                }));
             }
             alert("Inventario actualizado");
             setBusquedaCatalogo('');

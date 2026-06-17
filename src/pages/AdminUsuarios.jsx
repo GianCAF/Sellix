@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, getDocs, doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
+import { useAuth } from '../context/AuthContext';
+import { aplicarTenant, perteneceAlTenant, obtenerNegocioId } from '../utils/tenant';
 
 const AdminUsuarios = () => {
+    const { user } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [nombre, setNombre] = useState('');
@@ -17,12 +20,12 @@ const AdminUsuarios = () => {
 
     const cargarDatos = async () => {
         const sSnap = await getDocs(collection(db, "sucursales"));
-        setSucursales(sSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setSucursales(sSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
         const uSnap = await getDocs(collection(db, "usuarios"));
-        setUsuarios(uSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setUsuarios(uSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
     };
 
-    useEffect(() => { cargarDatos(); }, []);
+    useEffect(() => { if (user) cargarDatos(); }, [user]);
 
     const handleCrearOEditar = async (e) => {
         e.preventDefault();
@@ -33,7 +36,9 @@ const AdminUsuarios = () => {
                 await updateDoc(doc(db, "usuarios", editandoId), {
                     nombre,
                     rol,
-                    sucursalId: rol === 'empleado' ? sucursalId : ''
+                    sucursalId: rol === 'empleado' ? sucursalId : '',
+                    negocioId: obtenerNegocioId(user),
+                    adminId: user.uid
                 });
                 setEditandoId(null);
                 alert("Empleado actualizado con éxito");
@@ -64,6 +69,10 @@ const AdminUsuarios = () => {
                         email,
                         rol,
                         sucursalId: rol === 'empleado' ? sucursalId : '',
+                        negocioId: obtenerNegocioId(user),
+                        adminId: user.uid,
+                        creadoPorId: user.uid,
+                        creadoPorNombre: user.nombre || user.email || 'Admin',
                         fechaAlta: new Date()
                     });
                     alert("Empleado registrado correctamente");

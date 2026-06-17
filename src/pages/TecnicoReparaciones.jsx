@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../services/firebase';
 import { collection, doc, onSnapshot, query, Timestamp, updateDoc, where } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { perteneceAlTenant } from '../utils/tenant';
 
 const obtenerMillisFecha = (fecha) => {
     if (!fecha) return 0;
@@ -36,7 +37,7 @@ const TecnicoReparaciones = () => {
         const unsub = onSnapshot(pendientesQuery, (snap) => {
             const items = snap.docs
                 .map(d => ({ id: d.id, ...d.data() }))
-                .filter(item => (item.estado || 'pendiente') === 'pendiente')
+                .filter(item => perteneceAlTenant(user, item) && (item.estado || 'pendiente') === 'pendiente')
                 .sort((a, b) => obtenerMillisFecha(b.fecha) - obtenerMillisFecha(a.fecha));
             setPendientes(items);
         }, () => {
@@ -45,7 +46,7 @@ const TecnicoReparaciones = () => {
         });
 
         return () => unsub();
-    }, []);
+    }, [user]);
 
     const marcarHecho = async (item) => {
         if (completandoId) return;

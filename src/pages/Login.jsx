@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { auth, db } from '../services/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
+import { SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD } from '../utils/tenant';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -18,14 +19,47 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const correoNormalizado = email.trim().toLowerCase();
+            let userCredential;
+            try {
+                userCredential = await signInWithEmailAndPassword(auth, correoNormalizado, password);
+            } catch (err) {
+                if (
+                    correoNormalizado === SUPER_ADMIN_EMAIL &&
+                    password === SUPER_ADMIN_PASSWORD &&
+                    ['auth/user-not-found', 'auth/invalid-credential'].includes(err.code)
+                ) {
+                    userCredential = await createUserWithEmailAndPassword(auth, correoNormalizado, password);
+                    await setDoc(doc(db, "usuarios", userCredential.user.uid), {
+                        uid: userCredential.user.uid,
+                        nombre: 'Super Admin',
+                        email: correoNormalizado,
+                        rol: 'super_admin',
+                        negocioId: 'sellix_global',
+                        fechaAlta: new Date()
+                    });
+                } else {
+                    throw err;
+                }
+            }
             const user = userCredential.user;
             const userDoc = await getDoc(doc(db, "usuarios", user.uid));
 
             if (userDoc.exists()) {
                 const userData = userDoc.data();
 
-                if (userData.rol === 'admin') {
+                if (correoNormalizado === SUPER_ADMIN_EMAIL && userData.rol !== 'super_admin') {
+                    await setDoc(doc(db, "usuarios", user.uid), {
+                        ...userData,
+                        uid: user.uid,
+                        email: correoNormalizado,
+                        rol: 'super_admin',
+                        negocioId: 'sellix_global'
+                    }, { merge: true });
+                    navigate('/super-admin');
+                } else if (userData.rol === 'super_admin') {
+                    navigate('/super-admin');
+                } else if (userData.rol === 'admin') {
                     navigate('/admin');
                 } else if (userData.rol === 'empleado') {
                     navigate('/venta');

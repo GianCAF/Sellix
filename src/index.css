@@ -690,22 +690,99 @@
         display: none;
     }
 
+    .preparing-ticket-print .print-ticket {
+        display: block;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 48mm;
+        box-sizing: border-box;
+        padding: 1mm 0 0;
+        transform: translateX(-9999px);
+        visibility: hidden;
+        color: #000;
+        background: #fff;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 10px;
+        line-height: 1.25;
+        text-align: left;
+    }
+
+    .preparing-ticket-print .print-ticket-title {
+        display: block;
+        width: 100%;
+        margin: 0 auto 1mm;
+        font-size: 15px;
+        font-weight: 900;
+        text-align: center;
+        text-transform: uppercase;
+        white-space: nowrap;
+        transform: translateX(-5mm);
+    }
+
+    .preparing-ticket-print .print-ticket-center {
+        display: block;
+        width: 100%;
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+
+    .preparing-ticket-print .print-ticket-header-line {
+        transform: translateX(-5mm);
+    }
+
+    .preparing-ticket-print .print-ticket-rule {
+        border-top: 1px dashed #000;
+        margin: 6px 0;
+    }
+
+    .preparing-ticket-print .print-ticket-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+    }
+
+    .preparing-ticket-print .print-ticket-product {
+        margin-bottom: 4px;
+    }
+
+    .preparing-ticket-print .print-ticket-line-amount,
+    .preparing-ticket-print .print-ticket-total-amount {
+        transform: translateX(-8mm);
+    }
+
+    .preparing-ticket-print .print-ticket-total {
+        display: flex;
+        font-size: 13px;
+        font-weight: 900;
+        margin-bottom: 2px;
+    }
+
+    .preparing-ticket-print .print-ticket-contact {
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0;
+    }
+
     @media print {
         :root {
             --ticket-paper-width: 58mm;
             --ticket-print-width: 48mm;
             --ticket-offset-x: 5mm;
             --ticket-header-offset-x: -5mm;
+            --ticket-page-height: 80mm;
         }
 
         @page {
-            size: var(--ticket-paper-width) auto;
+            size: var(--ticket-paper-width) var(--ticket-page-height);
             margin: 0;
         }
 
         html,
         body {
             width: var(--ticket-paper-width);
+            height: var(--ticket-page-height);
+            max-height: var(--ticket-page-height);
             min-height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -717,7 +794,8 @@
             display: block !important;
             width: var(--ticket-paper-width) !important;
             min-height: 0 !important;
-            height: auto !important;
+            height: var(--ticket-page-height) !important;
+            max-height: var(--ticket-page-height) !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #fff !important;

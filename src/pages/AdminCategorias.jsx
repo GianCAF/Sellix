@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
+import { useAuth } from '../context/AuthContext';
+import { aplicarTenant, perteneceAlTenant } from '../utils/tenant';
 
 const IconEditar = () => (
     <svg className="admin-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -21,6 +23,7 @@ const IconEliminar = () => (
 );
 
 const AdminCategorias = () => {
+    const { user } = useAuth();
     const [nombreCat, setNombreCat] = useState('');
     const [nombreSub, setNombreSub] = useState('');
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
@@ -30,20 +33,20 @@ const AdminCategorias = () => {
 
     const cargarDatos = async () => {
         const catSnap = await getDocs(query(collection(db, "categorias"), orderBy("nombre")));
-        setCategorias(catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setCategorias(catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => perteneceAlTenant(user, item)));
 
         const subSnap = await getDocs(collection(db, "subcategorias"));
-        setSubcategorias(subSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setSubcategorias(subSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => perteneceAlTenant(user, item)));
     };
 
-    useEffect(() => { cargarDatos(); }, []);
+    useEffect(() => { if (user) cargarDatos(); }, [user]);
 
     const crearCategoria = async (e) => {
         e.preventDefault();
         if (procesando) return;
         setProcesando('crearCategoria');
         try {
-            await addDoc(collection(db, "categorias"), { nombre: nombreCat });
+            await addDoc(collection(db, "categorias"), aplicarTenant(user, { nombre: nombreCat }));
             setNombreCat('');
             await cargarDatos();
         } finally {
@@ -57,7 +60,7 @@ const AdminCategorias = () => {
         if (nuevoNombre && nuevoNombre !== nombreActual) {
             setProcesando(`editarCategoria:${id}`);
             try {
-                await updateDoc(doc(db, "categorias", id), { nombre: nuevoNombre });
+                await updateDoc(doc(db, "categorias", id), aplicarTenant(user, { nombre: nuevoNombre }));
                 await cargarDatos();
             } finally {
                 setProcesando('');
@@ -84,10 +87,10 @@ const AdminCategorias = () => {
         if (!categoriaSeleccionada) return alert("Selecciona una categoria primero");
         setProcesando('crearSubcategoria');
         try {
-            await addDoc(collection(db, "subcategorias"), {
+            await addDoc(collection(db, "subcategorias"), aplicarTenant(user, {
                 nombre: nombreSub,
                 categoriaId: categoriaSeleccionada
-            });
+            }));
             setNombreSub('');
             await cargarDatos();
         } finally {
@@ -101,7 +104,7 @@ const AdminCategorias = () => {
         if (nuevoNombre && nuevoNombre !== nombreActual) {
             setProcesando(`editarSubcategoria:${id}`);
             try {
-                await updateDoc(doc(db, "subcategorias", id), { nombre: nuevoNombre });
+                await updateDoc(doc(db, "subcategorias", id), aplicarTenant(user, { nombre: nuevoNombre }));
                 await cargarDatos();
             } finally {
                 setProcesando('');

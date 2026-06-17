@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { auth } from '../services/firebase';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AdminVoiceAssistant from './AdminVoiceAssistant';
+import { useAuth } from '../context/AuthContext';
 
 const AdminNavbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
 
     const handleLogout = async () => {
@@ -61,7 +63,7 @@ const AdminNavbar = () => {
                     <div className="admin-brand-mark">S</div>
                     <div>
                         <p className="admin-brand-title">Sellix</p>
-                        <p className="admin-brand-subtitle">Admin</p>
+                        <p className="admin-brand-subtitle">{user?.negocioNombre || 'Admin'}</p>
                     </div>
                 </div>
 
@@ -89,8 +91,8 @@ const AdminNavbar = () => {
                 </nav>
 
                 <div className="admin-user-foot">
-                    <p>Administrador</p>
-                    <span>admin@sellix.mx</span>
+                    <p>{user?.nombre || 'Administrador'}</p>
+                    <span>{user?.email || 'admin@sellix.mx'}</span>
                 </div>
             </aside>
 
