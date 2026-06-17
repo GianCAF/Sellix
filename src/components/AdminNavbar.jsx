@@ -40,6 +40,16 @@ const AdminNavbar = () => {
         ? location.pathname === '/admin'
         : location.pathname.startsWith(path);
 
+    const etiquetaRol = user?.rol === 'super_admin'
+        ? 'Super admin'
+        : user?.rol === 'admin'
+            ? 'Administrador'
+            : 'Usuario';
+
+    const etiquetaSesion = user?.negocioNombre
+        ? user.negocioNombre
+        : 'Sesion protegida';
+
     return (
         <>
             <button
@@ -91,8 +101,8 @@ const AdminNavbar = () => {
                 </nav>
 
                 <div className="admin-user-foot">
-                    <p>{user?.nombre || 'Administrador'}</p>
-                    <span>{user?.email || 'admin@sellix.mx'}</span>
+                    <p>{etiquetaRol}</p>
+                    <span>{etiquetaSesion}</span>
                 </div>
             </aside>
 
