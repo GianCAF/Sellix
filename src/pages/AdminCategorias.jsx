@@ -3,7 +3,7 @@ import { db } from '../services/firebase';
 import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant } from '../utils/tenant';
+import { aplicarTenant, perteneceAlTenant, obtenerConfigGiro } from '../utils/tenant';
 
 const IconEditar = () => (
     <svg className="admin-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,6 +24,7 @@ const IconEliminar = () => (
 
 const AdminCategorias = () => {
     const { user } = useAuth();
+    const recomendaciones = obtenerConfigGiro(user);
     const [nombreCat, setNombreCat] = useState('');
     const [nombreSub, setNombreSub] = useState('');
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
@@ -134,7 +135,7 @@ const AdminCategorias = () => {
                     <form onSubmit={crearCategoria} className="flex flex-col sm:flex-row gap-2 mb-6">
                         <input
                             type="text"
-                            placeholder="Ej: Audifonos"
+                            placeholder={recomendaciones.categoria}
                             className="border-2 p-2 rounded-xl flex-1 outline-none focus:border-[#576238] font-bold"
                             value={nombreCat}
                             onChange={(e) => setNombreCat(e.target.value)}
@@ -176,7 +177,7 @@ const AdminCategorias = () => {
                         <div className="flex flex-col sm:flex-row gap-2">
                             <input
                                 type="text"
-                                placeholder="Ej: Diadema"
+                                placeholder={recomendaciones.subcategoria}
                                 className="border-2 p-2 rounded-xl flex-1 outline-none focus:border-[#576238] font-bold"
                                 value={nombreSub}
                                 onChange={(e) => setNombreSub(e.target.value)}

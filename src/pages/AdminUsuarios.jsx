@@ -3,7 +3,7 @@ import { db } from '../services/firebase';
 import { collection, getDocs, doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant, obtenerNegocioId } from '../utils/tenant';
+import { aplicarTenant, perteneceAlTenant, obtenerNegocioId, obtenerGiroNegocio, permiteTecnicos } from '../utils/tenant';
 
 const AdminUsuarios = () => {
     const { user } = useAuth();
@@ -17,6 +17,8 @@ const AdminUsuarios = () => {
     const [editandoId, setEditandoId] = useState(null);
     const [cargando, setCargando] = useState(false);
     const [eliminandoId, setEliminandoId] = useState(null);
+    const negocioPermiteTecnicos = permiteTecnicos(user);
+    const usuariosVisibles = usuarios.filter(u => u.rol === 'empleado' || (negocioPermiteTecnicos && u.rol === 'tecnico'));
 
     const cargarDatos = async () => {
         const sSnap = await getDocs(collection(db, "sucursales"));
@@ -26,19 +28,24 @@ const AdminUsuarios = () => {
     };
 
     useEffect(() => { if (user) cargarDatos(); }, [user]);
+    useEffect(() => {
+        if (!negocioPermiteTecnicos && rol === 'tecnico') setRol('empleado');
+    }, [negocioPermiteTecnicos, rol]);
 
     const handleCrearOEditar = async (e) => {
         e.preventDefault();
         setCargando(true);
+        const rolSeguro = negocioPermiteTecnicos ? rol : 'empleado';
 
         try {
             if (editandoId) {
                 await updateDoc(doc(db, "usuarios", editandoId), {
                     nombre,
-                    rol,
-                    sucursalId: rol === 'empleado' ? sucursalId : '',
+                    rol: rolSeguro,
+                    sucursalId: rolSeguro === 'empleado' ? sucursalId : '',
                     negocioId: obtenerNegocioId(user),
-                    adminId: user.uid
+                    adminId: user.uid,
+                    giroNegocio: obtenerGiroNegocio(user)
                 });
                 setEditandoId(null);
                 alert("Empleado actualizado con éxito");
@@ -67,10 +74,11 @@ const AdminUsuarios = () => {
                         uid: data.localId,
                         nombre,
                         email,
-                        rol,
-                        sucursalId: rol === 'empleado' ? sucursalId : '',
+                        rol: rolSeguro,
+                        sucursalId: rolSeguro === 'empleado' ? sucursalId : '',
                         negocioId: obtenerNegocioId(user),
                         adminId: user.uid,
+                        giroNegocio: obtenerGiroNegocio(user),
                         creadoPorId: user.uid,
                         creadoPorNombre: user.nombre || user.email || 'Admin',
                         fechaAlta: new Date()
@@ -129,7 +137,7 @@ const AdminUsuarios = () => {
                         <label className="text-[10px] font-black text-[#8A8377] uppercase ml-2 mb-1">Rol</label>
                         <select className="p-3 border-2 rounded-xl outline-none font-bold text-[#67625C] bg-[#F8F5EC]" value={rol} onChange={(e) => setRol(e.target.value)} required>
                             <option value="empleado">Empleado</option>
-                            <option value="tecnico">Tecnico</option>
+                            {negocioPermiteTecnicos && <option value="tecnico">Tecnico</option>}
                         </select>
                     </div>
 
@@ -179,7 +187,7 @@ const AdminUsuarios = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#F0EADC]">
-                                {usuarios.filter(u => ['empleado', 'tecnico'].includes(u.rol)).map(u => (
+                                {usuariosVisibles.map(u => (
                                     <tr key={u.id} className="hover:bg-[#E5EEDC]/20 transition-colors">
                                         <td className="p-5">
                                             <p className="font-black text-[#3E4635] uppercase text-sm">{u.nombre}</p>
@@ -198,7 +206,7 @@ const AdminUsuarios = () => {
                                         </td>
                                     </tr>
                                 ))}
-                                {usuarios.filter(u => ['empleado', 'tecnico'].includes(u.rol)).length === 0 && (
+                                {usuariosVisibles.length === 0 && (
                                     <tr>
                                         <td colSpan="3" className="p-10 text-center text-[#B8AD9D] font-black uppercase italic">No hay empleados registrados</td>
                                     </tr>

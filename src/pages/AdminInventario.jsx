@@ -3,10 +3,11 @@ import { db } from '../services/firebase';
 import { collection, getDocs, addDoc, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant } from '../utils/tenant';
+import { aplicarTenant, perteneceAlTenant, obtenerConfigGiro } from '../utils/tenant';
 
 const AdminInventario = () => {
     const { user } = useAuth();
+    const recomendaciones = obtenerConfigGiro(user);
     // Datos de catálogos
     const [categorias, setCategorias] = useState([]);
     const [subcategorias, setSubcategorias] = useState([]);
@@ -189,11 +190,11 @@ const AdminInventario = () => {
                         <div className="inventory-grid-2">
                             <div>
                                 <label className="block text-xs font-black text-[#8A8377] uppercase mb-2">Modelo</label>
-                                <input type="text" className="inventory-input" value={modelo} onChange={(e) => setModelo(e.target.value)} placeholder="Ej: iPhone 15 Pro" />
+                                <input type="text" className="inventory-input" value={modelo} onChange={(e) => setModelo(e.target.value)} placeholder={recomendaciones.modelo} />
                             </div>
                             <div>
                                 <label className="block text-xs font-black text-[#8A8377] uppercase mb-2">Descripción (Ficha Técnica)</label>
-                                <input type="text" className="inventory-input-soft" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+                                <input type="text" className="inventory-input-soft" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder={recomendaciones.descripcion} />
                             </div>
                         </div>
 
@@ -202,7 +203,7 @@ const AdminInventario = () => {
                                 <label className="block text-xs font-black text-[#8A8377] uppercase mb-4">Colores</label>
                                 <div className="flex flex-wrap gap-2">
                                     {colores.map((color, idx) => (
-                                        <input key={idx} type="text" className="inventory-pill-input" value={color} onChange={(e) => handleUpdateArray(idx, e.target.value, setColores)} />
+                                        <input key={idx} type="text" className="inventory-pill-input" value={color} onChange={(e) => handleUpdateArray(idx, e.target.value, setColores)} placeholder={recomendaciones.color} />
                                     ))}
                                     <button type="button" onClick={() => handleAddField(setColores)} className="inventory-add-small">+</button>
                                 </div>
@@ -211,7 +212,7 @@ const AdminInventario = () => {
                                 <label className="block text-xs font-black text-[#8A8377] uppercase mb-4">Códigos Globales</label>
                                 <div className="space-y-2">
                                     {codigos.map((cod, idx) => (
-                                        <input key={idx} type="text" className="inventory-code-input" value={cod} onChange={(e) => handleUpdateArray(idx, e.target.value, setCodigos)} />
+                                        <input key={idx} type="text" className="inventory-code-input" value={cod} onChange={(e) => handleUpdateArray(idx, e.target.value, setCodigos)} placeholder={recomendaciones.codigo} />
                                     ))}
                                     <button type="button" onClick={() => handleAddField(setCodigos)} className="inventory-add-link">+ Añadir Código</button>
                                 </div>

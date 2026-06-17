@@ -3,6 +3,7 @@ import { auth, db } from '../services/firebase';
 import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { GIROS_NEGOCIO, GIRO_TECNOLOGIA } from '../utils/tenant';
 
 const SuperAdminDashboard = () => {
     const { user } = useAuth();
@@ -10,6 +11,7 @@ const SuperAdminDashboard = () => {
     const [admins, setAdmins] = useState([]);
     const [nombre, setNombre] = useState('');
     const [negocioNombre, setNegocioNombre] = useState('');
+    const [giroNegocio, setGiroNegocio] = useState(GIRO_TECNOLOGIA);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [procesando, setProcesando] = useState(false);
@@ -48,12 +50,14 @@ const SuperAdminDashboard = () => {
                 negocioId: data.localId,
                 adminId: data.localId,
                 negocioNombre: negocioNombre || nombre,
+                giroNegocio,
                 creadoPorSuperAdminId: user.uid,
                 fechaAlta: new Date()
             });
 
             setNombre('');
             setNegocioNombre('');
+            setGiroNegocio(GIRO_TECNOLOGIA);
             setEmail('');
             setPassword('');
             await cargarAdmins();
@@ -93,6 +97,14 @@ const SuperAdminDashboard = () => {
                             <input className="login-input" value={negocioNombre} onChange={(e) => setNegocioNombre(e.target.value)} placeholder="Ej: Archicell" required />
                         </div>
                         <div>
+                            <label className="form-label">Giro del negocio</label>
+                            <select className="login-input" value={giroNegocio} onChange={(e) => setGiroNegocio(e.target.value)} required>
+                                {Object.entries(GIROS_NEGOCIO).map(([value, config]) => (
+                                    <option key={value} value={value}>{config.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
                             <label className="form-label">Correo</label>
                             <input type="email" className="login-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
                         </div>
@@ -117,6 +129,7 @@ const SuperAdminDashboard = () => {
                                 <tr>
                                     <th className="admin-th">Negocio</th>
                                     <th className="admin-th">Admin</th>
+                                    <th className="admin-th">Giro</th>
                                     <th className="admin-th">Correo</th>
                                     <th className="admin-th">Negocio ID</th>
                                 </tr>
@@ -126,13 +139,14 @@ const SuperAdminDashboard = () => {
                                     <tr key={admin.id} className="admin-row">
                                         <td className="admin-td font-black uppercase">{admin.negocioNombre || 'Sin nombre'}</td>
                                         <td className="admin-td">{admin.nombre}</td>
+                                        <td className="admin-td">{GIROS_NEGOCIO[admin.giroNegocio]?.label || GIROS_NEGOCIO[GIRO_TECNOLOGIA].label}</td>
                                         <td className="admin-td">{admin.email}</td>
                                         <td className="admin-td text-xs font-mono">{admin.negocioId || admin.id}</td>
                                     </tr>
                                 ))}
                                 {admins.length === 0 && (
                                     <tr>
-                                        <td colSpan="4" className="p-12 text-center font-black uppercase text-[#B8AD9D]">Aun no hay admins creados</td>
+                                        <td colSpan="5" className="p-12 text-center font-black uppercase text-[#B8AD9D]">Aun no hay admins creados</td>
                                     </tr>
                                 )}
                             </tbody>

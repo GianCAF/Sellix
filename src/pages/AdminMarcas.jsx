@@ -3,7 +3,7 @@ import { db } from '../services/firebase';
 import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant } from '../utils/tenant';
+import { aplicarTenant, perteneceAlTenant, obtenerConfigGiro } from '../utils/tenant';
 
 const IconEditar = () => (
     <svg className="admin-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,6 +24,7 @@ const IconEliminar = () => (
 
 const AdminMarcas = () => {
     const { user } = useAuth();
+    const recomendaciones = obtenerConfigGiro(user);
     const [nombreMarca, setNombreMarca] = useState('');
     const [marcas, setMarcas] = useState([]);
     const [procesando, setProcesando] = useState('');
@@ -86,7 +87,7 @@ const AdminMarcas = () => {
                 <form onSubmit={crearMarca} className="bg-[#FFFDF7] p-5 md:p-6 rounded-2xl shadow-sm mb-8 flex flex-col sm:flex-row gap-3 border border-[#E3D9C8]">
                     <input
                         type="text"
-                        placeholder="Ej: Samsung, Apple, Sony..."
+                        placeholder={recomendaciones.marca}
                         className="border-2 p-3 rounded-xl flex-1 outline-none focus:border-[#576238] font-bold transition-all"
                         value={nombreMarca}
                         onChange={(e) => setNombreMarca(e.target.value)}

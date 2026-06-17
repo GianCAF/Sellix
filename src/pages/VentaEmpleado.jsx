@@ -4,13 +4,15 @@ import { collection, getDocs, query, where, addDoc, doc, updateDoc, increment, T
 import { useAuth } from '../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { obtenerNegocioId } from '../utils/tenant';
+import { obtenerNegocioId, obtenerConfigGiro, obtenerGiroNegocio, permiteTecnicos } from '../utils/tenant';
 
 const NOMBRE_TIENDA_TICKET = 'ARCHICELL';
 const CONTACTO_TICKET = '7731708400';
 
 const VentaEmpleado = () => {
     const { user } = useAuth();
+    const recomendaciones = obtenerConfigGiro(user);
+    const negocioPermiteTecnicos = permiteTecnicos(user);
     const [busqueda, setBusqueda] = useState('');
     const [productos, setProductos] = useState([]);
     const [carrito, setCarrito] = useState([]);
@@ -86,6 +88,9 @@ const VentaEmpleado = () => {
     };
 
     useEffect(() => { if (user) { obtenerSucursal(); verificarCajaHoy(); } }, [user]);
+    useEffect(() => {
+        if (!negocioPermiteTecnicos && tipoPendiente === 'celular_por_venir') setTipoPendiente('general');
+    }, [negocioPermiteTecnicos, tipoPendiente]);
     const enfocarBuscador = () => setTimeout(() => inputBusqueda.current?.focus(), 150);
 
     useEffect(() => {
@@ -236,15 +241,17 @@ const VentaEmpleado = () => {
         const nota = nuevaNotaPendiente.trim();
         if (procesandoPendiente) return;
         if (!nota) return alert("Escribe la nota pendiente");
+        const tipoSeguro = negocioPermiteTecnicos ? tipoPendiente : 'general';
         setProcesandoPendiente(true);
         try {
             await addDoc(collection(db, "pendientes_sucursal"), {
                 negocioId: obtenerNegocioId(user),
+                giroNegocio: obtenerGiroNegocio(user),
                 sucursalId: user.sucursalId,
                 sucursalNombre,
                 nota,
-                tipo: tipoPendiente,
-                tipoLabel: tipoPendiente === 'celular_por_venir' ? 'Celular por venir' : 'General',
+                tipo: tipoSeguro,
+                tipoLabel: tipoSeguro === 'celular_por_venir' ? 'Celular por venir' : 'General',
                 estado: 'pendiente',
                 creadoPorId: user.uid,
                 creadoPorNombre: user.nombre || 'Empleado',
@@ -1195,7 +1202,7 @@ const VentaEmpleado = () => {
                     </div>
                 )}
                 <form onSubmit={buscarProducto} className="mb-6">
-                    <input ref={inputBusqueda} type="text" className="input-pos" placeholder="Buscar por codigo, nombre, marca..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                    <input ref={inputBusqueda} type="text" className="input-pos" placeholder={recomendaciones.busquedaVenta} value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                 </form>
                 <div className="space-y-3">
                     {productos.map(p => (
@@ -1354,7 +1361,7 @@ const VentaEmpleado = () => {
                         </div>
 
                         <div className="bg-[#F8F5EC] border border-[#E3D9C8] rounded-2xl p-4 mb-5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                            <div className={`grid grid-cols-1 ${negocioPermiteTecnicos ? 'md:grid-cols-2' : ''} gap-3 mb-3`}>
                                 <button
                                     type="button"
                                     onClick={() => setTipoPendiente('general')}
@@ -1362,13 +1369,15 @@ const VentaEmpleado = () => {
                                 >
                                     Pendiente general
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setTipoPendiente('celular_por_venir')}
-                                    className={`rounded-2xl py-3 text-xs font-black uppercase ${tipoPendiente === 'celular_por_venir' ? 'bg-[#576238] text-white' : 'bg-[#F0EADC] text-[#67625C]'}`}
-                                >
-                                    Celular por venir
-                                </button>
+                                {negocioPermiteTecnicos && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setTipoPendiente('celular_por_venir')}
+                                        className={`rounded-2xl py-3 text-xs font-black uppercase ${tipoPendiente === 'celular_por_venir' ? 'bg-[#576238] text-white' : 'bg-[#F0EADC] text-[#67625C]'}`}
+                                    >
+                                        Celular por venir
+                                    </button>
+                                )}
                             </div>
                             <textarea
                                 className="w-full min-h-28 p-4 rounded-2xl border-2 border-[#FFFDF7] outline-none focus:border-[#576238] font-bold resize-none"
@@ -1440,7 +1449,7 @@ const VentaEmpleado = () => {
                                 <input
                                     type="text"
                                     className="w-full rounded-2xl border-2 border-[#FFFDF7] bg-[#FFFDF7] p-4 font-black outline-none focus:border-[#576238]"
-                                    placeholder="Codigo, nombre, marca, modelo..."
+                                    placeholder={recomendaciones.busquedaInventario}
                                     value={busquedaComprobarInventario}
                                     onChange={(e) => setBusquedaComprobarInventario(e.target.value)}
                                 />
