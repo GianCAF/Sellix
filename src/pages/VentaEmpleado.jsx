@@ -164,6 +164,24 @@ const VentaEmpleado = () => {
         setInventarioSucursal(items);
     };
 
+    const cargarInventarioSucursalActualizado = async () => {
+        const [inventarioSnap, catalogoSnap] = await Promise.all([
+            getDocs(query(collection(db, "inventarios"), where("sucursalId", "==", user.sucursalId))),
+            getDocs(collection(db, "productos_maestros"))
+        ]);
+        const catalogoPorId = new Map(catalogoSnap.docs.map(d => [d.id, { id: d.id, ...d.data() }]));
+        return inventarioSnap.docs
+            .map(d => {
+                const item = { id: d.id, ...d.data() };
+                const maestro = catalogoPorId.get(item.productoId);
+                return {
+                    ...item,
+                    importaStock: maestro?.importaStock ?? item.importaStock ?? true
+                };
+            })
+            .sort((a, b) => (a.descripcion || '').localeCompare(b.descripcion || ''));
+    };
+
     const actualizarConteoPendientes = () => {
         if (!ventasOfflineKey) return;
         setVentasPendientes(leerJsonLocal(ventasOfflineKey, []).length);
@@ -309,10 +327,7 @@ const VentaEmpleado = () => {
                 setModoOffline(true);
                 return;
             }
-            const snap = await getDocs(query(collection(db, "inventarios"), where("sucursalId", "==", user.sucursalId)));
-            const items = snap.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .sort((a, b) => (a.descripcion || '').localeCompare(b.descripcion || ''));
+            const items = await cargarInventarioSucursalActualizado();
             guardarInventarioCache(items);
             setMostrarInventario(true);
         } catch (error) {
@@ -459,8 +474,7 @@ const VentaEmpleado = () => {
 
         if (navigator.onLine && user?.sucursalId) {
             try {
-                const snap = await getDocs(query(collection(db, "inventarios"), where("sucursalId", "==", user.sucursalId)));
-                inventarioBase = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                inventarioBase = await cargarInventarioSucursalActualizado();
                 guardarInventarioCache(inventarioBase);
                 setModoOffline(false);
             } catch {
@@ -1045,8 +1059,7 @@ const VentaEmpleado = () => {
         let inventarioBase = inventarioSucursal.length ? inventarioSucursal : cargarInventarioDesdeCache();
         if (navigator.onLine) {
             try {
-                const snap = await getDocs(query(collection(db, "inventarios"), where("sucursalId", "==", user.sucursalId)));
-                inventarioBase = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                inventarioBase = await cargarInventarioSucursalActualizado();
                 guardarInventarioCache(inventarioBase);
             } catch {
                 inventarioBase = cargarInventarioDesdeCache();
