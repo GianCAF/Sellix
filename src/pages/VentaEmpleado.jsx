@@ -77,6 +77,7 @@ const VentaEmpleado = () => {
     const monedaSinCentavos = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
     const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const normalizarBusquedaVoz = (texto) => normalizarTexto(texto).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const productoImportaStock = (producto) => producto?.esTemporal || producto?.importaStock !== false;
     const subtotalProducto = (item) => Math.max(0, (Number(item.precio) || 0) * (Number(item.cantidadVenta) || 0) - (Number(item.descuento) || 0));
     const totalCarrito = carrito.reduce((acc, item) => acc + subtotalProducto(item), 0);
     const inventarioCacheKey = user?.sucursalId ? `sellix_inventario_${user.sucursalId}` : '';
@@ -858,7 +859,7 @@ const VentaEmpleado = () => {
     const descontarInventarioLocal = (productosVendidos) => {
         const cache = leerJsonLocal(inventarioCacheKey, inventarioSucursal);
         const actualizado = cache.map(item => {
-            const vendido = productosVendidos.find(p => p.id === item.id && !p.esTemporal);
+            const vendido = productosVendidos.find(p => p.id === item.id && !p.esTemporal && productoImportaStock(p));
             if (!vendido) return item;
             return { ...item, cantidad: Math.max(0, (Number(item.cantidad) || 0) - (Number(vendido.cantidadVenta) || 0)) };
         });
@@ -892,7 +893,7 @@ const VentaEmpleado = () => {
         const batch = writeBatch(db);
         batch.set(doc(db, "ventas", ventaId), ventaData);
         for (const item of ventaData.productos || []) {
-            if (!item.esTemporal) {
+            if (!item.esTemporal && productoImportaStock(item)) {
                 batch.update(doc(db, "inventarios", item.id), {
                     cantidad: increment(-Number(item.cantidadVenta || 0))
                 });
@@ -1071,8 +1072,9 @@ const VentaEmpleado = () => {
         productosAgregandoRef.current.add(p.id);
         setTimeout(() => productosAgregandoRef.current.delete(p.id), 500);
         const ex = carrito.find(i => i.id === p.id);
-        if (!p.esTemporal && Number(p.cantidad) <= 0) return alert("Producto sin stock disponible");
-        if (ex && !p.esTemporal && ex.cantidadVenta >= Number(p.cantidad)) return alert("No hay mas stock disponible");
+        const validaStock = !p.esTemporal && productoImportaStock(p);
+        if (validaStock && Number(p.cantidad) <= 0) return alert("Producto sin stock disponible");
+        if (ex && validaStock && ex.cantidadVenta >= Number(p.cantidad)) return alert("No hay mas stock disponible");
         if (ex) setCarrito(carrito.map(i => i.id === p.id ? { ...i, cantidadVenta: i.cantidadVenta + 1 } : i));
         else setCarrito([...carrito, { ...p, cantidadVenta: 1, descuento: 0, motivoDescuento: '' }]);
         setBusqueda(''); setProductos([]); enfocarBuscador();
@@ -1210,7 +1212,7 @@ const VentaEmpleado = () => {
                             <div className="flex-1 pr-4">
                                 <p className="font-bold uppercase text-sm">{p.descripcion}</p>
                                 <p className="text-[10px] text-[#8A8377] font-black uppercase">
-                                    Stock: {p.cantidad ?? 0} | Codigo: {p.codigos?.[0] || 'N/A'}
+                                    {productoImportaStock(p) ? `Stock: ${p.cantidad ?? 0} | ` : ''}Codigo: {p.codigos?.[0] || 'N/A'}
                                 </p>
                                 <p className="text-lg font-black text-[#576238]">{moneda.format(Number(p.precio) || 0)}</p>
                             </div>
@@ -1519,9 +1521,15 @@ const VentaEmpleado = () => {
                                 <div key={item.id} className="product-card text-[#1A2517]">
                                     <div className="flex-1 pr-4">
                                         <p className="font-black uppercase text-sm">{item.descripcion}</p>
-                                        <p className="text-[10px] text-[#8A8377] font-black uppercase">
-                                            Codigo: {item.codigos?.[0] || 'N/A'} | Stock: {item.cantidad ?? 0}
-                                        </p>
+                                        {productoImportaStock(item) ? (
+                                            <p className="text-[10px] text-[#8A8377] font-black uppercase">
+                                                Codigo: {item.codigos?.[0] || 'N/A'} | Stock: {item.cantidad ?? 0}
+                                            </p>
+                                        ) : (
+                                            <p className="text-[10px] text-[#8A8377] font-black uppercase">
+                                                Codigo: {item.codigos?.[0] || 'N/A'}
+                                            </p>
+                                        )}
                                         <p className="text-[10px] text-[#8A8377] font-black uppercase">
                                             Marca: {item.marcaNombre || item.marca || 'N/A'} | Modelo: {item.modelo || 'N/A'}
                                         </p>
