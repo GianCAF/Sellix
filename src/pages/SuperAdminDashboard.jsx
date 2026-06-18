@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { auth, db, functions } from '../services/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { auth, db } from '../services/firebase';
+import { collection, deleteDoc, doc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { httpsCallable } from 'firebase/functions';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GIROS_NEGOCIO, GIRO_TECNOLOGIA } from '../utils/tenant';
@@ -20,9 +19,6 @@ const SuperAdminDashboard = () => {
     const [editandoId, setEditandoId] = useState(null);
     const [eliminandoId, setEliminandoId] = useState(null);
     const [resetPasswordId, setResetPasswordId] = useState(null);
-    const crearAdminFn = httpsCallable(functions, 'createAdminAccount');
-    const actualizarAdminFn = httpsCallable(functions, 'updateAdminAccount');
-    const eliminarAdminFn = httpsCallable(functions, 'deleteAdminAccount');
 
     const cargarAdmins = async () => {
         const snap = await getDocs(collection(db, "usuarios"));
@@ -52,11 +48,12 @@ const SuperAdminDashboard = () => {
         setProcesando(true);
         try {
             if (editandoId) {
-                await actualizarAdminFn({
-                    adminId: editandoId,
+                await updateDoc(doc(db, "usuarios", editandoId), {
                     nombre,
                     negocioNombre: negocioNombre || nombre,
-                    giroNegocio
+                    giroNegocio,
+                    actualizadoPorSuperAdminId: user.uid,
+                    actualizadoEn: new Date()
                 });
 
                 limpiarFormulario();
@@ -65,12 +62,25 @@ const SuperAdminDashboard = () => {
                 return;
             }
 
-            await crearAdminFn({
+            const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${import.meta.env.VITE_FIREBASE_API_KEY}`, {
+                method: 'POST',
+                body: JSON.stringify({ email: email.trim().toLowerCase(), password, returnSecureToken: true }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error.message);
+
+            await setDoc(doc(db, "usuarios", data.localId), {
+                uid: data.localId,
                 nombre,
                 email: email.trim().toLowerCase(),
-                password,
+                rol: 'admin',
+                negocioId: data.localId,
+                adminId: data.localId,
                 negocioNombre: negocioNombre || nombre,
-                giroNegocio
+                giroNegocio,
+                creadoPorSuperAdminId: user.uid,
+                fechaAlta: new Date()
             });
 
             limpiarFormulario();
@@ -102,7 +112,7 @@ const SuperAdminDashboard = () => {
         if (!confirmado) return;
         setEliminandoId(admin.id);
         try {
-            await eliminarAdminFn({ adminId: admin.id });
+            await deleteDoc(doc(db, "usuarios", admin.id));
             if (editandoId === admin.id) limpiarFormulario();
             await cargarAdmins();
             window.sellixNotify?.('Acceso de admin eliminado', { type: 'success' });
