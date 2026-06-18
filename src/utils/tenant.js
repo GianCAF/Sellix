@@ -3,6 +3,7 @@ export const SUPER_ADMIN_PASSWORD = 'Carlosgian';
 
 export const GIRO_TECNOLOGIA = 'tecnologia';
 export const GIRO_TIENDA = 'tienda';
+export const GIRO_COMIDA = 'comida';
 
 export const GIROS_NEGOCIO = {
     [GIRO_TECNOLOGIA]: {
@@ -28,6 +29,18 @@ export const GIROS_NEGOCIO = {
         codigo: 'Ej: 7501001001001',
         busquedaVenta: 'Buscar por codigo, producto, marca...',
         busquedaInventario: 'Codigo, producto, marca, presentacion...'
+    },
+    [GIRO_COMIDA]: {
+        label: 'Comida',
+        categoria: 'Ej: Platillos',
+        subcategoria: 'Ej: Tacos, tortas, bebidas',
+        marca: 'Ej: Casa, Coca-Cola, Boing...',
+        modelo: 'Ej: Individual, grande, combo',
+        descripcion: 'Ej: Taco al pastor con queso',
+        color: 'Ej: Sabor, salsa o presentacion',
+        codigo: 'Ej: COM001',
+        busquedaVenta: 'Buscar por codigo, platillo, bebida...',
+        busquedaInventario: 'Codigo, alimento, bebida, presentacion...'
     }
 };
 
