@@ -84,7 +84,10 @@ const AdminVerInventario = () => {
 
             if (existe) {
                 const ref = doc(db, "inventarios", existe.id);
-                await updateDoc(ref, { cantidad: existe.cantidad + parseInt(cantidadSurtir) });
+                await updateDoc(ref, {
+                    cantidad: existe.cantidad + parseInt(cantidadSurtir),
+                    importaStock: prodMaestro.importaStock !== false
+                });
             } else {
                 await addDoc(collection(db, "inventarios"), aplicarTenant(user, {
                     productoId: prodMaestro.id,
@@ -93,6 +96,7 @@ const AdminVerInventario = () => {
                     precio: prodMaestro.precio,
                     codigos: prodMaestro.codigos,
                     cantidad: parseInt(cantidadSurtir),
+                    importaStock: prodMaestro.importaStock !== false,
                     fechaAsignacion: new Date()
                 }));
             }
