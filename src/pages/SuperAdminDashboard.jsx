@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { auth, db } from '../services/firebase';
-import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GIROS_NEGOCIO, GIRO_TECNOLOGIA } from '../utils/tenant';
@@ -15,6 +16,9 @@ const SuperAdminDashboard = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [procesando, setProcesando] = useState(false);
+    const [editandoId, setEditandoId] = useState(null);
+    const [eliminandoId, setEliminandoId] = useState(null);
+    const [resetPasswordId, setResetPasswordId] = useState(null);
 
     const cargarAdmins = async () => {
         const snap = await getDocs(collection(db, "usuarios"));
@@ -28,12 +32,36 @@ const SuperAdminDashboard = () => {
 
     useEffect(() => { cargarAdmins(); }, []);
 
-    const crearAdmin = async (e) => {
+    const limpiarFormulario = () => {
+        setEditandoId(null);
+        setNombre('');
+        setNegocioNombre('');
+        setGiroNegocio(GIRO_TECNOLOGIA);
+        setEmail('');
+        setPassword('');
+    };
+
+    const guardarAdmin = async (e) => {
         e.preventDefault();
         if (procesando) return;
-        if (password.length < 6) return window.sellixNotify?.('La contrasena debe tener al menos 6 caracteres', { type: 'warning' });
+        if (!editandoId && password.length < 6) return window.sellixNotify?.('La contrasena debe tener al menos 6 caracteres', { type: 'warning' });
         setProcesando(true);
         try {
+            if (editandoId) {
+                await updateDoc(doc(db, "usuarios", editandoId), {
+                    nombre,
+                    negocioNombre: negocioNombre || nombre,
+                    giroNegocio,
+                    actualizadoPorSuperAdminId: user.uid,
+                    actualizadoEn: new Date()
+                });
+
+                limpiarFormulario();
+                await cargarAdmins();
+                window.sellixNotify?.('Admin actualizado correctamente', { type: 'success' });
+                return;
+            }
+
             const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${import.meta.env.VITE_FIREBASE_API_KEY}`, {
                 method: 'POST',
                 body: JSON.stringify({ email: email.trim().toLowerCase(), password, returnSecureToken: true }),
@@ -55,17 +83,57 @@ const SuperAdminDashboard = () => {
                 fechaAlta: new Date()
             });
 
-            setNombre('');
-            setNegocioNombre('');
-            setGiroNegocio(GIRO_TECNOLOGIA);
-            setEmail('');
-            setPassword('');
+            limpiarFormulario();
             await cargarAdmins();
             window.sellixNotify?.('Admin creado correctamente', { type: 'success' });
         } catch (error) {
             window.sellixNotify?.(`Error: ${error.message}`, { type: 'error' });
         } finally {
             setProcesando(false);
+        }
+    };
+
+    const prepararEdicion = (admin) => {
+        setEditandoId(admin.id);
+        setNombre(admin.nombre || '');
+        setNegocioNombre(admin.negocioNombre || '');
+        setGiroNegocio(admin.giroNegocio || GIRO_TECNOLOGIA);
+        setEmail(admin.email || '');
+        setPassword('');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const eliminarAdmin = async (admin) => {
+        if (eliminandoId) return;
+        const confirmado = await window.sellixConfirm?.(
+            `Quitar acceso al admin ${admin.nombre || admin.email}? Sus sucursales, inventario y ventas no se borraran.`,
+            { title: 'Quitar acceso de admin' }
+        );
+        if (!confirmado) return;
+        setEliminandoId(admin.id);
+        try {
+            await deleteDoc(doc(db, "usuarios", admin.id));
+            if (editandoId === admin.id) limpiarFormulario();
+            await cargarAdmins();
+            window.sellixNotify?.('Acceso de admin eliminado', { type: 'success' });
+        } catch (error) {
+            window.sellixNotify?.(`Error: ${error.message}`, { type: 'error' });
+        } finally {
+            setEliminandoId(null);
+        }
+    };
+
+    const enviarResetPassword = async (admin) => {
+        if (resetPasswordId) return;
+        if (!admin.email) return window.sellixNotify?.('Este admin no tiene correo registrado', { type: 'warning' });
+        setResetPasswordId(admin.id);
+        try {
+            await sendPasswordResetEmail(auth, admin.email);
+            window.sellixNotify?.('Correo de restablecimiento enviado', { type: 'success' });
+        } catch (error) {
+            window.sellixNotify?.(`Error: ${error.message}`, { type: 'error' });
+        } finally {
+            setResetPasswordId(null);
         }
     };
 
@@ -85,8 +153,10 @@ const SuperAdminDashboard = () => {
             </header>
 
             <main className="p-5 md:p-8 grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
-                <form onSubmit={crearAdmin} className="bg-[#FFFDF7] border border-[#D8C7B5] rounded-2xl p-6 shadow-sm h-fit">
-                    <h2 className="text-xl font-black uppercase italic mb-5">Crear admin de negocio</h2>
+                <form onSubmit={guardarAdmin} className="bg-[#FFFDF7] border border-[#D8C7B5] rounded-2xl p-6 shadow-sm h-fit">
+                    <h2 className="text-xl font-black uppercase italic mb-5">
+                        {editandoId ? 'Editar admin de negocio' : 'Crear admin de negocio'}
+                    </h2>
                     <div className="space-y-4">
                         <div>
                             <label className="form-label">Nombre del dueno/admin</label>
@@ -106,15 +176,25 @@ const SuperAdminDashboard = () => {
                         </div>
                         <div>
                             <label className="form-label">Correo</label>
-                            <input type="email" className="login-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                            <input type="email" className="login-input disabled:bg-[#F0EADC] disabled:text-[#8A8377]" value={email} onChange={(e) => setEmail(e.target.value)} required={!editandoId} disabled={!!editandoId} />
+                            {editandoId && (
+                                <p className="mt-2 text-[10px] font-black uppercase text-[#8A8377]">El correo de acceso se cambia desde Firebase Auth o con una funcion segura.</p>
+                            )}
                         </div>
-                        <div>
-                            <label className="form-label">Contrasena temporal</label>
-                            <input type="password" className="login-input" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                        </div>
+                        {!editandoId && (
+                            <div>
+                                <label className="form-label">Contrasena temporal</label>
+                                <input type="password" className="login-input" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                            </div>
+                        )}
                         <button disabled={procesando} className="login-submit login-submit-active disabled:opacity-50">
-                            {procesando ? 'Creando...' : 'Crear admin'}
+                            {procesando ? 'Procesando...' : editandoId ? 'Actualizar admin' : 'Crear admin'}
                         </button>
+                        {editandoId && (
+                            <button type="button" onClick={limpiarFormulario} className="w-full text-xs font-black uppercase text-[#8A8377]">
+                                Cancelar edicion
+                            </button>
+                        )}
                     </div>
                 </form>
 
@@ -132,6 +212,7 @@ const SuperAdminDashboard = () => {
                                     <th className="admin-th">Giro</th>
                                     <th className="admin-th">Correo</th>
                                     <th className="admin-th">Negocio ID</th>
+                                    <th className="admin-th text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#F0EADC]">
@@ -142,11 +223,24 @@ const SuperAdminDashboard = () => {
                                         <td className="admin-td">{GIROS_NEGOCIO[admin.giroNegocio]?.label || GIROS_NEGOCIO[GIRO_TECNOLOGIA].label}</td>
                                         <td className="admin-td">{admin.email}</td>
                                         <td className="admin-td text-xs font-mono">{admin.negocioId || admin.id}</td>
+                                        <td className="admin-td">
+                                            <div className="flex flex-wrap justify-end gap-2">
+                                                <button type="button" onClick={() => prepararEdicion(admin)} className="rounded-xl bg-[#F0EADC] px-3 py-2 text-[10px] font-black uppercase text-[#1A2517] shadow-sm transition-colors hover:bg-[#1A2517] hover:text-white" title="Editar admin" aria-label="Editar admin">
+                                                    Editar
+                                                </button>
+                                                <button type="button" onClick={() => enviarResetPassword(admin)} disabled={resetPasswordId === admin.id} className="rounded-xl bg-[#E5EEDC] px-3 py-2 text-[10px] font-black uppercase text-[#1A2517] shadow-sm transition-colors hover:bg-[#576238] hover:text-white disabled:opacity-50" title="Enviar reset de contrasena" aria-label="Enviar reset de contrasena">
+                                                    {resetPasswordId === admin.id ? '...' : 'Clave'}
+                                                </button>
+                                                <button type="button" onClick={() => eliminarAdmin(admin)} disabled={eliminandoId === admin.id} className="rounded-xl bg-[#9A3B30] px-3 py-2 text-[10px] font-black uppercase text-white shadow-sm transition-colors hover:bg-[#7E2F28] disabled:opacity-50" title="Quitar acceso" aria-label="Quitar acceso">
+                                                    {eliminandoId === admin.id ? '...' : 'Eliminar'}
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                                 {admins.length === 0 && (
                                     <tr>
-                                        <td colSpan="5" className="p-12 text-center font-black uppercase text-[#B8AD9D]">Aun no hay admins creados</td>
+                                        <td colSpan="6" className="p-12 text-center font-black uppercase text-[#B8AD9D]">Aun no hay admins creados</td>
                                     </tr>
                                 )}
                             </tbody>
