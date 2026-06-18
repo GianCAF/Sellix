@@ -29,6 +29,7 @@ const AdminInventario = () => {
     const [precio, setPrecio] = useState('');
     const [colores, setColores] = useState(['']);
     const [codigos, setCodigos] = useState(['']);
+    const [importaStock, setImportaStock] = useState(true);
 
     const cargarCatalogos = async () => {
         const catSnap = await getDocs(query(collection(db, "categorias"), orderBy("nombre")));
@@ -74,6 +75,7 @@ const AdminInventario = () => {
         setPrecio('');
         setColores(['']);
         setCodigos(['']);
+        setImportaStock(true);
     };
 
     const guardarOActualizar = async (e) => {
@@ -88,6 +90,7 @@ const AdminInventario = () => {
                 modelo: modelo || '',
                 descripcion: descripcion || 'Sin descripción',
                 precio: parseFloat(precio),
+                importaStock,
                 colores: colores.filter(c => c.trim() !== ''),
                 codigos: codigos.filter(c => c.trim() !== '').map(c => c.toUpperCase()),
                 fechaRegistro: new Date()
@@ -122,6 +125,7 @@ const AdminInventario = () => {
         setPrecio(prod.precio || '');
         setColores(prod.colores?.length ? prod.colores : ['']);
         setCodigos(prod.codigos?.length ? prod.codigos : ['']);
+        setImportaStock(prod.importaStock !== false);
         setVistaActual('registrar');
         window.scrollTo(0, 0);
     };
@@ -224,6 +228,29 @@ const AdminInventario = () => {
                             <input type="number" step="0.01" className="inventory-price-input" placeholder="$ 0.00" value={precio} onChange={(e) => setPrecio(e.target.value)} required />
                         </div>
 
+                        <div className="rounded-3xl border border-[#D8C7B5] bg-[#F8F5EC] p-5">
+                            <label className="block text-xs font-black text-[#1A2517] uppercase mb-3">Importa stock</label>
+                            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#F0EADC] p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setImportaStock(true)}
+                                    className={`rounded-xl py-3 text-xs font-black uppercase transition-all ${importaStock ? 'bg-[#1A2517] text-white shadow-sm' : 'text-[#67625C]'}`}
+                                >
+                                    Si
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setImportaStock(false)}
+                                    className={`rounded-xl py-3 text-xs font-black uppercase transition-all ${!importaStock ? 'bg-[#576238] text-white shadow-sm' : 'text-[#67625C]'}`}
+                                >
+                                    No
+                                </button>
+                            </div>
+                            <p className="mt-3 text-[10px] font-black uppercase text-[#8A8377]">
+                                Si importa stock, Sellix bloquea la venta cuando no hay existencias. Si no importa, se puede vender aunque el stock este en cero.
+                            </p>
+                        </div>
+
                         <button type="submit" disabled={procesandoGuardar} className="inventory-submit disabled:opacity-50">
                             {procesandoGuardar ? 'Procesando...' : editandoId ? 'Actualizar Ficha Maestra' : 'Registrar en Catálogo'}
                         </button>
@@ -245,7 +272,9 @@ const AdminInventario = () => {
                                     <tr key={prod.id} className="admin-row">
                                         <td className="admin-td">
                                             <p className="inventory-product-title">{prod.descripcion}</p>
-                                            <p className="inventory-product-meta">{categorias.find(c => c.id === prod.categoriaId)?.nombre} | {prod.modelo}</p>
+                                            <p className="inventory-product-meta">
+                                                {categorias.find(c => c.id === prod.categoriaId)?.nombre} | {prod.modelo} | {prod.importaStock === false ? 'No importa stock' : 'Importa stock'}
+                                            </p>
                                         </td>
                                         <td className="admin-td text-center">
                                             <div className="flex flex-col gap-1">
