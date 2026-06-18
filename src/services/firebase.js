@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { getAuth } from "firebase/auth";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -23,6 +24,7 @@ if (appCheckSiteKey) {
 }
 
 export const auth = getAuth(app);
+export const functions = getFunctions(app, "us-central1");
 export const db = initializeFirestore(app, {
     localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager()
