@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../services/firebase';
-import { collection, getDocs, doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { db, functions } from '../services/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant, obtenerNegocioId, obtenerGiroNegocio, permiteTecnicos } from '../utils/tenant';
+import { perteneceAlTenant, permiteTecnicos } from '../utils/tenant';
 
 const AdminUsuarios = () => {
     const { user } = useAuth();
@@ -19,6 +20,9 @@ const AdminUsuarios = () => {
     const [eliminandoId, setEliminandoId] = useState(null);
     const negocioPermiteTecnicos = permiteTecnicos(user);
     const usuariosVisibles = usuarios.filter(u => u.rol === 'empleado' || (negocioPermiteTecnicos && u.rol === 'tecnico'));
+    const crearStaffFn = httpsCallable(functions, 'createStaffAccount');
+    const actualizarStaffFn = httpsCallable(functions, 'updateStaffAccount');
+    const eliminarStaffFn = httpsCallable(functions, 'deleteStaffAccount');
 
     const cargarDatos = async () => {
         const sSnap = await getDocs(collection(db, "sucursales"));
@@ -39,13 +43,11 @@ const AdminUsuarios = () => {
 
         try {
             if (editandoId) {
-                await updateDoc(doc(db, "usuarios", editandoId), {
+                await actualizarStaffFn({
+                    userId: editandoId,
                     nombre,
                     rol: rolSeguro,
-                    sucursalId: rolSeguro === 'empleado' ? sucursalId : '',
-                    negocioId: obtenerNegocioId(user),
-                    adminId: user.uid,
-                    giroNegocio: obtenerGiroNegocio(user)
+                    sucursalId: rolSeguro === 'empleado' ? sucursalId : ''
                 });
                 setEditandoId(null);
                 alert("Empleado actualizado con éxito");
@@ -57,34 +59,14 @@ const AdminUsuarios = () => {
                     return;
                 }
 
-                const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${import.meta.env.VITE_FIREBASE_API_KEY}`, {
-                    method: 'POST',
-                    body: JSON.stringify({ email, password, returnSecureToken: true }),
-                    headers: { 'Content-Type': 'application/json' }
+                await crearStaffFn({
+                    nombre,
+                    email: email.trim().toLowerCase(),
+                    password,
+                    rol: rolSeguro,
+                    sucursalId: rolSeguro === 'empleado' ? sucursalId : ''
                 });
-
-                const data = await response.json();
-
-                if (data.error) {
-                    throw new Error(data.error.message);
-                }
-
-                if (data.localId) {
-                    await setDoc(doc(db, "usuarios", data.localId), {
-                        uid: data.localId,
-                        nombre,
-                        email,
-                        rol: rolSeguro,
-                        sucursalId: rolSeguro === 'empleado' ? sucursalId : '',
-                        negocioId: obtenerNegocioId(user),
-                        adminId: user.uid,
-                        giroNegocio: obtenerGiroNegocio(user),
-                        creadoPorId: user.uid,
-                        creadoPorNombre: user.nombre || user.email || 'Admin',
-                        fechaAlta: new Date()
-                    });
-                    alert("Empleado registrado correctamente");
-                }
+                alert("Empleado registrado correctamente");
             }
             // Resetear campos
             setNombre(''); setEmail(''); setPassword(''); setSucursalId(''); setRol('empleado');
@@ -110,7 +92,7 @@ const AdminUsuarios = () => {
         if (await window.sellixConfirm("¿Seguro que deseas quitar el acceso a este empleado?", { title: 'Quitar acceso' })) {
             setEliminandoId(id);
             try {
-                await deleteDoc(doc(db, "usuarios", id));
+                await eliminarStaffFn({ userId: id });
                 await cargarDatos();
             } finally {
                 setEliminandoId(null);
