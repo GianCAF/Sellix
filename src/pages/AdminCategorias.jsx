@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
-import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant, obtenerConfigGiro } from '../utils/tenant';
+import { aplicarTenant, obtenerConfigGiro } from '../utils/tenant';
+import { getTenantDocs, ordenarPorCampoTexto } from '../services/firestoreTenant';
 
 const IconEditar = () => (
     <svg className="admin-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -33,11 +34,12 @@ const AdminCategorias = () => {
     const [procesando, setProcesando] = useState('');
 
     const cargarDatos = async () => {
-        const catSnap = await getDocs(query(collection(db, "categorias"), orderBy("nombre")));
-        setCategorias(catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => perteneceAlTenant(user, item)));
-
-        const subSnap = await getDocs(collection(db, "subcategorias"));
-        setSubcategorias(subSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => perteneceAlTenant(user, item)));
+        const [cats, subs] = await Promise.all([
+            getTenantDocs("categorias", user),
+            getTenantDocs("subcategorias", user)
+        ]);
+        setCategorias(ordenarPorCampoTexto(cats, 'nombre'));
+        setSubcategorias(ordenarPorCampoTexto(subs, 'nombre'));
     };
 
     useEffect(() => { if (user) cargarDatos(); }, [user]);

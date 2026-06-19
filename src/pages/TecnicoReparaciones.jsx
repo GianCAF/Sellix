@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../services/firebase';
 import { collection, doc, onSnapshot, query, Timestamp, updateDoc, where } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
-import { perteneceAlTenant } from '../utils/tenant';
+import { obtenerNegocioId, perteneceAlTenant } from '../utils/tenant';
 
 const obtenerMillisFecha = (fecha) => {
     if (!fecha) return 0;
@@ -29,8 +29,11 @@ const TecnicoReparaciones = () => {
     const [completandoId, setCompletandoId] = useState(null);
 
     useEffect(() => {
+        const negocioId = obtenerNegocioId(user);
+        if (!negocioId) return;
         const pendientesQuery = query(
             collection(db, "pendientes_sucursal"),
+            where("negocioId", "==", negocioId),
             where("tipo", "==", "celular_por_venir")
         );
 

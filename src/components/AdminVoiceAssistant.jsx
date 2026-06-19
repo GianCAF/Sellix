@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../services/firebase';
+import { where } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
-import { perteneceAlTenant } from '../utils/tenant';
+import { getTenantDocs } from '../services/firestoreTenant';
 
 const normalizarTexto = (texto) => String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const normalizarBusqueda = (texto) => normalizarTexto(texto).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -224,14 +223,14 @@ const AdminVoiceAssistant = () => {
         const cacheVigente = cacheDatos.current.sucursales.length > 0 && ahora - cacheDatos.current.actualizado < 60000;
         if (cacheVigente) return cacheDatos.current;
 
-        const [sSnap, iSnap] = await Promise.all([
-            getDocs(collection(db, "sucursales")),
-            getDocs(collection(db, "inventarios"))
+        const [sucursales, inventario] = await Promise.all([
+            getTenantDocs("sucursales", user),
+            getTenantDocs("inventarios", user)
         ]);
 
         const datos = {
-            sucursales: sSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)),
-            inventario: iSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)),
+            sucursales,
+            inventario,
             actualizado: ahora
         };
         cacheDatos.current = datos;
@@ -314,13 +313,11 @@ const AdminVoiceAssistant = () => {
         const cacheVigente = cacheVentas.current.key === periodo.key && ahora - cacheVentas.current.actualizado < 60000;
         if (cacheVigente) return cacheVentas.current.ventas;
 
-        const ventasSnap = await getDocs(query(
-            collection(db, "ventas"),
+        const ventas = await getTenantDocs("ventas", user, [
             where("fecha", ">=", periodo.inicio),
             where("fecha", "<=", periodo.fin)
-        ));
+        ]);
 
-        const ventas = ventasSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item));
         cacheVentas.current = { key: periodo.key, ventas, actualizado: ahora };
         return ventas;
     };

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
-import { collection, getDocs, addDoc, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant, obtenerConfigGiro } from '../utils/tenant';
+import { aplicarTenant, obtenerConfigGiro } from '../utils/tenant';
+import { getTenantDocs, ordenarPorCampoTexto } from '../services/firestoreTenant';
 
 const AdminInventario = () => {
     const { user } = useAuth();
@@ -32,15 +33,21 @@ const AdminInventario = () => {
     const [importaStock, setImportaStock] = useState(true);
 
     const cargarCatalogos = async () => {
-        const catSnap = await getDocs(query(collection(db, "categorias"), orderBy("nombre")));
-        const subSnap = await getDocs(collection(db, "subcategorias"));
-        const marSnap = await getDocs(query(collection(db, "marcas"), orderBy("nombre")));
-        const prodSnap = await getDocs(query(collection(db, "productos_maestros"), orderBy("fechaRegistro", "desc")));
+        const [cats, subs, mars, prods] = await Promise.all([
+            getTenantDocs("categorias", user),
+            getTenantDocs("subcategorias", user),
+            getTenantDocs("marcas", user),
+            getTenantDocs("productos_maestros", user)
+        ]);
 
-        setCategorias(catSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
-        setSubcategorias(subSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
-        setMarcas(marSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
-        setProductosMaestros(prodSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
+        setCategorias(ordenarPorCampoTexto(cats, 'nombre'));
+        setSubcategorias(ordenarPorCampoTexto(subs, 'nombre'));
+        setMarcas(ordenarPorCampoTexto(mars, 'nombre'));
+        setProductosMaestros([...prods].sort((a, b) => {
+            const fechaA = a.fechaRegistro?.toMillis?.() || new Date(a.fechaRegistro || 0).getTime() || 0;
+            const fechaB = b.fechaRegistro?.toMillis?.() || new Date(b.fechaRegistro || 0).getTime() || 0;
+            return fechaB - fechaA;
+        }));
     };
 
     useEffect(() => { if (user) cargarCatalogos(); }, [user]);

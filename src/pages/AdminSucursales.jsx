@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../services/firebase';
-import { addDoc, collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant } from '../utils/tenant';
+import { aplicarTenant } from '../utils/tenant';
+import { getTenantDocs, ordenarPorCampoTexto } from '../services/firestoreTenant';
 
 const IconEditar = () => (
     <svg className="admin-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -31,8 +32,8 @@ const AdminSucursales = () => {
     const [procesando, setProcesando] = useState('');
 
     const cargarSucursales = async () => {
-        const querySnapshot = await getDocs(collection(db, "sucursales"));
-        setSucursales(querySnapshot.docs.map(documento => ({ id: documento.id, ...documento.data() })).filter(item => perteneceAlTenant(user, item)));
+        const items = await getTenantDocs("sucursales", user);
+        setSucursales(ordenarPorCampoTexto(items, 'nombre'));
     };
 
     useEffect(() => { if (user) cargarSucursales(); }, [user]);

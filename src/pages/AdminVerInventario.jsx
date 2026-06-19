@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
-import { collection, getDocs, deleteDoc, doc, updateDoc, query, where, addDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, updateDoc, where, addDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant } from '../utils/tenant';
+import { aplicarTenant } from '../utils/tenant';
+import { getTenantDocs, ordenarPorCampoTexto } from '../services/firestoreTenant';
 
 const AdminVerInventario = () => {
     const { user } = useAuth();
@@ -24,16 +25,19 @@ const AdminVerInventario = () => {
     const [procesandoSurtir, setProcesandoSurtir] = useState(null);
 
     const cargarDatos = async () => {
-        const sSnap = await getDocs(collection(db, "sucursales"));
-        const iSnap = await getDocs(collection(db, "inventarios"));
-        const cSnap = await getDocs(collection(db, "productos_maestros"));
+        const filtrosInventario = filtroSucursal === 'todas' ? [] : [where("sucursalId", "==", filtroSucursal)];
+        const [sucs, inv, catalogo] = await Promise.all([
+            getTenantDocs("sucursales", user),
+            getTenantDocs("inventarios", user, filtrosInventario),
+            getTenantDocs("productos_maestros", user)
+        ]);
 
-        setSucursales(sSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
-        setInventario(iSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
-        setCatalogoMaestro(cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
+        setSucursales(ordenarPorCampoTexto(sucs, 'nombre'));
+        setInventario(ordenarPorCampoTexto(inv, 'descripcion'));
+        setCatalogoMaestro(ordenarPorCampoTexto(catalogo, 'descripcion'));
     };
 
-    useEffect(() => { if (user) cargarDatos(); }, [user]);
+    useEffect(() => { if (user) cargarDatos(); }, [user, filtroSucursal]);
 
     // --- LÓGICA DE CÁLCULO DE VALOR ---
     const obtenerResumenSucursal = (id) => {

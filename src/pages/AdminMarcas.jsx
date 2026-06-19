@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
-import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant, obtenerConfigGiro } from '../utils/tenant';
+import { aplicarTenant, obtenerConfigGiro } from '../utils/tenant';
+import { getTenantDocs, ordenarPorCampoTexto } from '../services/firestoreTenant';
 
 const IconEditar = () => (
     <svg className="admin-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -30,9 +31,8 @@ const AdminMarcas = () => {
     const [procesando, setProcesando] = useState('');
 
     const cargarMarcas = async () => {
-        const q = query(collection(db, "marcas"), orderBy("nombre"));
-        const querySnapshot = await getDocs(q);
-        setMarcas(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(item => perteneceAlTenant(user, item)));
+        const items = await getTenantDocs("marcas", user);
+        setMarcas(ordenarPorCampoTexto(items, 'nombre'));
     };
 
     useEffect(() => { if (user) cargarMarcas(); }, [user]);

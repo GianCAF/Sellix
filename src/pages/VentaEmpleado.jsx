@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../services/firebase';
-import { collection, getDocs, query, where, addDoc, doc, updateDoc, increment, Timestamp, getDoc, setDoc, writeBatch, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, addDoc, doc, updateDoc, increment, Timestamp, getDoc, setDoc, writeBatch, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { obtenerNegocioId, obtenerConfigGiro, obtenerGiroNegocio, permiteTecnicos } from '../utils/tenant';
+import { getTenantDocs } from '../services/firestoreTenant';
 
 const NOMBRE_TIENDA_TICKET = 'ARCHICELL';
 const CONTACTO_TICKET = '7731708400';
@@ -165,14 +166,13 @@ const VentaEmpleado = () => {
     };
 
     const cargarInventarioSucursalActualizado = async () => {
-        const [inventarioSnap, catalogoSnap] = await Promise.all([
-            getDocs(query(collection(db, "inventarios"), where("sucursalId", "==", user.sucursalId))),
-            getDocs(collection(db, "productos_maestros"))
+        const [inventarioItems, catalogoItems] = await Promise.all([
+            getTenantDocs("inventarios", user, [where("sucursalId", "==", user.sucursalId)]),
+            getTenantDocs("productos_maestros", user)
         ]);
-        const catalogoPorId = new Map(catalogoSnap.docs.map(d => [d.id, { id: d.id, ...d.data() }]));
-        return inventarioSnap.docs
-            .map(d => {
-                const item = { id: d.id, ...d.data() };
+        const catalogoPorId = new Map(catalogoItems.map(item => [item.id, item]));
+        return inventarioItems
+            .map(item => {
                 const maestro = catalogoPorId.get(item.productoId);
                 return {
                     ...item,
@@ -208,9 +208,8 @@ const VentaEmpleado = () => {
 
     const obtenerSucursal = async () => {
         if (user?.sucursalId) {
-            const sucSnap = await getDocs(collection(db, "sucursales"));
-            const miSuc = sucSnap.docs.find(d => d.id === user.sucursalId);
-            setSucursalNombre(miSuc?.data().nombre || 'Mi Sucursal');
+            const sucSnap = await getDoc(doc(db, "sucursales", user.sucursalId));
+            setSucursalNombre(sucSnap.exists() ? (sucSnap.data().nombre || 'Mi Sucursal') : 'Mi Sucursal');
         }
     };
 
@@ -306,12 +305,23 @@ const VentaEmpleado = () => {
     const consultarCorteCompleto = async () => {
         try {
             const fechaHoy = getFechaLocalID();
-            const [snapV, snapM] = await Promise.all([
-                getDocs(query(collection(db, "ventas"), where("sucursalId", "==", user.sucursalId))),
-                getDocs(query(collection(db, "movimientos_caja"), where("sucursalId", "==", user.sucursalId)))
+            const inicio = new Date();
+            inicio.setHours(0, 0, 0, 0);
+            const fin = new Date();
+            fin.setHours(23, 59, 59, 999);
+            const [ventasDia, movimientosDia] = await Promise.all([
+                getTenantDocs("ventas", user, [
+                    where("sucursalId", "==", user.sucursalId),
+                    where("fecha", ">=", inicio),
+                    where("fecha", "<=", fin)
+                ]),
+                getTenantDocs("movimientos_caja", user, [
+                    where("sucursalId", "==", user.sucursalId),
+                    where("fechaString", "==", fechaHoy)
+                ])
             ]);
-            const vData = snapV.docs.map(d => ({ id: d.id, ...d.data() })).filter(v => v.fecha && `${String(v.fecha.toDate().getDate()).padStart(2, '0')}-${String(v.fecha.toDate().getMonth() + 1).padStart(2, '0')}-${v.fecha.toDate().getFullYear()}` === fechaHoy).sort((a, b) => b.fecha.toMillis() - a.fecha.toMillis());
-            const mData = snapM.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.fechaString === fechaHoy).sort((a, b) => b.fecha.toMillis() - a.fecha.toMillis());
+            const vData = ventasDia.sort((a, b) => b.fecha.toMillis() - a.fecha.toMillis());
+            const mData = movimientosDia.sort((a, b) => b.fecha.toMillis() - a.fecha.toMillis());
             const cierreSnap = await getDoc(doc(db, "cajas_cierre", `${user.sucursalId}_${fechaHoy}`));
             const cierreData = cierreSnap.exists() ? { id: cierreSnap.id, ...cierreSnap.data() } : null;
             setVentasHoy(vData); setMovimientosHoy(mData); setCierreCaja(cierreData); setEfectivoReal(cierreData ? String(cierreData.efectivoReal || '') : ''); setMostrarCorte(true);
@@ -865,7 +875,8 @@ const VentaEmpleado = () => {
                 sucursalId: user.sucursalId,
                 productos: productosVendidos,
                 total: totalVenta,
-                fecha: Timestamp.fromDate(fechaTicket)
+                fecha: Timestamp.fromDate(fechaTicket),
+                fechaString: getFechaLocalID()
             }
         };
     };

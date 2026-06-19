@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../services/firebase';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { where } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
+import { useAuth } from '../context/AuthContext';
+import { getTenantDocs } from '../services/firestoreTenant';
 
 const AdminDesempeno = () => {
+    const { user } = useAuth();
     const [ranking, setRanking] = useState([]);
-    const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const hoyStr = new Date().toISOString().split('T')[0];
@@ -16,23 +17,23 @@ const AdminDesempeno = () => {
         setLoading(true);
         try {
             // 1. Cargar nombres de empleados para mapear IDs
-            const userSnap = await getDocs(collection(db, "usuarios"));
+            const usuariosTenant = await getTenantDocs("usuarios", user);
             const usersMap = {};
-            userSnap.docs.forEach(d => {
-                usersMap[d.id] = d.data().nombre;
+            usuariosTenant.forEach(item => {
+                usersMap[item.id] = item.nombre;
             });
-            setUsuarios(usersMap);
 
             // 2. Cargar ventas en rango
             const inicio = new Date(fechaInicio + "T00:00:00");
             const fin = new Date(fechaFin + "T23:59:59");
-            const q = query(collection(db, "ventas"), where("fecha", ">=", inicio), where("fecha", "<=", fin));
-            const ventSnap = await getDocs(q);
+            const ventas = await getTenantDocs("ventas", user, [
+                where("fecha", ">=", inicio),
+                where("fecha", "<=", fin)
+            ]);
 
             // 3. Agrupar por empleado
             const performance = {};
-            ventSnap.docs.forEach(doc => {
-                const v = doc.data();
+            ventas.forEach(v => {
                 const empId = v.empleadoId;
                 if (!performance[empId]) {
                     performance[empId] = {
@@ -55,7 +56,7 @@ const AdminDesempeno = () => {
         setLoading(false);
     };
 
-    useEffect(() => { cargarDatos(); }, [fechaInicio, fechaFin]);
+    useEffect(() => { if (user) cargarDatos(); }, [fechaInicio, fechaFin, user]);
 
     return (
         <div className="admin-page">

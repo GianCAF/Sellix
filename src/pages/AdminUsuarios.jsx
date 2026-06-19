@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
-import { collection, getDocs, doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, deleteDoc, updateDoc, setDoc } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { aplicarTenant, perteneceAlTenant, obtenerNegocioId, obtenerGiroNegocio, permiteTecnicos } from '../utils/tenant';
+import { perteneceAlTenant, obtenerNegocioId, obtenerGiroNegocio, permiteTecnicos } from '../utils/tenant';
+import { getTenantDocs, ordenarPorCampoTexto } from '../services/firestoreTenant';
 
 const AdminUsuarios = () => {
     const { user } = useAuth();
@@ -21,10 +22,12 @@ const AdminUsuarios = () => {
     const usuariosVisibles = usuarios.filter(u => u.rol === 'empleado' || (negocioPermiteTecnicos && u.rol === 'tecnico'));
 
     const cargarDatos = async () => {
-        const sSnap = await getDocs(collection(db, "sucursales"));
-        setSucursales(sSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
-        const uSnap = await getDocs(collection(db, "usuarios"));
-        setUsuarios(uSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
+        const [sucs, users] = await Promise.all([
+            getTenantDocs("sucursales", user),
+            getTenantDocs("usuarios", user)
+        ]);
+        setSucursales(ordenarPorCampoTexto(sucs, 'nombre'));
+        setUsuarios(ordenarPorCampoTexto(users, 'nombre').filter(item => perteneceAlTenant(user, item)));
     };
 
     useEffect(() => { if (user) cargarDatos(); }, [user]);

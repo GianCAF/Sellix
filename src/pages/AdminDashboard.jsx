@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
-import { collection, getDocs, query, where, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, doc, updateDoc, limit } from 'firebase/firestore';
 import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
-import { perteneceAlTenant } from '../utils/tenant';
+import { perteneceAlTenant, obtenerNegocioId } from '../utils/tenant';
+import { getTenantDocs } from '../services/firestoreTenant';
 
 const AdminDashboard = () => {
     const { user } = useAuth();
@@ -26,20 +27,18 @@ const AdminDashboard = () => {
     const cargarDatos = async () => {
         setLoading(true);
         try {
-            const [sucSnap, invSnap, ultimasSnap] = await Promise.all([
-                getDocs(collection(db, "sucursales")),
-                getDocs(collection(db, "inventarios")),
-                getDocs(query(collection(db, "ventas"), orderBy("fecha", "desc")))
+            const [sucursalesTenant, inventarioTenant] = await Promise.all([
+                getTenantDocs("sucursales", user),
+                getTenantDocs("inventarios", user)
             ]);
-            const listaSucursales = sucSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-            const sucursalesTenant = listaSucursales.filter(item => perteneceAlTenant(user, item));
             setSucursales(sucursalesTenant);
-            setInventario(invSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
+            setInventario(inventarioTenant);
+
             const ultimas = {};
-            ultimasSnap.docs.forEach(d => {
-                const venta = { id: d.id, ...d.data() };
-                if (perteneceAlTenant(user, venta) && venta.sucursalId && !ultimas[venta.sucursalId]) ultimas[venta.sucursalId] = venta;
-            });
+            await Promise.all(sucursalesTenant.map(async (sucursal) => {
+                const ultima = await cargarUltimaVentaSucursal(sucursal.id);
+                if (ultima) ultimas[sucursal.id] = ultima;
+            }));
             setUltimaVentaPorSucursal(ultimas);
 
             const inicio = new Date(fechaInicio + "T00:00:00");
@@ -63,13 +62,41 @@ const AdminDashboard = () => {
                 );
             }
 
-            const ventSnap = await getDocs(qVentas);
-            setVentas(ventSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item)));
+            setVentas(await cargarVentasPeriodo(qVentas, inicio, fin));
 
         } catch (error) {
             console.error("Error al cargar ventas:", error);
         }
         setLoading(false);
+    };
+
+    const cargarVentasPeriodo = async (qVentas, inicio, fin) => {
+        const negocioId = obtenerNegocioId(user);
+        if (negocioId && negocioId !== 'super_admin') {
+            const filtros = filtroSucursal === 'todas'
+                ? [where("fecha", ">=", inicio), where("fecha", "<=", fin), orderBy("fecha", "desc")]
+                : [where("sucursalId", "==", filtroSucursal), where("fecha", ">=", inicio), where("fecha", "<=", fin), orderBy("fecha", "desc")];
+            try {
+                return await getTenantDocs("ventas", user, filtros);
+            } catch {
+                // getTenantDocs ya tiene fallback interno, este catch queda solo como seguro adicional.
+            }
+        }
+        const ventSnap = await getDocs(qVentas);
+        return ventSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => perteneceAlTenant(user, item));
+    };
+
+    const cargarUltimaVentaSucursal = async (sucursalId) => {
+        try {
+            const ventas = await getTenantDocs("ventas", user, [
+                where("sucursalId", "==", sucursalId),
+                orderBy("fecha", "desc"),
+                limit(1)
+            ]);
+            return ventas[0] || null;
+        } catch {
+            return null;
+        }
     };
 
     useEffect(() => {
