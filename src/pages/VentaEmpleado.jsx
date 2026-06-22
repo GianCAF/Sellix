@@ -474,16 +474,18 @@ const VentaEmpleado = () => {
         const preguntaCantidad = /\b(cuantos|cuantas|cuanto|cuanta|cantidad|stock|inventario)\b/.test(comando);
         const preguntaExistencia = /\b(hay|tenemos|tienes|existe|busca|buscar|consulta|checa|revisa)\b/.test(comando);
         const esInventario = preguntaCantidad || preguntaExistencia;
+        const otraSucursal = /\b(?:alguna?\s+)?otras?\s+(?:sucursales?|tiendas?)\b/.test(comando);
 
         let consulta = comando
-            .replace(/\b(cuantos|cuantas|cuanto|cuanta|cantidad|tenemos|tienes|hay|existe|busca|buscar|consulta|checa|revisa|stock|inventario|producto|productos|marca|modelo|de|del|la|el|un|una|por favor)\b/g, ' ')
+            .replace(/\b(cuantos|cuantas|cuanto|cuanta|cantidad|tenemos|tienes|hay|existe|busca|buscar|consulta|checa|revisa|stock|inventario|producto|productos|marca|modelo|en|algun|alguna|otra|otras|sucursal|sucursales|tienda|tiendas|de|del|la|el|un|una|por favor)\b/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
 
         return {
             consulta,
             esInventario,
-            intencion: preguntaCantidad ? 'cantidad' : 'existencia'
+            intencion: preguntaCantidad ? 'cantidad' : 'existencia',
+            otraSucursal
         };
     };
 
@@ -502,6 +504,31 @@ const VentaEmpleado = () => {
         }
 
         return inventarioBase;
+    };
+
+    const obtenerInventarioOtrasSucursales = async () => {
+        if (!navigator.onLine) throw new Error('Sin conexion');
+
+        const [inventarios, catalogo, sucursales] = await Promise.all([
+            getTenantDocs('inventarios', user),
+            getTenantDocs('productos_maestros', user),
+            getTenantDocs('sucursales', user)
+        ]);
+        const catalogoPorId = new Map(catalogo.map(item => [item.id, item]));
+        const sucursalesPorId = new Map(sucursales.map(item => [item.id, item.nombre || 'Otra sucursal']));
+
+        return inventarios
+            .filter(item => item.sucursalId && item.sucursalId !== user?.sucursalId)
+            .map(item => {
+                const maestro = catalogoPorId.get(item.productoId);
+                return {
+                    ...maestro,
+                    ...item,
+                    descripcion: item.descripcion || maestro?.descripcion || 'Producto',
+                    importaStock: maestro?.importaStock ?? item.importaStock ?? true,
+                    sucursalNombre: sucursalesPorId.get(item.sucursalId) || 'Otra sucursal'
+                };
+            });
     };
 
     const obtenerTextoProductoVoz = (producto) => [
@@ -607,7 +634,7 @@ const VentaEmpleado = () => {
         const contexto = obtenerContextoAsistente(texto);
         if (contexto === null) return;
 
-        const { consulta, esInventario, intencion } = contexto;
+        const { consulta, esInventario, intencion, otraSucursal } = contexto;
 
         if (!consulta) {
             const respuesta = 'Te escucho. Dime que producto quieres consultar.';
@@ -622,6 +649,39 @@ const VentaEmpleado = () => {
             setMensajeAsistente(respuesta);
             setResultadoAsistente(null);
             hablarAsistente(respuesta);
+            return;
+        }
+
+        if (otraSucursal) {
+            setMensajeAsistente(`Buscando ${consulta} en otras sucursales`);
+            try {
+                const inventarioOtrasSucursales = await obtenerInventarioOtrasSucursales();
+                const resultados = buscarProductoPorVoz(inventarioOtrasSucursales, consulta);
+                const conStock = resultados.filter(item => (Number(item.producto.cantidad) || 0) > 0);
+                const mejorPuntaje = conStock[0]?.puntaje || 0;
+                const sucursalesDisponibles = [...new Set(conStock
+                    .filter(item => item.puntaje >= Math.max(10, mejorPuntaje * 0.65))
+                    .map(item => item.producto.sucursalNombre)
+                    .filter(Boolean))];
+
+                const nombresSucursales = sucursalesDisponibles.length > 1
+                    ? `${sucursalesDisponibles.slice(0, -1).join(', ')} y ${sucursalesDisponibles.at(-1)}`
+                    : sucursalesDisponibles[0];
+                const respuesta = sucursalesDisponibles.length
+                    ? `Si, tenemos ${consulta} en ${nombresSucursales}.`
+                    : `No tenemos ${consulta} en otra sucursal.`;
+
+                setMensajeAsistente(respuesta);
+                setResultadoAsistente({ consulta, encontrado: false, otraSucursal: true });
+                hablarAsistente(respuesta);
+            } catch {
+                const respuesta = navigator.onLine
+                    ? 'No pude consultar otras sucursales en este momento.'
+                    : 'Necesito conexion a internet para consultar otras sucursales.';
+                setMensajeAsistente(respuesta);
+                setResultadoAsistente({ consulta, encontrado: false, otraSucursal: true });
+                hablarAsistente(respuesta);
+            }
             return;
         }
 
