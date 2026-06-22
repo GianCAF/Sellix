@@ -435,7 +435,7 @@ const VentaEmpleado = () => {
 
     const describirDiferenciaInventario = (diferencia) => {
         if (diferencia === null) return 'Pendiente';
-        if (diferencia === 0) return 'Cuadra';
+        if (diferencia === 0) return 'Correcto';
         const piezas = Math.abs(diferencia);
         return diferencia < 0
             ? `${piezas} pieza${piezas === 1 ? '' : 's'} faltante${piezas === 1 ? '' : 's'}`
@@ -1523,8 +1523,8 @@ const VentaEmpleado = () => {
                                                                 placeholder="0"
                                                             />
                                                         </td>
-                                                        <td className="p-3 align-top">
-                                                            <span className={`inline-flex rounded-xl px-3 py-2 text-xs font-black uppercase ${diferencia === null ? 'bg-[#F0EADC] text-[#67625C]' : diferencia === 0 ? 'bg-[#E5EEDC] text-[#1A2517]' : diferencia < 0 ? 'bg-[#F4E6E1] text-[#9A3B30]' : 'bg-[#EFE2B8] text-[#9A6B3F]'}`}>
+                                                        <td className={`p-3 align-middle ${diferencia === null ? 'bg-[#F8F5EC]' : diferencia === 0 ? 'bg-[#E5F2DF]' : diferencia < 0 ? 'bg-[#F8DEDA]' : 'bg-[#FFF1C9]'}`}>
+                                                            <span className={`inline-flex rounded-xl px-3 py-2 text-xs font-black uppercase ${diferencia === null ? 'text-[#67625C]' : diferencia === 0 ? 'text-[#31552B]' : diferencia < 0 ? 'text-[#9A3B30]' : 'text-[#8A6426]'}`}>
                                                                 {describirDiferenciaInventario(diferencia)}
                                                             </span>
                                                         </td>
