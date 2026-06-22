@@ -519,18 +519,23 @@ const VentaEmpleado = () => {
             getTenantDocs('sucursales', user)
         ]);
         const catalogoPorId = new Map(catalogo.map(item => [item.id, item]));
-        const sucursalesPorId = new Map(sucursales.map(item => [item.id, item.nombre || 'Otra sucursal']));
+        const sucursalesPorId = new Map(sucursales.map(item => [item.id, {
+            nombre: item.nombre || 'Otra sucursal',
+            ubicacion: item.ubicacion || ''
+        }]));
 
         return inventarios
             .filter(item => item.sucursalId && item.sucursalId !== user?.sucursalId)
             .map(item => {
                 const maestro = catalogoPorId.get(item.productoId);
+                const sucursal = sucursalesPorId.get(item.sucursalId);
                 return {
                     ...maestro,
                     ...item,
                     descripcion: item.descripcion || maestro?.descripcion || 'Producto',
                     importaStock: maestro?.importaStock ?? item.importaStock ?? true,
-                    sucursalNombre: sucursalesPorId.get(item.sucursalId) || 'Otra sucursal'
+                    sucursalNombre: sucursal?.nombre || 'Otra sucursal',
+                    sucursalUbicacion: sucursal?.ubicacion || ''
                 };
             });
     };
@@ -663,14 +668,20 @@ const VentaEmpleado = () => {
                 const resultados = buscarProductoPorVoz(inventarioOtrasSucursales, consulta);
                 const conStock = resultados.filter(item => (Number(item.producto.cantidad) || 0) > 0);
                 const mejorPuntaje = conStock[0]?.puntaje || 0;
-                const sucursalesDisponibles = [...new Set(conStock
+                const sucursalesDisponibles = [...new Map(conStock
                     .filter(item => item.puntaje >= Math.max(10, mejorPuntaje * 0.65))
-                    .map(item => item.producto.sucursalNombre)
-                    .filter(Boolean))];
+                    .map(item => [item.producto.sucursalId, {
+                        nombre: item.producto.sucursalNombre,
+                        ubicacion: item.producto.sucursalUbicacion
+                    }]))
+                    .values()];
 
-                const nombresSucursales = sucursalesDisponibles.length > 1
-                    ? `${sucursalesDisponibles.slice(0, -1).join(', ')} y ${sucursalesDisponibles.at(-1)}`
-                    : sucursalesDisponibles[0];
+                const detallesSucursales = sucursalesDisponibles.map(sucursal => sucursal.ubicacion
+                    ? `${sucursal.nombre}, ubicada en ${sucursal.ubicacion}`
+                    : sucursal.nombre);
+                const nombresSucursales = detallesSucursales.length > 1
+                    ? `${detallesSucursales.slice(0, -1).join('; ')}; y ${detallesSucursales.at(-1)}`
+                    : detallesSucursales[0];
                 const respuesta = sucursalesDisponibles.length
                     ? `Si, tenemos ${consulta} en ${nombresSucursales}.`
                     : `No tenemos ${consulta} en otra sucursal.`;
