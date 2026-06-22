@@ -472,12 +472,14 @@ const VentaEmpleado = () => {
 
         const comando = limpio.slice(coincidencia.indice + coincidencia.palabra.length).replace(/\s+/g, ' ').trim();
         const preguntaCantidad = /\b(cuantos|cuantas|cuanto|cuanta|cantidad|stock|inventario)\b/.test(comando);
-        const preguntaExistencia = /\b(hay|tenemos|tienes|existe|busca|buscar|consulta|checa|revisa)\b/.test(comando);
+        const preguntaExistencia = /\b(hay|tenemos|tienes|existe|existencia|disponible|busca|buscar|consulta|checa|revisa|verifica)\b/.test(comando);
         const esInventario = preguntaCantidad || preguntaExistencia;
-        const otraSucursal = /\b(?:alguna?\s+)?otras?\s+(?:sucursales?|tiendas?)\b/.test(comando);
+        const mencionaSucursal = /\b(sucursal(?:es)?|tienda(?:s)?|local(?:es)?)\b/.test(comando);
+        const mencionaSucursalActual = /\b(esta|este|mi|actual)\s+(sucursal|tienda|local)\b|\b(aqui|aca)\b/.test(comando);
+        const otraSucursal = mencionaSucursal && !mencionaSucursalActual;
 
         let consulta = comando
-            .replace(/\b(cuantos|cuantas|cuanto|cuanta|cantidad|tenemos|tienes|hay|existe|busca|buscar|consulta|checa|revisa|stock|inventario|producto|productos|marca|modelo|en|algun|alguna|otra|otras|sucursal|sucursales|tienda|tiendas|de|del|la|el|un|una|por favor)\b/g, ' ')
+            .replace(/\b(cuantos|cuantas|cuanto|cuanta|cantidad|tenemos|tienes|hay|existe|existencia|esta|estan|disponible|busca|buscar|consulta|checa|revisa|verifica|stock|inventario|producto|productos|marca|modelo|en|algun|alguna|otra|otras|demas|diferente|diferentes|sucursal|sucursales|tienda|tiendas|local|locales|revisar|saber|puedes|puede|si|que|de|del|las|los|la|el|un|una|por favor)\b/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
 
