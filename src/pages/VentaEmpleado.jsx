@@ -471,9 +471,11 @@ const VentaEmpleado = () => {
         if (!coincidencia) return null;
 
         const comando = limpio.slice(coincidencia.indice + coincidencia.palabra.length).replace(/\s+/g, ' ').trim();
+        const preguntaPrecio = /\b(precio|costo|cuesta|coste|vale|valor|sale)\b/.test(comando)
+            || /\b(?:en|a)\s+cuanto\b|\bcuanto\s+es\b/.test(comando);
         const preguntaCantidad = /\b(cuantos|cuantas|cuanto|cuanta|cantidad|stock|inventario)\b/.test(comando);
         const preguntaExistencia = /\b(hay|tenemos|tienes|existe|existencia|disponible|busca|buscar|consulta|checa|revisa|verifica)\b/.test(comando);
-        const esInventario = preguntaCantidad || preguntaExistencia;
+        const esInventario = preguntaPrecio || preguntaCantidad || preguntaExistencia;
         const patronAlcanceSucursal = /\b(?:en|de)\s+(?:(?:algun|alguna|un|una)\s+)?(?:de\s+)?(?:(?:las|los)\s+)?(?:(?:otra|otras|demas|diferente|diferentes)\s+)?(?:sucursal(?:es)?|tienda(?:s)?|local(?:es)?)\b/;
         const mencionaSucursal = /\b(sucursal(?:es)?|tienda(?:s)?|local(?:es)?)\b/.test(comando);
         const mencionaSucursalActual = /\b(esta|este|mi|actual)\s+(sucursal|tienda|local)\b|\b(aqui|aca)\b/.test(comando);
@@ -481,14 +483,14 @@ const VentaEmpleado = () => {
         const comandoProducto = otraSucursal ? comando.replace(patronAlcanceSucursal, ' ') : comando;
 
         let consulta = comandoProducto
-            .replace(/\b(cuantos|cuantas|cuanto|cuanta|cantidad|tenemos|tienes|hay|existe|existencia|esta|estan|disponible|busca|buscar|consulta|checa|revisa|verifica|stock|inventario|producto|productos|marca|modelo|en|algun|alguna|otra|otras|demas|diferente|diferentes|sucursal|sucursales|tienda|tiendas|local|locales|revisar|saber|puedes|puede|si|que|de|del|las|los|la|el|un|una|por favor)\b/g, ' ')
+            .replace(/\b(cuantos|cuantas|cuanto|cuanta|cantidad|pieza|piezas|precio|costo|cuesta|coste|vale|valor|sale|tiene|tenemos|tienes|hay|existe|existencia|es|esta|estan|disponible|busca|buscar|consulta|checa|revisa|verifica|stock|inventario|producto|productos|marca|modelo|en|a|me|dime|dices|algun|alguna|otra|otras|demas|diferente|diferentes|sucursal|sucursales|tienda|tiendas|local|locales|revisar|saber|puedes|puede|cual|si|que|de|del|las|los|la|el|un|una|por favor)\b/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
 
         return {
             consulta,
             esInventario,
-            intencion: preguntaCantidad ? 'cantidad' : 'existencia',
+            intencion: preguntaPrecio ? 'precio' : preguntaCantidad ? 'cantidad' : 'existencia',
             otraSucursal
         };
     };
@@ -621,6 +623,14 @@ const VentaEmpleado = () => {
             .map(item => item.producto);
     };
 
+    const obtenerCoincidenciasPrecioVoz = (resultados) => {
+        const mejorPuntaje = resultados[0]?.puntaje || 0;
+        return resultados
+            .filter(item => item.puntaje >= Math.max(10, mejorPuntaje * 0.65))
+            .slice(0, 8)
+            .map(item => item.producto);
+    };
+
     const resumirCoincidenciasVoz = (productos) => {
         return productos
             .map(producto => {
@@ -638,6 +648,14 @@ const VentaEmpleado = () => {
     };
 
     const resumirExistenciasVoz = (productos) => productos.map(describirProductoSinCantidad).join(', ');
+
+    const formatearPrecioVoz = (precio) => `${new Intl.NumberFormat('es-MX', {
+        maximumFractionDigits: 2
+    }).format(Number(precio) || 0)} pesos`;
+
+    const resumirPreciosVoz = (productos) => productos
+        .map(producto => `${producto.descripcion} cuesta ${formatearPrecioVoz(producto.precio)}`)
+        .join(', ');
 
     const procesarComandoVoz = async (texto) => {
         const contexto = obtenerContextoAsistente(texto);
@@ -703,11 +721,13 @@ const VentaEmpleado = () => {
         setMensajeAsistente(`Buscando: ${consulta}`);
         const inventarioBase = await obtenerInventarioParaAsistente();
         const resultados = buscarProductoPorVoz(inventarioBase, consulta);
-        const coincidencias = obtenerCoincidenciasVoz(resultados);
+        const coincidencias = intencion === 'precio'
+            ? obtenerCoincidenciasPrecioVoz(resultados)
+            : obtenerCoincidenciasVoz(resultados);
         const mejor = coincidencias[0];
         const stock = Number(mejor?.cantidad) || 0;
 
-        if (!mejor || stock <= 0) {
+        if (!mejor || (intencion !== 'precio' && stock <= 0)) {
             const respuesta = `Segun inventario no tenemos ${consulta} en esta sucursal.`;
             setMensajeAsistente(respuesta);
             setResultadoAsistente({ consulta, encontrado: false });
@@ -715,14 +735,19 @@ const VentaEmpleado = () => {
             return;
         }
 
-        const respuesta = intencion === 'existencia'
-            ? `Si, hay ${resumirExistenciasVoz(coincidencias)}.`
-            : coincidencias.length > 1
-                ? `Segun inventario encontre ${coincidencias.length} coincidencias: ${resumirCoincidenciasVoz(coincidencias)}.`
-                : `Segun inventario hay ${stock} pieza${stock === 1 ? '' : 's'} de ${mejor.descripcion}.`;
+        const respuesta = intencion === 'precio'
+            ? coincidencias.length > 1
+                ? `Encontre estas opciones: ${resumirPreciosVoz(coincidencias)}.`
+                : `${mejor.descripcion} cuesta ${formatearPrecioVoz(mejor.precio)}.`
+            : intencion === 'existencia'
+                ? `Si, hay ${resumirExistenciasVoz(coincidencias)}.`
+                : coincidencias.length > 1
+                    ? `Segun inventario encontre ${coincidencias.length} coincidencias: ${resumirCoincidenciasVoz(coincidencias)}.`
+                    : `Segun inventario hay ${stock} pieza${stock === 1 ? '' : 's'} de ${mejor.descripcion}.`;
         setMensajeAsistente(respuesta);
         setResultadoAsistente({
             consulta,
+            intencion,
             encontrado: true,
             descripcion: mejor.descripcion,
             stock,
@@ -1296,14 +1321,20 @@ const VentaEmpleado = () => {
                                         {resultadoAsistente.productos.map(producto => (
                                             <div key={producto.id} className="flex justify-between gap-3">
                                                 <span>{producto.descripcion}</span>
-                                                <span className="text-[#576238] shrink-0">{producto.stock} PZ</span>
+                                                <span className="text-[#576238] shrink-0">
+                                                    {resultadoAsistente.intencion === 'precio' ? moneda.format(producto.precio) : `${producto.stock} PZ`}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
                                     <>
                                         <p>{resultadoAsistente.descripcion}</p>
-                                        <p>Stock: {resultadoAsistente.stock} | Codigo: {resultadoAsistente.codigo} | Precio: {moneda.format(resultadoAsistente.precio)}</p>
+                                        {resultadoAsistente.intencion === 'precio' ? (
+                                            <p>Precio: {moneda.format(resultadoAsistente.precio)}</p>
+                                        ) : (
+                                            <p>Stock: {resultadoAsistente.stock} | Codigo: {resultadoAsistente.codigo} | Precio: {moneda.format(resultadoAsistente.precio)}</p>
+                                        )}
                                     </>
                                 )}
                             </div>
