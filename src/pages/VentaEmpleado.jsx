@@ -474,11 +474,13 @@ const VentaEmpleado = () => {
         const preguntaCantidad = /\b(cuantos|cuantas|cuanto|cuanta|cantidad|stock|inventario)\b/.test(comando);
         const preguntaExistencia = /\b(hay|tenemos|tienes|existe|existencia|disponible|busca|buscar|consulta|checa|revisa|verifica)\b/.test(comando);
         const esInventario = preguntaCantidad || preguntaExistencia;
+        const patronAlcanceSucursal = /\b(?:en|de)\s+(?:(?:algun|alguna|un|una)\s+)?(?:de\s+)?(?:(?:las|los)\s+)?(?:(?:otra|otras|demas|diferente|diferentes)\s+)?(?:sucursal(?:es)?|tienda(?:s)?|local(?:es)?)\b/;
         const mencionaSucursal = /\b(sucursal(?:es)?|tienda(?:s)?|local(?:es)?)\b/.test(comando);
         const mencionaSucursalActual = /\b(esta|este|mi|actual)\s+(sucursal|tienda|local)\b|\b(aqui|aca)\b/.test(comando);
-        const otraSucursal = mencionaSucursal && !mencionaSucursalActual;
+        const otraSucursal = (patronAlcanceSucursal.test(comando) || mencionaSucursal) && !mencionaSucursalActual;
+        const comandoProducto = otraSucursal ? comando.replace(patronAlcanceSucursal, ' ') : comando;
 
-        let consulta = comando
+        let consulta = comandoProducto
             .replace(/\b(cuantos|cuantas|cuanto|cuanta|cantidad|tenemos|tienes|hay|existe|existencia|esta|estan|disponible|busca|buscar|consulta|checa|revisa|verifica|stock|inventario|producto|productos|marca|modelo|en|algun|alguna|otra|otras|demas|diferente|diferentes|sucursal|sucursales|tienda|tiendas|local|locales|revisar|saber|puedes|puede|si|que|de|del|las|los|la|el|un|una|por favor)\b/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
