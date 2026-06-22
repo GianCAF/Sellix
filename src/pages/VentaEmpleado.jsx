@@ -349,39 +349,14 @@ const VentaEmpleado = () => {
         }
     };
 
-    const obtenerDetalleInventario = (item) => ({
-        descripcion: item.descripcion || '',
-        codigo: (item.codigos || []).join(', '),
-        stock: item.cantidad ?? 0,
-        precio: Number(item.precio) || 0,
-        valor: (Number(item.cantidad) || 0) * (Number(item.precio) || 0),
-        marca: item.marcaNombre || item.marca || '',
-        modelo: item.modelo || '',
-        categoria: item.categoriaNombre || item.categoria || '',
-        subcategoria: item.subcategoriaNombre || item.subcategoria || '',
-        colores: (item.colores || []).join(', '),
-        productoId: item.productoId || '',
-        inventarioId: item.id || ''
-    });
-
     const exportarInventarioExcel = () => {
-        const filas = inventarioSucursal.map(obtenerDetalleInventario);
-        const headers = ['Descripcion', 'Codigos', 'Stock', 'Precio', 'Valor', 'Marca', 'Modelo', 'Categoria', 'Subcategoria', 'Colores', 'Producto ID', 'Inventario ID'];
+        const headers = ['Codigo', 'Nombre', 'Existencia'];
         const escapeHtml = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        const rowsHtml = filas.map(item => `
+        const rowsHtml = inventarioSucursal.map(item => `
             <tr>
-                <td>${escapeHtml(item.descripcion)}</td>
-                <td>${escapeHtml(item.codigo)}</td>
-                <td>${escapeHtml(item.stock)}</td>
-                <td>${escapeHtml(item.precio)}</td>
-                <td>${escapeHtml(item.valor)}</td>
-                <td>${escapeHtml(item.marca)}</td>
-                <td>${escapeHtml(item.modelo)}</td>
-                <td>${escapeHtml(item.categoria)}</td>
-                <td>${escapeHtml(item.subcategoria)}</td>
-                <td>${escapeHtml(item.colores)}</td>
-                <td>${escapeHtml(item.productoId)}</td>
-                <td>${escapeHtml(item.inventarioId)}</td>
+                <td>${escapeHtml((item.codigos || []).join(', ') || 'N/A')}</td>
+                <td>${escapeHtml(item.descripcion || '')}</td>
+                <td>${escapeHtml(item.cantidad ?? 0)}</td>
             </tr>
         `).join('');
         const html = `
@@ -440,6 +415,39 @@ const VentaEmpleado = () => {
         return diferencia < 0
             ? `${piezas} pieza${piezas === 1 ? '' : 's'} faltante${piezas === 1 ? '' : 's'}`
             : `${piezas} pieza${piezas === 1 ? '' : 's'} sobrante${piezas === 1 ? '' : 's'}`;
+    };
+
+    const descargarComprobacionInventarioPDF = () => {
+        const doc = new jsPDF();
+        const filas = inventarioSucursal.map(item => [
+            item.descripcion || 'Sin nombre',
+            String(item.cantidad ?? 0),
+            describirDiferenciaInventario(calcularDiferenciaInventario(item))
+        ]);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('COMPROBACION DE INVENTARIO', 14, 18);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Sucursal: ${sucursalNombre || 'Sin sucursal'}`, 14, 25);
+        doc.text(`Fecha: ${new Date().toLocaleString('es-MX')}`, 14, 31);
+
+        autoTable(doc, {
+            startY: 37,
+            head: [['Producto', 'Inventario', 'Resultado']],
+            body: filas,
+            theme: 'grid',
+            styles: { fontSize: 9, cellPadding: 3 },
+            headStyles: { fillColor: [87, 98, 56], textColor: [255, 255, 255] },
+            columnStyles: {
+                0: { cellWidth: 95 },
+                1: { cellWidth: 30, halign: 'center' },
+                2: { cellWidth: 55 }
+            }
+        });
+
+        doc.save(`comprobacion_inventario_${sucursalNombre || 'sucursal'}_${getFechaLocalID()}.pdf`);
     };
 
     const hablarAsistente = (texto) => {
@@ -1465,6 +1473,11 @@ const VentaEmpleado = () => {
                                     >
                                         {modoComprobarInventario ? 'Vista normal' : 'Comprobar'}
                                     </button>
+                                    {modoComprobarInventario && (
+                                        <button type="button" onClick={descargarComprobacionInventarioPDF} className="btn-primary">
+                                            Descargar comprobacion
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                             <button onClick={() => setMostrarInventario(false)} className="text-3xl font-black text-[#1A2517]">X</button>
