@@ -9,15 +9,15 @@ const NotFound = () => {
             <div className="not-found-card">
                 <div className="not-found-illustration" aria-hidden="true">
                     <svg viewBox="0 0 420 260" role="img">
-                        <rect x="74" y="42" width="272" height="154" rx="24" fill="#FFFDF7" stroke="#1A2517" strokeWidth="8" />
-                        <rect x="102" y="72" width="216" height="54" rx="12" fill="#E5EEDC" />
-                        <path d="M130 162h160" stroke="#1A2517" strokeWidth="10" strokeLinecap="round" />
-                        <path d="M150 190h120" stroke="#576238" strokeWidth="8" strokeLinecap="round" />
-                        <circle cx="142" cy="99" r="10" fill="#1A2517" />
-                        <circle cx="278" cy="99" r="10" fill="#1A2517" />
-                        <path d="M178 102c18 18 46 18 64 0" stroke="#576238" strokeWidth="7" fill="none" strokeLinecap="round" />
-                        <path d="M92 214h236" stroke="#D8C7B5" strokeWidth="9" strokeLinecap="round" />
-                        <path d="M52 238h316" stroke="#ACC8A2" strokeWidth="7" strokeLinecap="round" />
+                        <rect x="74" y="42" width="272" height="154" rx="16" fill="#FFFFFF" stroke="#0F172A" strokeWidth="8" />
+                        <rect x="102" y="72" width="216" height="54" rx="8" fill="#F1F5F9" />
+                        <path d="M130 162h160" stroke="#0F172A" strokeWidth="10" strokeLinecap="round" />
+                        <path d="M150 190h120" stroke="#0EA5E9" strokeWidth="8" strokeLinecap="round" />
+                        <circle cx="142" cy="99" r="10" fill="#0F172A" />
+                        <circle cx="278" cy="99" r="10" fill="#0F172A" />
+                        <path d="M178 102c18 18 46 18 64 0" stroke="#0EA5E9" strokeWidth="7" fill="none" strokeLinecap="round" />
+                        <path d="M92 214h236" stroke="#CBD5E1" strokeWidth="9" strokeLinecap="round" />
+                        <path d="M52 238h316" stroke="#0EA5E9" strokeWidth="7" strokeLinecap="round" />
                     </svg>
                 </div>
                 <p className="not-found-kicker">Ruta no encontrada</p>
