@@ -5,6 +5,7 @@ import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
 import { aplicarTenant, obtenerConfigGiro } from '../utils/tenant';
 import { getTenantDocs, ordenarPorCampoTexto } from '../services/firestoreTenant';
+import { Pencil, Trash2 } from 'lucide-react';
 
 const AdminInventario = () => {
     const { user } = useAuth();
@@ -292,8 +293,8 @@ const AdminInventario = () => {
                                         </td>
                                         <td className="admin-td text-center font-black text-[#576238]">${prod.precio}</td>
                                         <td className="admin-td text-right flex gap-2 justify-end">
-                                            <button onClick={() => prepararEdicion(prod)} className="inventory-edit-btn">✏️</button>
-                                            <button onClick={() => eliminarProductoMaestro(prod.id)} disabled={procesandoEliminar === prod.id} className="inventory-delete-btn disabled:opacity-50">🗑️</button>
+                                            <button onClick={() => prepararEdicion(prod)} className="inventory-edit-btn" title="Editar producto" aria-label="Editar producto"><Pencil size={16} /></button>
+                                            <button onClick={() => eliminarProductoMaestro(prod.id)} disabled={procesandoEliminar === prod.id} className="inventory-delete-btn disabled:opacity-50" title="Eliminar producto" aria-label="Eliminar producto"><Trash2 size={16} /></button>
                                         </td>
                                     </tr>
                                 ))}
