@@ -5,6 +5,7 @@ import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
 import { perteneceAlTenant, obtenerNegocioId } from '../utils/tenant';
 import { getTenantDocs } from '../services/firestoreTenant';
+import { Bell, Store } from 'lucide-react';
 
 const AdminDashboard = () => {
     const { user } = useAuth();
@@ -273,7 +274,7 @@ const AdminDashboard = () => {
                                                     className={`absolute right-5 top-5 h-11 w-11 rounded-2xl border-2 text-lg shadow-lg transition-all active:scale-95 ${alertaStock.severidad === 'roja' ? 'bg-[#F4E6E1] border-[#9A3B30] text-[#9A3B30]' : alertaStock.severidad === 'naranja' ? 'bg-[#EFE2B8] border-[#9A6B3F] text-[#9A6B3F]' : 'bg-[#F0EADC] border-[#D8C7B5] text-[#67625C]'}`}
                                                     title="Alertas de stock"
                                                 >
-                                                    🔔
+                                                    <Bell size={18} strokeWidth={1.8} className="mx-auto" />
                                                     {alertaStock.activos.length > 0 && (
                                                         <span className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#1A2517] px-1 text-[10px] font-black text-white border-2 border-[#FFFDF7]">
                                                             {alertaStock.activos.length}
@@ -281,7 +282,7 @@ const AdminDashboard = () => {
                                                     )}
                                                 </button>
                                             )}
-                                            <div className="admin-branch-icon">🏪</div>
+                                            <div className="admin-branch-icon"><Store size={24} strokeWidth={1.7} /></div>
                                             <h3 className="admin-branch-name">{suc.nombre}</h3>
                                             <p className="admin-branch-location">{suc.ubicacion || 'Sin ubicación'}</p>
 
