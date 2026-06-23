@@ -143,8 +143,8 @@ const SuperAdminDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F0EADC] text-[#1A2517]">
-            <header className="bg-[#1A2517] text-white px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="super-admin-page min-h-screen bg-[#F0EADC] text-[#1A2517]">
+            <header className="super-admin-header bg-[#1A2517] text-white px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
                     <p className="text-xs font-black uppercase text-[#ACC8A2]">Sellix Global</p>
                     <h1 className="text-3xl font-black uppercase italic">Super Admin</h1>
@@ -152,8 +152,8 @@ const SuperAdminDashboard = () => {
                 <button onClick={cerrarSesion} className="btn-primary bg-[#ACC8A2] !text-[#1A2517]">Salir</button>
             </header>
 
-            <main className="p-5 md:p-8 grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
-                <form onSubmit={guardarAdmin} className="bg-[#FFFDF7] border border-[#D8C7B5] rounded-2xl p-6 shadow-sm h-fit">
+            <main className="super-admin-layout p-5 md:p-8 grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
+                <form onSubmit={guardarAdmin} className="super-admin-form bg-[#FFFDF7] border border-[#D8C7B5] rounded-2xl p-6 shadow-sm h-fit">
                     <h2 className="text-xl font-black uppercase italic mb-5">
                         {editandoId ? 'Editar admin de negocio' : 'Crear admin de negocio'}
                     </h2>
