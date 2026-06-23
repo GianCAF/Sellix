@@ -3,6 +3,7 @@ import { auth } from '../services/firebase';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AdminVoiceAssistant from './AdminVoiceAssistant';
 import { useAuth } from '../context/AuthContext';
+import { Boxes, Home, Layers3, LogOut, Menu, Package, Store, Tags, Users } from 'lucide-react';
 
 const AdminNavbar = () => {
     const navigate = useNavigate();
@@ -22,13 +23,13 @@ const AdminNavbar = () => {
     });
 
     const menuItems = [
-        { label: 'Inicio', path: '/admin', icon: '⌂' },
-        { label: 'Sucursales', path: '/admin/sucursales', icon: '▣' },
-        { label: 'Categorías', path: '/admin/categorias', icon: '◇' },
-        { label: 'Marcas', path: '/admin/marcas', icon: '▤' },
-        { label: 'Inventario', path: '/admin/inventario', icon: '▧' },
-        { label: 'Ver Stock', path: '/admin/ver-inventario', icon: '✣' },
-        { label: 'Empleados', path: '/admin/usuarios', icon: '♙' },
+        { label: 'Inicio', path: '/admin', icon: Home },
+        { label: 'Sucursales', path: '/admin/sucursales', icon: Store },
+        { label: 'Categorías', path: '/admin/categorias', icon: Tags },
+        { label: 'Marcas', path: '/admin/marcas', icon: Layers3 },
+        { label: 'Inventario', path: '/admin/inventario', icon: Package },
+        { label: 'Ver Stock', path: '/admin/ver-inventario', icon: Boxes },
+        { label: 'Empleados', path: '/admin/usuarios', icon: Users },
     ];
 
     const navegar = (path) => {
@@ -58,7 +59,7 @@ const AdminNavbar = () => {
                 className="admin-mobile-menu"
                 aria-label="Abrir menu admin"
             >
-                ☰
+                <Menu size={20} />
             </button>
 
             {isOpen && (
@@ -78,24 +79,27 @@ const AdminNavbar = () => {
                 </div>
 
                 <nav className="admin-side-menu">
-                    {menuItems.map((item) => (
-                        <button
-                            key={item.path}
-                            type="button"
-                            onClick={() => navegar(item.path)}
-                            className={`admin-side-link ${esActivo(item.path) ? 'admin-side-link-active' : ''}`}
-                        >
-                            <span className="admin-side-icon">{item.icon}</span>
-                            <span>{item.label}</span>
-                        </button>
-                    ))}
+                    {menuItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <button
+                                key={item.path}
+                                type="button"
+                                onClick={() => navegar(item.path)}
+                                className={`admin-side-link ${esActivo(item.path) ? 'admin-side-link-active' : ''}`}
+                            >
+                                <span className="admin-side-icon"><Icon size={18} strokeWidth={1.8} /></span>
+                                <span>{item.label}</span>
+                            </button>
+                        );
+                    })}
 
                     <button
                         type="button"
                         onClick={handleLogout}
                         className="admin-side-link mt-5"
                     >
-                        <span className="admin-side-icon">↪</span>
+                        <span className="admin-side-icon"><LogOut size={18} strokeWidth={1.8} /></span>
                         <span>Salir</span>
                     </button>
                 </nav>
