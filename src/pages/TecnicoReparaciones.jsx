@@ -70,8 +70,8 @@ const TecnicoReparaciones = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F0EADC] pb-20">
-            <nav className="bg-[#FFFDF7] border-b border-[#D8C7B5] p-4 sticky top-0 z-[100] shadow-sm">
+        <div className="technician-page min-h-screen bg-[#F0EADC] pb-20">
+            <nav className="technician-header bg-[#FFFDF7] border-b border-[#D8C7B5] p-4 sticky top-0 z-[100] shadow-sm">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div>
                         <h1 className="font-black text-2xl text-[#1A2517] uppercase italic tracking-tighter">Sellix Tecnico</h1>
@@ -86,7 +86,7 @@ const TecnicoReparaciones = () => {
                 </div>
             </nav>
 
-            <main className="admin-shell">
+            <main className="technician-shell admin-shell">
                 <section className="admin-summary-panel">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
@@ -99,7 +99,7 @@ const TecnicoReparaciones = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     {pendientes.map(item => (
-                        <article key={item.id} className="bg-[#FFFDF7] border border-[#E3D9C8] rounded-[30px] p-6 shadow-sm text-[#1A2517]">
+                        <article key={item.id} className="technician-card bg-[#FFFDF7] border border-[#E3D9C8] rounded-[30px] p-6 shadow-sm text-[#1A2517]">
                             <div className="flex items-start justify-between gap-4">
                                 <div>
                                     <span className="inline-flex rounded-full bg-[#E5EEDC] px-3 py-1 text-[9px] font-black uppercase text-[#1A2517]">
