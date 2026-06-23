@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Castoro+Titling&family=Google+Sans+Flex:opsz,wght@6..144,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @tailwind base;
 @tailwind components;
@@ -11,14 +11,8 @@
     input,
     select,
     textarea {
-        font-family: "Google Sans Flex", sans-serif;
-        font-optical-sizing: auto;
+        font-family: "Inter", sans-serif;
         font-style: normal;
-        font-variation-settings:
-            "slnt" 0,
-            "wdth" 100,
-            "GRAD" 0,
-            "ROND" 0;
     }
 
     h1,
@@ -28,27 +22,916 @@
     h5,
     h6,
     .castoro-title {
-        font-family: "Castoro Titling", serif;
-        font-weight: 400;
+        font-family: "Inter", sans-serif;
+        font-weight: 600;
         font-style: normal;
     }
 
     .castoro-titling-regular {
-        font-family: "Castoro Titling", serif;
-        font-weight: 400;
+        font-family: "Inter", sans-serif;
+        font-weight: 600;
         font-style: normal;
     }
 
     .google-sans-flex-regular {
-        font-family: "Google Sans Flex", sans-serif;
-        font-optical-sizing: auto;
+        font-family: "Inter", sans-serif;
         font-weight: 400;
         font-style: normal;
-        font-variation-settings:
-            "slnt" 0,
-            "wdth" 100,
-            "GRAD" 0,
-            "ROND" 0;
+    }
+}
+
+/* Stitch: Sellix POS corporate visual system. Screen-only to preserve thermal printing. */
+:root {
+    --sx-navy-950: #071426;
+    --sx-navy-900: #0f172a;
+    --sx-navy-800: #1e293b;
+    --sx-slate-700: #334155;
+    --sx-slate-600: #475569;
+    --sx-slate-500: #64748b;
+    --sx-slate-400: #94a3b8;
+    --sx-slate-300: #cbd5e1;
+    --sx-slate-200: #e2e8f0;
+    --sx-slate-100: #f1f5f9;
+    --sx-slate-50: #f8fafc;
+    --sx-white: #ffffff;
+    --sx-info: #0ea5e9;
+    --sx-success: #10b981;
+    --sx-warning: #f59e0b;
+    --sx-danger: #dc2626;
+    --sx-radius-sm: 4px;
+    --sx-radius: 8px;
+    --sx-radius-lg: 12px;
+    --sx-shadow-popover: 0 8px 24px rgb(15 23 42 / 10%);
+}
+
+@media screen {
+    html,
+    body,
+    #root {
+        min-height: 100%;
+        background: var(--sx-slate-50);
+        color: var(--sx-navy-900);
+    }
+
+    body,
+    button,
+    input,
+    select,
+    textarea,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .castoro-title,
+    .castoro-titling-regular,
+    .google-sans-flex-regular {
+        font-family: "Inter", sans-serif !important;
+        letter-spacing: 0 !important;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+        font-size: 14px;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [role="button"]:focus-visible {
+        outline: 3px solid rgb(14 165 233 / 30%) !important;
+        outline-offset: 2px;
+    }
+
+    /* Translate legacy utility colors to the Stitch palette. */
+    [class*="bg-[#F0EADC]"] { background-color: var(--sx-slate-100) !important; }
+    [class*="bg-[#FFFDF7]"] { background-color: var(--sx-white) !important; }
+    [class*="bg-[#F8F5EC]"] { background-color: var(--sx-slate-50) !important; }
+    [class*="bg-[#E5EEDC]"] { background-color: var(--sx-slate-100) !important; }
+    [class*="bg-[#D9E5D3]"] { background-color: var(--sx-slate-200) !important; }
+    [class*="bg-[#ACC8A2]"] { background-color: var(--sx-slate-300) !important; }
+    [class*="bg-[#1A2517]"] { background-color: var(--sx-navy-950) !important; }
+    [class*="bg-[#576238]"] { background-color: var(--sx-navy-800) !important; }
+    [class*="bg-[#67625C]"] { background-color: var(--sx-slate-600) !important; }
+    [class*="bg-[#F4E6E1]"],
+    [class*="bg-[#F8DEDA]"],
+    [class*="bg-[#E8C9BF]"] { background-color: #fee2e2 !important; }
+    [class*="bg-[#EFE2B8]"],
+    [class*="bg-[#FFF1C9]"] { background-color: #fef3c7 !important; }
+    [class*="bg-[#E5F2DF]"] { background-color: #dcfce7 !important; }
+    [class*="bg-[#9A3B30]"] { background-color: var(--sx-danger) !important; }
+
+    [class*="text-[#1A2517]"] { color: var(--sx-navy-900) !important; }
+    [class*="text-[#3E4635]"] { color: var(--sx-slate-700) !important; }
+    [class*="text-[#576238]"] { color: var(--sx-navy-800) !important; }
+    [class*="text-[#67625C]"] { color: var(--sx-slate-600) !important; }
+    [class*="text-[#8A8377]"] { color: var(--sx-slate-500) !important; }
+    [class*="text-[#B8AD9D]"] { color: var(--sx-slate-400) !important; }
+    [class*="text-[#ACC8A2]"] { color: var(--sx-slate-300) !important; }
+    [class*="text-[#9A3B30]"],
+    [class*="text-[#7E2F28]"] { color: #b91c1c !important; }
+    [class*="text-[#9A6B3F]"] { color: #b45309 !important; }
+    [class*="text-[#31552B]"] { color: #166534 !important; }
+
+    [class*="border-[#D8C7B5]"],
+    [class*="border-[#E3D9C8]"],
+    [class*="border-[#D9E5D3]"] { border-color: var(--sx-slate-200) !important; }
+    [class*="border-[#ACC8A2]"] { border-color: var(--sx-slate-300) !important; }
+    [class*="border-[#9A3B30]"] { border-color: var(--sx-danger) !important; }
+
+    .admin-page .rounded-xl,
+    .admin-page .rounded-2xl,
+    .admin-page [class*="rounded-["],
+    .technician-page .rounded-xl,
+    .technician-page .rounded-2xl,
+    .technician-page [class*="rounded-["],
+    .super-admin-page .rounded-xl,
+    .super-admin-page .rounded-2xl,
+    .super-admin-page [class*="rounded-["] {
+        border-radius: var(--sx-radius) !important;
+    }
+
+    .super-admin-page,
+    .technician-page {
+        background: var(--sx-slate-50) !important;
+        color: var(--sx-navy-900) !important;
+    }
+
+    .super-admin-header,
+    .technician-header {
+        min-height: 64px !important;
+        padding: 12px 24px !important;
+        border-bottom: 1px solid var(--sx-slate-200) !important;
+        background: white !important;
+        color: var(--sx-navy-900) !important;
+        box-shadow: none !important;
+    }
+
+    .super-admin-header h1,
+    .technician-header h1 {
+        color: var(--sx-navy-900) !important;
+        font-size: 18px !important;
+        font-style: normal !important;
+        font-weight: 700 !important;
+        text-transform: none !important;
+    }
+
+    .super-admin-layout,
+    .technician-shell {
+        max-width: 1440px !important;
+        margin: 0 auto !important;
+        padding: 24px !important;
+    }
+
+    .super-admin-form,
+    .technician-card {
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: white !important;
+        box-shadow: none !important;
+    }
+
+    /* Login */
+    .login-page {
+        background: var(--sx-slate-50) !important;
+        color: var(--sx-navy-900) !important;
+        padding: 24px !important;
+    }
+
+    .login-shell {
+        max-width: 360px !important;
+    }
+
+    .login-header {
+        margin-bottom: 24px !important;
+    }
+
+    .login-logo {
+        width: 44px !important;
+        height: 44px !important;
+        margin-bottom: 14px !important;
+        border-radius: var(--sx-radius) !important;
+        background: var(--sx-navy-950) !important;
+        color: white !important;
+        box-shadow: none !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+    }
+
+    .login-title {
+        color: var(--sx-navy-900) !important;
+        font-size: 24px !important;
+        line-height: 32px !important;
+        font-weight: 700 !important;
+    }
+
+    .login-subtitle,
+    .app-footer-note,
+    .login-auto-role {
+        color: var(--sx-slate-500) !important;
+        font-size: 12px !important;
+    }
+
+    .login-card {
+        padding: 24px !important;
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: white !important;
+        box-shadow: 0 4px 12px rgb(15 23 42 / 5%) !important;
+    }
+
+    .form-stack { gap: 16px !important; }
+
+    .form-label,
+    .inventory-label-primary,
+    .inventory-label-muted,
+    .inventory-label-green {
+        margin-bottom: 6px !important;
+        color: var(--sx-slate-600) !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+    }
+
+    .login-input,
+    .admin-filter-input,
+    .admin-filter-select,
+    .inventory-select-primary,
+    .inventory-select,
+    .inventory-input,
+    .inventory-input-soft,
+    .inventory-pill-input,
+    .inventory-code-input,
+    .input-modal,
+    .app-dialog-input {
+        min-height: 40px !important;
+        padding: 9px 12px !important;
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: white !important;
+        color: var(--sx-navy-900) !important;
+        box-shadow: none !important;
+        font-weight: 500 !important;
+    }
+
+    .login-input:focus,
+    .admin-filter-input:focus,
+    .admin-filter-select:focus,
+    .inventory-select-primary:focus,
+    .inventory-select:focus,
+    .inventory-input:focus,
+    .inventory-input-soft:focus,
+    .inventory-code-input:focus,
+    .input-modal:focus {
+        border-color: var(--sx-info) !important;
+        box-shadow: 0 0 0 3px rgb(14 165 233 / 12%) !important;
+    }
+
+    .login-submit,
+    .btn-primary,
+    .btn-dark,
+    .btn-icon-status,
+    .inventory-submit {
+        min-height: 40px !important;
+        padding: 9px 16px !important;
+        border: 1px solid var(--sx-navy-950) !important;
+        border-radius: var(--sx-radius) !important;
+        background: var(--sx-navy-950) !important;
+        color: white !important;
+        box-shadow: none !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    .login-submit:hover,
+    .btn-primary:hover,
+    .btn-dark:hover,
+    .btn-icon-status:hover,
+    .inventory-submit:hover {
+        background: var(--sx-navy-800) !important;
+    }
+
+    .btn-orange {
+        min-height: 40px !important;
+        padding: 9px 16px !important;
+        border-radius: var(--sx-radius) !important;
+        background: var(--sx-info) !important;
+        color: white !important;
+        box-shadow: none !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    .btn-green {
+        min-height: 44px !important;
+        padding: 10px 18px !important;
+        border-radius: var(--sx-radius) !important;
+        background: var(--sx-success) !important;
+        color: white !important;
+        box-shadow: none !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    /* Admin shell */
+    .admin-page {
+        min-height: 100vh !important;
+        padding-top: 64px !important;
+        padding-bottom: 40px !important;
+        background: var(--sx-slate-50) !important;
+        color: var(--sx-navy-900) !important;
+    }
+
+    .admin-sidebar {
+        width: 256px !important;
+        padding: 20px 16px !important;
+        border-right: 1px solid #17253a !important;
+        background: var(--sx-navy-950) !important;
+        box-shadow: none !important;
+    }
+
+    .admin-brand {
+        margin: 0 8px 26px !important;
+        gap: 10px !important;
+    }
+
+    .admin-brand-mark {
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: var(--sx-radius) !important;
+        background: #dbeafe !important;
+        color: var(--sx-navy-950) !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+    }
+
+    .admin-brand-title {
+        font-family: "Inter", sans-serif !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        color: white !important;
+    }
+
+    .admin-brand-subtitle {
+        margin-top: 2px !important;
+        color: var(--sx-slate-400) !important;
+        font-family: "Inter", sans-serif !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+    }
+
+    .admin-side-menu { gap: 4px !important; }
+
+    .admin-side-link {
+        min-height: 40px !important;
+        gap: 12px !important;
+        padding: 9px 12px !important;
+        border-radius: 6px !important;
+        color: var(--sx-slate-300) !important;
+        font-family: "Inter", sans-serif !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        box-shadow: none !important;
+    }
+
+    .admin-side-link:hover {
+        background: rgb(255 255 255 / 7%) !important;
+        color: white !important;
+    }
+
+    .admin-side-link-active {
+        background: #dbeafe !important;
+        color: var(--sx-navy-950) !important;
+    }
+
+    .admin-side-icon {
+        width: 20px !important;
+        color: inherit !important;
+    }
+
+    .admin-user-foot {
+        padding: 16px 8px 0 !important;
+        border-color: rgb(148 163 184 / 20%) !important;
+        color: var(--sx-slate-300) !important;
+        font-family: "Inter", sans-serif !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+    }
+
+    .admin-user-foot span { color: var(--sx-slate-500) !important; }
+
+    .admin-topbar {
+        height: 64px !important;
+        padding: 0 24px !important;
+        border-color: var(--sx-slate-200) !important;
+        background: rgb(255 255 255 / 96%) !important;
+        box-shadow: none !important;
+    }
+
+    .admin-topbar h1 {
+        color: var(--sx-navy-900) !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    .admin-topbar p {
+        color: var(--sx-slate-500) !important;
+        font-size: 12px !important;
+    }
+
+    .admin-shell,
+    .admin-shell-md {
+        padding: 24px !important;
+    }
+
+    .admin-summary-panel,
+    .admin-panel,
+    .admin-total-card,
+    .admin-table-panel,
+    .admin-branch-card,
+    .inventory-form,
+    .inventory-list-panel {
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: white !important;
+        box-shadow: none !important;
+    }
+
+    .admin-summary-panel,
+    .admin-total-card,
+    .admin-branch-card,
+    .inventory-form {
+        padding: 20px !important;
+    }
+
+    .admin-dashboard-head {
+        margin-bottom: 20px !important;
+        gap: 16px !important;
+    }
+
+    .admin-filter-bar { gap: 12px !important; }
+
+    .admin-filter-label {
+        margin-bottom: 6px !important;
+        color: var(--sx-slate-600) !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+    }
+
+    .admin-card-grid {
+        gap: 16px !important;
+        margin-bottom: 20px !important;
+    }
+
+    .admin-branch-card {
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+    }
+
+    .admin-branch-card:hover {
+        border-color: var(--sx-slate-300) !important;
+        box-shadow: 0 4px 12px rgb(15 23 42 / 5%) !important;
+    }
+
+    .admin-branch-icon {
+        margin-bottom: 10px !important;
+        font-size: 26px !important;
+    }
+
+    .admin-branch-name {
+        color: var(--sx-navy-900) !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    .admin-branch-location {
+        margin-bottom: 14px !important;
+        color: var(--sx-slate-500) !important;
+        font-size: 12px !important;
+        font-style: normal !important;
+    }
+
+    .admin-metric-box {
+        min-height: 92px !important;
+        padding: 14px 16px !important;
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: var(--sx-slate-50) !important;
+    }
+
+    .admin-metric-label {
+        margin-bottom: 4px !important;
+        color: var(--sx-slate-500) !important;
+        font-size: 10px !important;
+        font-weight: 600 !important;
+    }
+
+    .admin-metric-value {
+        color: var(--sx-navy-900) !important;
+        font-size: 28px !important;
+        font-weight: 700 !important;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .admin-section-title {
+        color: var(--sx-navy-900) !important;
+        font-size: 20px !important;
+        font-style: normal !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    .admin-section-subtitle {
+        color: var(--sx-slate-500) !important;
+        font-size: 12px !important;
+        font-weight: 400 !important;
+        text-transform: none !important;
+    }
+
+    .admin-table {
+        width: 100% !important;
+        color: var(--sx-slate-700) !important;
+        font-size: 13px !important;
+        border-collapse: collapse !important;
+    }
+
+    .admin-table-head,
+    .admin-table thead {
+        background: var(--sx-slate-100) !important;
+        border-color: var(--sx-slate-200) !important;
+    }
+
+    .admin-th,
+    .admin-th-lg,
+    .admin-table th {
+        padding: 11px 14px !important;
+        color: var(--sx-slate-600) !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    .admin-td,
+    .admin-table td {
+        padding: 12px 14px !important;
+        border-color: var(--sx-slate-200) !important;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .admin-row:hover,
+    .admin-table tbody tr:hover {
+        background: var(--sx-slate-50) !important;
+    }
+
+    .admin-badge {
+        padding: 5px 9px !important;
+        border-radius: var(--sx-radius-sm) !important;
+        background: var(--sx-slate-100) !important;
+        color: var(--sx-slate-700) !important;
+        font-size: 11px !important;
+        font-style: normal !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    .admin-icon-btn,
+    .inventory-edit-btn,
+    .inventory-delete-btn {
+        width: 34px !important;
+        height: 34px !important;
+        padding: 7px !important;
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: 6px !important;
+        background: white !important;
+        color: var(--sx-slate-600) !important;
+        box-shadow: none !important;
+    }
+
+    .admin-icon-btn:hover,
+    .inventory-edit-btn:hover {
+        border-color: var(--sx-navy-800) !important;
+        background: var(--sx-navy-800) !important;
+        color: white !important;
+    }
+
+    .admin-icon-btn-danger,
+    .inventory-delete-btn {
+        border-color: #fecaca !important;
+        background: #fff !important;
+        color: var(--sx-danger) !important;
+    }
+
+    .admin-icon-btn-danger:hover,
+    .inventory-delete-btn:hover {
+        background: var(--sx-danger) !important;
+        color: white !important;
+    }
+
+    .admin-empty-state {
+        padding: 56px 20px !important;
+        color: var(--sx-slate-400) !important;
+        font-size: 14px !important;
+        font-style: normal !important;
+        text-transform: none !important;
+        animation: none !important;
+    }
+
+    /* Inventory */
+    .inventory-tabs {
+        width: fit-content !important;
+        margin-bottom: 16px !important;
+        padding: 3px !important;
+        gap: 2px !important;
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: var(--sx-slate-100) !important;
+        box-shadow: none !important;
+    }
+
+    .inventory-tab {
+        min-width: 150px !important;
+        padding: 8px 12px !important;
+        border-radius: 6px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+    }
+
+    .inventory-tab-active {
+        background: white !important;
+        color: var(--sx-navy-900) !important;
+        box-shadow: 0 1px 2px rgb(15 23 42 / 8%) !important;
+    }
+
+    .inventory-tab-idle { color: var(--sx-slate-500) !important; }
+    .inventory-grid-2,
+    .inventory-grid-3 { gap: 16px !important; }
+
+    .inventory-array-section {
+        gap: 20px !important;
+        padding-top: 20px !important;
+        border-color: var(--sx-slate-200) !important;
+    }
+
+    .inventory-price-input {
+        padding: 10px 12px !important;
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: white !important;
+        color: var(--sx-navy-900) !important;
+        font-size: 22px !important;
+        box-shadow: none !important;
+    }
+
+    .inventory-code-badge {
+        border-radius: var(--sx-radius-sm) !important;
+        background: var(--sx-slate-100) !important;
+        color: var(--sx-slate-600) !important;
+    }
+
+    /* Point of sale */
+    .pos-container {
+        min-height: 100vh !important;
+        background: var(--sx-slate-50) !important;
+        color: var(--sx-navy-900) !important;
+    }
+
+    .pos-main-panel {
+        padding: 20px !important;
+        border-color: var(--sx-slate-200) !important;
+    }
+
+    .pos-sidebar {
+        width: 380px !important;
+        padding: 20px !important;
+        border-left: 1px solid var(--sx-slate-200) !important;
+        background: white !important;
+        box-shadow: none !important;
+    }
+
+    .pos-header {
+        margin-bottom: 16px !important;
+        gap: 12px !important;
+    }
+
+    .pos-header h2,
+    .pos-sidebar h2 {
+        color: var(--sx-navy-900) !important;
+        font-size: 18px !important;
+        font-style: normal !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    .pos-header-actions { gap: 8px !important; }
+    .pos-action-bar { margin-bottom: 16px !important; gap: 10px !important; }
+
+    .pos-action-group {
+        padding: 8px !important;
+        gap: 8px !important;
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: white !important;
+        box-shadow: none !important;
+    }
+
+    .pos-action-button { min-height: 40px !important; }
+
+    .input-pos {
+        min-height: 46px !important;
+        padding: 11px 14px !important;
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: white !important;
+        color: var(--sx-navy-900) !important;
+        box-shadow: none !important;
+        font-size: 14px !important;
+    }
+
+    .input-pos:focus {
+        border-color: var(--sx-info) !important;
+        box-shadow: 0 0 0 3px rgb(14 165 233 / 12%) !important;
+    }
+
+    .product-card {
+        padding: 14px !important;
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: white !important;
+        box-shadow: none !important;
+    }
+
+    .product-card:hover {
+        border-color: var(--sx-slate-300) !important;
+        background: var(--sx-slate-50) !important;
+    }
+
+    .ticket-item { border-color: var(--sx-slate-200) !important; }
+
+    /* Modals, notifications, dialogs */
+    .modal-overlay,
+    .app-dialog-overlay {
+        background: rgb(7 20 38 / 62%) !important;
+        backdrop-filter: blur(2px) !important;
+    }
+
+    .modal-apertura-overlay {
+        background: rgb(7 20 38 / 94%) !important;
+    }
+
+    .modal-content,
+    .modal-content-sm,
+    .app-dialog,
+    .not-found-card {
+        padding: 24px !important;
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius-lg) !important;
+        background: white !important;
+        color: var(--sx-navy-900) !important;
+        box-shadow: 0 18px 42px rgb(7 20 38 / 18%) !important;
+    }
+
+    .modal-content h2,
+    .modal-content h3,
+    .modal-content-sm h2,
+    .modal-content-sm h3,
+    .app-dialog h2 {
+        font-style: normal !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    .toast-card {
+        border: 1px solid var(--sx-slate-200) !important;
+        border-radius: var(--sx-radius) !important;
+        background: white !important;
+        color: var(--sx-navy-900) !important;
+        box-shadow: var(--sx-shadow-popover) !important;
+        font-weight: 500 !important;
+    }
+
+    .toast-icon,
+    .app-dialog-mark {
+        border-radius: 6px !important;
+        background: var(--sx-navy-950) !important;
+        color: white !important;
+    }
+
+    .toast-success { border-left: 4px solid var(--sx-success) !important; }
+    .toast-error { border-left: 4px solid var(--sx-danger) !important; }
+    .toast-warning { border-left: 4px solid var(--sx-warning) !important; }
+    .toast-info { border-left: 4px solid var(--sx-info) !important; }
+
+    .app-dialog-actions { gap: 8px !important; }
+
+    .app-dialog-cancel,
+    .app-dialog-confirm,
+    .app-dialog-danger {
+        min-height: 40px !important;
+        padding: 9px 14px !important;
+        border-radius: var(--sx-radius) !important;
+        box-shadow: none !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+    }
+
+    .app-dialog-cancel { background: var(--sx-slate-100) !important; color: var(--sx-slate-700) !important; }
+    .app-dialog-confirm { background: var(--sx-navy-950) !important; }
+    .app-dialog-danger { background: var(--sx-danger) !important; }
+
+    /* Admin assistant */
+    .admin-page ~ div[class*="fixed bottom-5"],
+    body > #root > div > div[class*="fixed bottom-5"] {
+        font-family: "Inter", sans-serif !important;
+    }
+
+    /* 404 */
+    .not-found-page {
+        background: var(--sx-slate-50) !important;
+        color: var(--sx-navy-900) !important;
+    }
+
+    .not-found-card {
+        max-width: 560px !important;
+    }
+
+    .not-found-kicker {
+        color: var(--sx-info) !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+    }
+
+    .not-found-card h1 {
+        color: var(--sx-navy-900) !important;
+        font-size: 30px !important;
+        font-style: normal !important;
+        font-weight: 700 !important;
+        text-transform: none !important;
+    }
+
+    .not-found-copy {
+        color: var(--sx-slate-500) !important;
+        font-weight: 400 !important;
+    }
+
+    @media (min-width: 1024px) {
+        .admin-page { padding-left: 256px !important; }
+        .admin-topbar { left: 256px !important; }
+    }
+
+    @media (max-width: 1023px) {
+        .admin-mobile-menu {
+            top: 12px !important;
+            left: 12px !important;
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: var(--sx-radius) !important;
+            background: var(--sx-navy-950) !important;
+            box-shadow: none !important;
+        }
+
+        .admin-topbar { padding-left: 64px !important; }
+        .admin-topbar h1 { padding-left: 0 !important; }
+    }
+
+    @media (max-width: 767px) {
+        .admin-shell,
+        .admin-shell-md { padding: 16px !important; }
+
+        .admin-sidebar { width: min(280px, 86vw) !important; }
+
+        .pos-container { display: block !important; }
+
+        .pos-main-panel {
+            padding: 14px !important;
+            border-right: 0 !important;
+        }
+
+        .pos-sidebar {
+            position: relative !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 60vh !important;
+            padding: 16px !important;
+            border-top: 1px solid var(--sx-slate-200) !important;
+            border-left: 0 !important;
+        }
+
+        .pos-action-group { grid-template-columns: 1fr 1fr !important; }
+        .modal-content,
+        .modal-content-sm { padding: 18px !important; }
+        .inventory-tab { min-width: 0 !important; }
     }
 }
 
