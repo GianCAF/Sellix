@@ -5,6 +5,7 @@ import AdminNavbar from '../components/AdminNavbar';
 import { useAuth } from '../context/AuthContext';
 import { aplicarTenant } from '../utils/tenant';
 import { getTenantDocs, ordenarPorCampoTexto } from '../services/firestoreTenant';
+import { Pencil, Store, Trash2 } from 'lucide-react';
 
 const AdminVerInventario = () => {
     const { user } = useAuth();
@@ -148,7 +149,7 @@ const AdminVerInventario = () => {
                                     onClick={() => setFiltroSucursal(suc.id)}
                                     className="bg-[#FFFDF7] p-10 rounded-[45px] shadow-sm border border-[#E3D9C8] flex flex-col items-center justify-center text-center hover:shadow-2xl hover:scale-[1.02] transition-all cursor-pointer group"
                                 >
-                                    <div className="text-5xl mb-4 group-hover:rotate-12 transition-transform">🏪</div>
+                                    <div className="mb-4 text-[#475569]"><Store size={28} strokeWidth={1.7} /></div>
                                     <h3 className="text-xl font-black text-[#1A2517] uppercase tracking-tighter">{suc.nombre}</h3>
                                     <p className="text-[#8A8377] text-xs font-bold mb-6 italic tracking-widest">{suc.ubicacion}</p>
 
@@ -220,8 +221,8 @@ const AdminVerInventario = () => {
                                             {/* SUBTOTAL POR PRODUCTO */}
                                             <td className="p-5 text-center font-black text-[#1A2517]">${(p.cantidad * p.precio).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
                                             <td className="p-5 text-right flex gap-2 justify-end">
-                                                <button onClick={() => { setEditandoProd(p.id); setNuevoStock(p.cantidad); setNuevoPrecio(p.precio); }} className="p-2 bg-[#E5EEDC] text-[#1A2517] rounded-lg hover:bg-[#1A2517] hover:text-white transition-all">✏️</button>
-                                                <button onClick={() => eliminarProducto(p.id)} disabled={procesandoEliminar === p.id} className="p-2 bg-[#F4E6E1] text-[#9A3B30] rounded-lg hover:bg-[#9A3B30] hover:text-white transition-all disabled:opacity-50">🗑️</button>
+                                                <button onClick={() => { setEditandoProd(p.id); setNuevoStock(p.cantidad); setNuevoPrecio(p.precio); }} className="admin-icon-btn" title="Editar existencia" aria-label="Editar existencia"><Pencil size={16} /></button>
+                                                <button onClick={() => eliminarProducto(p.id)} disabled={procesandoEliminar === p.id} className="admin-icon-btn admin-icon-btn-danger disabled:opacity-50" title="Eliminar existencia" aria-label="Eliminar existencia"><Trash2 size={16} /></button>
                                             </td>
                                         </tr>
                                         {editandoProd === p.id && (
